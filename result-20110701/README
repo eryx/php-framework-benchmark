@@ -1,0 +1,16 @@
+
+* Hardware
+
+    CPU: Intel Core i5 750 (2.67GHz x4)
+    RAM: 4GB
+
+* Software
+Debian 6.0.2 x86_64 (2.6.32-5-amd64)
+
+apache 2.2.16
+    mpm-prefork
+    mod-php5
+
+php 5.3.6
+    php-apc 3.1.3p1
+

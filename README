@@ -1,0 +1,28 @@
+
+@2011-07-01
+-----------------------------------------------
+* zf: Zend Framework
+    Site:   http://framework.zend.com
+    Ver:    1.11.7
+    
+* ci: CodeIgniter
+    Site:   http://codeigniter.com/
+    Ver:    2.0.2
+
+* yii: Yii Framework
+    Site:   http://www.yiiframework.com/
+    Ver:    1.1.8
+
+* yaf: Yet Another Framework in PHP Extension
+    Site:   http://code.google.com/p/yafphp/
+    Ver:    2.0.1
+
+* micromvc: MicroMVC
+    Site:   http://www.micromvc.com/
+    Ver:    3.1.0
+
+# XHProf: A Hierarchical Profiler for PHP
+    Site:   http://pecl.php.net/xhprof
+    Ver:    0.9.2
+
+
