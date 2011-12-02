@@ -18,11 +18,11 @@ for ($i = 0; $i < 3; $i++) {
     
     foreach ($a as $v) {
         
-        shell_exec("/etc/init.d/apache2 restart");
-        sleep(60);
+        shell_exec("/etc/init.d/apache2 restart");        
         do {
+            sleep(60);
             $loadavg = strstr(shell_exec('cat /proc/loadavg'), ' ', true);
-        } while ($loadavg < 0.05);
+        } while ($loadavg > 0.05);
         
         /** Memuse/Time/fun-calls/fun-map **/
         $memuse = 0;
