@@ -13,6 +13,8 @@ require_once(dirname(__FILE__).'/../../framework/yii.php');
 // create a Web application instance and run
 Yii::createWebApplication()->run();
 
+$xhprof_data = xhprof_disable();
+
 if (!isset($_GET['debug'])) {
     die();
 }
@@ -20,8 +22,8 @@ if (!isset($_GET['debug'])) {
 echo "Page rendered in <b>"
     . round((microtime(true) - START_TIME), 5) * 1000 ." ms</b>, taking <b>"
     . round((memory_get_usage() - START_MEMORY_USAGE) / 1024, 2) ." KB</b>";
-    
-$xhprof_data = xhprof_disable();
+$f = get_included_files();
+echo ", include files: ".count($f);
 
 $XHPROF_ROOT = realpath(dirname(__FILE__) .'/../../..');
 include_once $XHPROF_ROOT . "/xhprof/xhprof_lib/utils/xhprof_lib.php";
