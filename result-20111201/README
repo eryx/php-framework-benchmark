@@ -1,0 +1,18 @@
+Hardware platform
+    CPU: Intel Core i5 750 (2.67GHz x4)
+    RAM: 4GB
+
+Software Environment
+
+    Debian 6.0.3 x86_64 (2.6.32-39)
+
+    apache 2.2.16 (mpm-prefork,mod-php5)
+
+    php 5.3.8
+    php-apc 3.1.9 (Optimization for include/require)
+    
+    Copy all projects to /dev/shm/* (Optimization for files read/write)
+
+Test report:
+    http://www.ruilog.com/blog/view/b6f0e42cf705.html
+
