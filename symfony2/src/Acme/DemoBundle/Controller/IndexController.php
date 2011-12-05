@@ -8,6 +8,6 @@ class IndexController extends Controller
 {
     public function indexAction()
     {
-        return $this->render('AcmeDemoBundle:Index:index.html.twig');
+        return $this->render('AcmeDemoBundle:Welcome:index.html.twig');
     }
 }
