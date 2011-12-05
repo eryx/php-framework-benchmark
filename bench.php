@@ -6,24 +6,40 @@ $opt = getopt("c:n:");
 $gc = isset($opt['c']) ? $opt['c'] : 100;
 $gn = isset($opt['n']) ? $opt['n'] : 30000;
 
-$a = array('ci','yii','micromvc4','yaf','zf','zf2','slim','laravel','cakephp','symfony2');
-//$a = array('micromvc4','yaf','slim');
-$r = array();
-$output = '';
-$mt = array();
+$al = array(
+    'symfony2' => 'Symfony 2.0.6',
+    'zf' => 'Zend Framework 1.11.11',
+    'zf2' => 'Zend Framework 2.0.0-beta1',
+    'cakephp' => 'CakePHP 2.0.4',
+    'ci' => 'CodeIgniter 2.1.0',
+    'yii' => 'Yii Framework 1.1.8',
+    'slim' => 'Slim 1.5',
+    'laravel' => 'Laravel 2.0.2',
+    'micromvc4' => 'MicroMVC 4.0.0',
+    'yaf' => 'Yaf 2.1.3-beta',
+);
+$al = array(
+    'micromvc4' => 'MicroMVC 4.0.0',
+    'yaf' => 'Yaf 2.1.3-beta',
+);
+$a = array_keys($al);
 
-for ($i = 0; $i < 3; $i++) {
-    
-    shuffle($a);
+//
+$rs = array();
+$output = '';
+$count = 3;
+for ($i = 0; $i < $count; $i++) {
     
     foreach ($a as $v) {
         
         shell_exec("/etc/init.d/apache2 restart");        
-        do {
+        /*do {
             sleep(60);
             $loadavg = strstr(shell_exec('cat /proc/loadavg'), ' ', true);
         } while ($loadavg > 0.05);
+        */
         
+        echo "Testing $v\n";
         /** Memuse/Time/fun-calls/fun-map **/
         $memuse = 0;
         $time   = 0;
@@ -50,13 +66,14 @@ for ($i = 0; $i < 3; $i++) {
         $o = shell_exec("ab -c $gc -n $gn -H \"Connection: close\" \"http://{$v}.pfb.example.com/\"");
         if (preg_match("/Requests\ per\ second:\ +(.*?)\[/", $o, $mat)) {
             $loadavg = strstr(shell_exec('cat /proc/loadavg'), ' ', true);
-            $r[$v][] = array($mat[1], $loadavg, $memuse, $time, $funcal, $files);
+            $rs[$v][] = array($mat[1], $loadavg, $memuse, $time, $funcal, $files);
         }
     }
 }
 
 $output .= sprintf("%12s QPS, LOAD, MEM(KB), TIME(ms); functions, include files\n", 'framework');
-foreach ($r as $k => $v) {
+$rsm = array();
+foreach ($rs as $k => $v) {
     $output .= sprintf("%12s ", $k);
     $rqsvg = 0;
     $loadavg = 0;
@@ -73,10 +90,63 @@ foreach ($r as $k => $v) {
         $files  = $v2[5];
         $output .= sprintf("%8d,%5.2f,%7.2f,%6.2f;", $v2[0], $v2[1], $v2[2], $v2[3]);
     }
-    $output .= sprintf("%8d,%5.2f,%7.2f,%6.2f;  %5d,%5d\n", $rqsvg/3, $loadavg/3, $memuse/3, $time/3, $funcal, $files);
+    $output .= sprintf("%8d,%5.2f,%7.2f,%6.2f;  %5d,%5d\n", 
+        $rqsvg/$count, $loadavg/$count, $memuse/$count, $time/$count, $funcal, $files);
+    $rsm['qps'][$al[$k]] = intval($rqsvg/$count);
+    $rsm['load'][$al[$k]] = round($loadavg/$count, 2);
+    $rsm['memuse'][$al[$k]] = round($memuse/$count, 2);
+    $rsm['time'][$al[$k]] = round($time/$count, 2);
+    $rsm['funcal'][$al[$k]] = $funcal;
+    $rsm['files'][$al[$k]] = $files;
 }
 
 file_put_contents("./result-".date("Ymd")."/ab-c{$gc}-n{$gn}.txt", $output);
 echo $output;
+
+include('./deps/phpgraphlib.php');
+
+foreach ($rsm as $k => $v) {
+    switch ($k) {
+    case 'qps':
+        $graph = new PHPGraphLib(800,450,"./result-".date("Ymd")."/ab-c{$gc}-n{$gn}.png");
+        $graph->addData($rsm['qps']);
+        $graph->setTitle("ApacheBench (ab -c {$gc} -n {$gn})");
+        break;
+    case 'load':
+        $graph = new PHPGraphLib(800,450,"./result-".date("Ymd")."/loadavg.png");
+        $graph->addData($rsm['load']);
+        $graph->setTitle("System LoadAvg in 1 Minute (ab -c {$gc} -n {$gn})");
+        break;
+    case 'memuse':
+        $graph = new PHPGraphLib(800,450,"./result-".date("Ymd")."/memory-usage.png");
+        $graph->addData($rsm['memuse']);
+        $graph->setTitle("Memory Usage (KB)");  
+        break;
+    case 'files':
+        $graph = new PHPGraphLib(800,450,"./result-".date("Ymd")."/number-of-files.png");
+        $graph->addData($rsm['files']);
+        $graph->setTitle("Number of files been included or required");
+        break;
+    case 'funcal':
+        $graph = new PHPGraphLib(800,450,"./result-".date("Ymd")."/number-of-function-calls.png");
+        $graph->addData($rsm['funcal']);
+        $graph->setTitle("Number fo function calls");
+        break;
+    case 'time':
+        $graph = new PHPGraphLib(800,450,"./result-".date("Ymd")."/response-time.png");
+        $graph->addData($rsm['time']);
+        $graph->setTitle("Response Time (Millisecond)");
+        break;
+    default:
+        continue;
+    }
+    
+    $graph->setTitleLocation('left');
+    $graph->setBarColor('255,102,51');
+    $graph->setDataValues(true);
+    $graph->setXValuesHorizontal(true);
+    $graph->setupXAxis(20, '');
+    $graph->createGraph();
+}
 
 
