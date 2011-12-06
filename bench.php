@@ -18,10 +18,6 @@ $al = array(
     'micromvc4' => 'MicroMVC 4.0.0',
     'yaf' => 'Yaf 2.1.3-beta',
 );
-$al = array(
-    'micromvc4' => 'MicroMVC 4.0.0',
-    'yaf' => 'Yaf 2.1.3-beta',
-);
 $a = array_keys($al);
 
 //
@@ -33,11 +29,10 @@ for ($i = 0; $i < $count; $i++) {
     foreach ($a as $v) {
         
         shell_exec("/etc/init.d/apache2 restart");        
-        /*do {
+        do {
             sleep(60);
             $loadavg = strstr(shell_exec('cat /proc/loadavg'), ' ', true);
         } while ($loadavg > 0.05);
-        */
         
         echo "Testing $v\n";
         /** Memuse/Time/fun-calls/fun-map **/

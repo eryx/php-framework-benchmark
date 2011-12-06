@@ -417,7 +417,7 @@ class PHPGraphLib {
 							$textHorizPos = round($xStart + ($this->bar_width / 2) - ((strlen($key) * $this->text_width) / 2));
 							$textHorizPos = round($xStart + ($this->bar_width / 2) - 20);
 							//imagestring($this->image, 2, $textHorizPos, $textVertPos, $key,  $this->x_axis_text_color);
-							imagettftext($this->image, 10, -30, $textHorizPos, $textVertPos + 10, $this->x_axis_text_color, './deps/DejaVuSansCondensed.ttf', $key);
+							imagettftext($this->image, 10, -20, $textHorizPos, $textVertPos + 10, $this->x_axis_text_color, './deps/DejaVuSansCondensed.ttf', $key);
 						}
 					}
 				}
@@ -988,11 +988,11 @@ class PHPGraphLib {
 	function setDataCurrency($currency_type = 'dollar') {
 		switch (strtolower($currency_type)) {
 			case 'dollar': $this->data_currency = '$'; break;
-			case 'yen': $this->data_currency = '¥'; break;
-			case 'pound': $this->data_currency = '£'; break;
-			case 'lira': $this->data_currency = '£'; break;
+			case 'yen': $this->data_currency = '?'; break;
+			case 'pound': $this->data_currency = '?'; break;
+			case 'lira': $this->data_currency = '?'; break;
 			/* Euro doesn't display properly...
-			case 'euro': $this->data_currency = '€'; break; */
+			case 'euro': $this->data_currency = '?'; break; */
 			/* Franc doesn't display properly
 			case 'franc': $this->data_currency = '?'; break; */
 			default: $this->data_currency = $currency_type; break;
@@ -1062,7 +1062,7 @@ class PHPGraphLib {
 		return $input . '%';
 	}
 	function formatDataAsDegrees($input) {
-		return $input . '°';
+		return $input . '?';
 	}
 	function formatDataAsGeneric($input) {
 		return $input . $this->data_format_generic;
