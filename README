@@ -1,3 +1,49 @@
+How to run this benchmark
+
+    Software Environment
+        apache 2.2.x (mpm-prefork,mod-php5)
+        php 5.3.x
+        php-apc 3.1.9 (Optimization for include/require)
+        php-curl
+        php-gd
+        php-intl
+        php-xhprof (A Hierarchical Profiler for PHP)
+
+    Download the Source
+        git clone git://github.com/eryx/php-framework-benchmark.git
+    
+    Copy all projects to /dev/shm/* (Optimization for files read/write)
+        cp -rp php-framework-benchmark.git /dev/shm/*
+    
+    Apache settings
+        cd php-framework-benchmark.git
+        cp ./apache-pfb.conf /etc/apache2/sites-enabled/    (Debian/Ubuntu)
+        cp ./apache-pfb.conf /etc/httpd/conf.d/     (CentOS)
+        Restart Apache Server 
+        
+    Hosts settings
+        cd php-framework-benchmark.git
+        cat ./hosts-pfb >> /etc/hosts 
+        
+    Confirm all sites are available
+        http://zf.pfb.example.com/?debug=1
+        http://zf2.pfb.example.com/?debug=1
+        http://ci.pfb.example.com/?debug=1
+        http://yii.pfb.example.com/?debug=1
+        http://micromvc.pfb.example.com/?debug=1
+        http://micromvc4.pfb.example.com/?debug=1
+        http://cakephp.pfb.example.com/?debug=1
+        http://symfony2.pfb.example.com/?debug=1
+        http://yaf.pfb.example.com/?debug=1
+        http://laravel.pfb.example.com/?debug=1
+        http://slim.pfb.example.com/?debug=1
+
+    Run the benchmark scripts
+        php bench.php -c 100 -n 5000 (clients:100, numbers:5000)   
+       
+        About 1~3 hours later, all of the test data be saved in the ./result-*
+
+
 @2011-12-01
 -----------------------------------------------
 * zf: Zend Framework

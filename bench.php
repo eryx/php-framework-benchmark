@@ -2,6 +2,17 @@
 
 <?php
 
+if (!function_exists("xhprof_enable"))
+    die("php5-xhprof not found\n");
+if (!function_exists("apc_add"))
+    die("php5-apc not found\n");
+if (!function_exists("curl_close"))
+    die("php5-curl not found\n");
+if (!function_exists("imagecopy"))
+    die("php5-gd not found\n");
+if (!class_exists("Locale"))
+    die("php5-intl not found\n");
+
 $opt = getopt("c:n:");
 $gc = isset($opt['c']) ? $opt['c'] : 100;
 $gn = isset($opt['n']) ? $opt['n'] : 30000;
