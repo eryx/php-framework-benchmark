@@ -30,7 +30,6 @@ How to run this benchmark
         http://zf2.pfb.example.com/?debug=1
         http://ci.pfb.example.com/?debug=1
         http://yii.pfb.example.com/?debug=1
-        http://micromvc.pfb.example.com/?debug=1
         http://micromvc4.pfb.example.com/?debug=1
         http://cakephp.pfb.example.com/?debug=1
         http://symfony2.pfb.example.com/?debug=1
