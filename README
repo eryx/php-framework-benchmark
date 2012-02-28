@@ -13,7 +13,7 @@ How to run this benchmark
         git clone git://github.com/eryx/php-framework-benchmark.git
     
     Copy all projects to /dev/shm/* (Optimization for files read/write)
-        cp -rp php-framework-benchmark.git /dev/shm/*
+        cp -rp php-framework-benchmark /dev/shm/
     
     Apache settings
         cd php-framework-benchmark.git
