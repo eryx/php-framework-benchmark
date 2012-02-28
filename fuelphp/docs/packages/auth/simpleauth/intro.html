@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./../../../assets/css/combined.css">
+	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
+	<script type="text/javascript">
+		var path = './../../../';
+	</script>
+	<script src="./../../../assets/js/combined.js"></script>
+	<title>Introduction - SimpleAuth - Auth Package - FuelPHP Documentation</title>
+</head>
+<body>
+	<div id="container">
+		<header id="header">
+			<div class="table">
+				<h1>
+					<strong>FuelPHP, a PHP 5.3 Framework</strong>
+					Documentation
+				</h1>
+
+				<form id="google_search">
+					<p>
+						<span id="search_clear">&nbsp;</span>
+						<input type="submit" name="search_submit" id="search_submit" value="search" />
+						<input type="text" value="" id="search_input" name="search_input" />
+					</p>
+				</form>
+			</div>
+			<nav>
+
+				<div class="clear"></div>
+			</nav>
+			<a href="#" id="toc_handle">table of contents</a>
+			<div class="clear"></div>
+		</header>
+
+		<div id="cse">
+			<div id="cse_point"></div>
+			<div id="cse_content"></div>
+		</div>
+
+		<div id="main">
+			<h2>SimpleAuth - Introduction</h2>
+
+			<p>
+				SimpleAuth is an Auth package that is included with the framework. Besides being a working Auth implementation, it is also
+				an example for other Auth drivers. You can use this as a reference when building your own driver.
+			</p>
+
+			<h3 id="configuration">Configuration</h3>
+
+			<p>
+				SimpleAuth relies on one table. Here is the SQL to create it:
+			</p>
+
+			<pre class="sql"><code>CREATE TABLE `users` (
+	`id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+	`username` VARCHAR( 50 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL ,
+	`password` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL ,
+	`group` INT NOT NULL DEFAULT 1 ,
+	`email` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL ,
+	`last_login` VARCHAR( 25 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL ,
+	`login_hash` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL ,
+	`profile_fields` TEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL ,
+	`created_at` INT( 11 ) UNSIGNED NOT NULL ,
+	UNIQUE (
+		`username` ,
+		`email`
+	)
+)</code></pre>
+
+			<p>This is a sample login action</p>
+
+			<pre class="php"><code>public function action_login()
+{
+	$data = array();
+	if ($_POST)
+	{
+
+		// Ok, you pressed the submit button. let's go over
+
+		// first of all, let's get a auth object
+		$auth = Auth::instance();
+
+		// check the credentials. This assumes that you have the previous table created
+		if ($auth->login($_POST['username'],$_POST['password']))
+		{
+			// credentials ok, go right in
+			Response::redirect('success_page');
+		}
+		else
+		{
+			// Oops, no soup for you. try to login again.
+			// Set some values to repopulate the username field and give some error text back to the view
+
+			$data['username']    = $_POST['username'];
+			$data['login_error'] = 'Wrong username/password combo. Try again';
+		}
+	}
+
+	// Show the login form
+	echo View::forge('owl/login',$data);
+}</code></pre>
+
+		</div>
+
+		<footer>
+			<p>
+				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+			</p>
+		</footer>
+	</div>
+</body>
+</html>

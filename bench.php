@@ -22,10 +22,12 @@ $al = array(
     'zf' => 'Zend Framework 1.11.11',
     'zf2' => 'Zend Framework 2.0.0-beta1',
     'cakephp' => 'CakePHP 2.0.4',
+    'fuelphp' => 'FuelPHP 1.1',
     'ci' => 'CodeIgniter 2.1.0',
     'yii' => 'Yii Framework 1.1.8',
     'slim' => 'Slim 1.5',
     'laravel' => 'Laravel 2.0.2',
+    'colaphp' => 'ColaPHP 1.2-ga',
     'micromvc4' => 'MicroMVC 4.0.0',
     'yaf' => 'Yaf 2.1.3-beta',
 );

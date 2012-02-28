@@ -10,6 +10,8 @@
 127.0.0.1   yaf.pfb.example.com
 127.0.0.1   laravel.pfb.example.com
 127.0.0.1   slim.pfb.example.com
+127.0.0.1   colaphp.pfb.example.com
+127.0.0.1   fuelphp.pfb.example.com
 
 127.0.0.1   noframework.pfb.example.com
 127.0.0.1   xhprof.pfb.example.com
