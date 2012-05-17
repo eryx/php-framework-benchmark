@@ -16,13 +16,13 @@ How to run this benchmark
         cp -rp php-framework-benchmark /dev/shm/
     
     Apache settings
-        cd php-framework-benchmark.git
+        cd php-framework-benchmark
         cp ./apache-pfb.conf /etc/apache2/sites-enabled/    (Debian/Ubuntu)
         cp ./apache-pfb.conf /etc/httpd/conf.d/     (CentOS)
         Restart Apache Server 
         
     Hosts settings
-        cd php-framework-benchmark.git
+        cd php-framework-benchmark
         cat ./hosts-pfb >> /etc/hosts 
         
     Confirm all sites are available
