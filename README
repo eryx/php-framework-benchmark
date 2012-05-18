@@ -50,7 +50,7 @@ How to run this benchmark
 
 @2012-05-18
 -----------------------------------------------
-* Optimized configuration for symfony2 (By https://github.com/d1gi)
+* Optimized configuration for symfony2 (Commit By https://github.com/Smart-Core)
   Patch https://github.com/eryx/php-framework-benchmark/pull/2
 
 @2012-02-29
