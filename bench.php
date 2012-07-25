@@ -30,6 +30,7 @@ $al = array(
     'colaphp' => 'ColaPHP 1.2-ga',
     'micromvc4' => 'MicroMVC 4.0.0',
     'yaf' => 'Yaf 2.1.3-beta',
+    'proem' => 'Proem 0.5.1',
 );
 $a = array_keys($al);
 

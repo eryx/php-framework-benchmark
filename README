@@ -135,6 +135,10 @@ How to run this benchmark
     Site:   http://www.micromvc.com/
     Ver:    3.1.0
 
+* proem: The Proem Framework
+    Site:   http://proemframework.org
+    Ver:    0.5.1 pre-alpha
+
 # XHProf: A Hierarchical Profiler for PHP
     Site:   http://pecl.php.net/xhprof
     Ver:    0.9.2
