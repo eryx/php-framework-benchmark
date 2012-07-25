@@ -10,6 +10,7 @@ if (isset($_GET['debug'])) {
 require_once '../lib/Proem/Autoloader.php';
 
 (new Proem\Autoloader())
+    ->enableAPC()
     ->attachNamespace('Proem', '../lib')
     ->attachNamespace('Module', '../app')
     ->register();
