@@ -63,6 +63,7 @@ class Autoloader
     public function enableAPC()
     {
         $this->apcEnabled = true;
+	return $this;
     }
 
     /**
