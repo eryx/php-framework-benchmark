@@ -30,6 +30,8 @@
  */
 namespace Proem\Api\Signal\Manager;
 
+use Proem\Signal\Event\Standard as Event;
+
 /**
  * Interface that all signal managers must implement.
  */
@@ -57,6 +59,6 @@ interface Template
      * @param array $options An array of Proem\Api\Util\Opt\Options objects
      * @return Proem\Api\Signal\Manager\Template
      */
-    public function trigger(array $options);
+    public function trigger(Event $event, Callable $callback = null);
 
 }

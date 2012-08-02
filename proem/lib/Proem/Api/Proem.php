@@ -103,7 +103,7 @@ class Proem
     public function __construct()
     {
         $this->events = new Asset;
-        $this->events->set('\Proem\Signal\Manager\Template', $this->events->single(function($asset) {
+        $this->events->set('Proem\Signal\Manager\Template', $this->events->single(function($asset) {
             return new SignalManager;
         }));
 
@@ -173,15 +173,14 @@ class Proem
     {
         $this->serviceManager->set('events', $this->events);
 
-        $this->events->get()->trigger([
-            'name'  => 'proem.init',
-            'event' => (new Bootstrap)->setServiceManager($this->serviceManager)->setEnvironment($environment),
-            'callback'  => function($e) {
-                if ($e instanceof Proem\Filter\Manager\Template) {
-                    $this->filterManager = $e;
+        $this->events->get()->trigger(
+            (new Bootstrap('proem.init'))->setServiceManager($this->serviceManager)->setEnvironment($environment),
+            function($response) {
+                if ($response instanceof Proem\Filter\Manager\Template) {
+                    $this->filterManager = $response;
                 }
             }
-        ]);
+        );
 
         if ($this->filterManager === null) {
             $this->filterManager = new FilterManager;

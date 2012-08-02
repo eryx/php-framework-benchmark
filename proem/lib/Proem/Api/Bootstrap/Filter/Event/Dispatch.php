@@ -55,19 +55,15 @@ class Dispatch extends Event
      */
     public function preIn(Manager $assets)
     {
-        if ($assets->provides('events', '\Proem\Signal\Manager\Template')) {
-            $assets->get('events')->trigger([
-                'name'      => 'proem.pre.in.dispatch',
-                'params'    => [],
-                'target'    => $this,
-                'method'    => __FUNCTION__,
-                'event'     => (new Bootstrap())->setServiceManager($assets),
-                'callback'  => function($responseAsset) use ($assets) {
-                    if ($responseAsset->provides('Proem\Dispatch\Template')) {
-                        $assets->set('dispatch', $responseAsset);
+        if ($assets->provides('events', 'Proem\Signal\Manager\Template')) {
+            $assets->get('events')->trigger(
+                (new Bootstrap('proem.pre.in.dispatch'))->setServiceManager($assets),
+                function($response) use ($assets) {
+                    if ($response->provides('Proem\Dispatch\Template')) {
+                        $assets->set('dispatch', $response);
                     }
-                },
-            ]);
+                }
+            );
         }
     }
 
@@ -105,15 +101,8 @@ class Dispatch extends Event
      */
     public function postIn(Manager $assets)
     {
-        if ($assets->provides('events', '\Proem\Signal\Manager\Template')) {
-            $assets->get('events')->trigger([
-                'name'      => 'proem.post.in.dispatch',
-                'params'    => [],
-                'target'    => $this,
-                'method'    => __FUNCTION__,
-                'event'     => (new Bootstrap())->setServiceManager($assets),
-                'callback'  => function($responseAsset) {},
-            ]);
+        if ($assets->provides('events', 'Proem\Signal\Manager\Template')) {
+            $assets->get('events')->trigger((new Bootstrap('proem.post.in.dispatch'))->setServiceManager($assets));
         }
 
         (new DispatchStage($assets));
@@ -127,15 +116,8 @@ class Dispatch extends Event
      */
     public function preOut(Manager $assets)
     {
-        if ($assets->provides('events', '\Proem\Signal\Manager\Template')) {
-            $assets->get('events')->trigger([
-                'name'      => 'proem.pre.out.dispatch',
-                'params'    => [],
-                'target'    => $this,
-                'method'    => __FUNCTION__,
-                'event'     => (new Bootstrap())->setServiceManager($assets),
-                'callback'  => function($responseAsset) {},
-            ]);
+        if ($assets->provides('events', 'Proem\Signal\Manager\Template')) {
+            $assets->get('events')->trigger((new Bootstrap('proem.pre.out.dispatch'))->setServiceManager($assets));
         }
     }
 
@@ -157,15 +139,8 @@ class Dispatch extends Event
      */
     public function postOut(Manager $assets)
     {
-        if ($assets->provides('events', '\Proem\Signal\Manager\Template')) {
-            $assets->get('events')->trigger([
-                'name'      => 'proem.post.out.dispatch',
-                'params'    => [],
-                'target'    => $this,
-                'method'    => __FUNCTION__,
-                'event'     => (new Bootstrap())->setServiceManager($assets),
-                'callback'  => function($responseAsset) {},
-            ]);
+        if ($assets->provides('events', 'Proem\Signal\Manager\Template')) {
+            $assets->get('events')->trigger((new Bootstrap('proem.post.out.dispatch'))->setServiceManager($assets));
         }
     }
 }

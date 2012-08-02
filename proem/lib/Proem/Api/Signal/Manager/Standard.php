@@ -177,8 +177,6 @@ class Standard implements Template
      *       'name'      => (new Option())->required(),
      *       'params'    => (new Option())->type('array'),
      *       'callback'  => (new Option())->type('callable'),
-     *       'target'    => (new Option())->type('object'),
-     *       'method'    => (new Option())->type('string'),
      *       'event'     => (new Option(new Event))->object('\Proem\Signal\Event\Template')
      *   ], $options);
      * </code>
@@ -186,41 +184,27 @@ class Standard implements Template
      * @param array $options An array of Proem\Util\Opt\Options objects
      * @return Proem\Api\Signal\Manager\Template
      */
-    public function trigger(array $options)
+    public function trigger(Event $event, Callable $callback = null)
     {
-        $ops = $this->setOptions([
-            'name'      => (new Option())->required(),
-            'params'    => (new Option())->type('array'),
-            'callback'  => (new Option())->type('callable'),
-            'target'    => (new Option())->type('object'),
-            'method'    => (new Option())->type('string'),
-            'event'     => (new Option(new Event))->object('\Proem\Signal\Event\Template')
-        ], $options);
-
-        if (isset($this->queues[$ops->name]) || isset($this->queues[self::WILDCARD])) {
+        $name = $event->getName();
+        if (isset($name) || isset($this->queues[self::WILDCARD])) {
             if (isset($this->queues[self::WILDCARD])) {
                 foreach ($this->queues[self::WILDCARD] as $listener) {
-                    if (isset($this->queues[$ops->name])) {
-                        $this->queues[$ops->name]->insert($listener[0], $listener[1]);
+                    if (isset($this->queues[$name])) {
+                        $this->queues[$name]->insert($listener[0], $listener[1]);
                     } else {
-                        $this->queues[$ops->name] = new Queue;
-                        $this->queues[$ops->name]->insert($listener[0], $listener[1]);
+                        $this->queues[$name] = new Queue;
+                        $this->queues[$name]->insert($listener[0], $listener[1]);
                     }
                 }
             }
-            foreach ($this->queues[$ops->name] as $key) {
-                $event = $ops->event;
-                if ($event instanceof \Proem\Signal\Event\Template) {
-                    if ($ops->has('params')) {
-                        $event->setParams($ops->params);
-                    }
-                }
-                $event->setName($ops->name);
-                $event->setTarget($ops->target);
-                $event->setMethod($ops->method);
-                if ($return = (new Callback($this->callbacks[$key], $event))->call()) {
-                    if ($ops->has('callback')) {
-                        (new Callback($ops->callback, $return))->call();
+
+            if (isset($this->queues[$name])) {
+                foreach ($this->queues[$name] as $key) {
+                    if ($return = (new Callback($this->callbacks[$key], $event))->call()) {
+                        if ($callback !== null) {
+                            (new Callback($callback, $return))->call();
+                        }
                     }
                 }
             }

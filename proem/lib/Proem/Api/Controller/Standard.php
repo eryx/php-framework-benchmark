@@ -73,26 +73,14 @@ class Standard implements ControllerTemplate
         $action = strtolower($action);
 
         if ($this->assets->provides('events', '\Proem\Signal\Manager\Template')) {
-            $this->assets->get('events')->trigger([
-                'name'      => 'proem.pre.action.' . $action,
-                'params'    => [],
-                'target'    => $this,
-                'method'    => __FUNCTION__,
-                'event'     => (new Bootstrap())->setServiceManager($this->assets)
-            ]);
+            $this->assets->get('events')->trigger((new Bootstrap('proem.pre.action.' . $action))->setServiceManager($this->assets));
         }
 
         $method = $action . 'Action';
         $result = $this->{$method}();
 
         if ($this->assets->provides('events', '\Proem\Signal\Manager\Template')) {
-            $this->assets->get('events')->trigger([
-                'name'      => 'proem.post.action.' . $action,
-                'params'    => [],
-                'target'    => $this,
-                'method'    => __FUNCTION__,
-                'event'     => (new Bootstrap())->setServiceManager($this->assets)
-            ]);
+            $this->assets->get('events')->trigger((new Bootstrap('proem.post.action.' . $action))->setServiceManager($this->assets));
         }
 
         return $result;
