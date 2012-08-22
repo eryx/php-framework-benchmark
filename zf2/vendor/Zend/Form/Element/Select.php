@@ -15,30 +15,104 @@
  * @category   Zend
  * @package    Zend_Form
  * @subpackage Element
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Form\Element;
 
+use Traversable;
+use Zend\Form\Element;
+use Zend\InputFilter\InputProviderInterface;
+use Zend\Validator\Explode as ExplodeValidator;
+use Zend\Validator\InArray as InArrayValidator;
+use Zend\Validator\ValidatorInterface;
+
 /**
- * Select.php form element
- *
- * @uses       \Zend\Form\Element\Multi
  * @category   Zend
  * @package    Zend_Form
  * @subpackage Element
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
-class Select extends Multi
+class Select extends Element implements InputProviderInterface
 {
     /**
-     * Use formSelect view helper by default
-     * @var string
+     * Seed attributes
+     *
+     * @var array
      */
-    public $helper = 'formSelect';
+    protected $attributes = array(
+        'type'    => 'select',
+        'options' => array(),
+    );
+
+    /**
+    * @var ValidatorInterface
+    */
+    protected $validator;
+
+    /**
+    * Get validator
+    *
+    * @return ValidatorInterface
+    */
+    protected function getValidator()
+    {
+        if (null === $this->validator) {
+            $validator = new InArrayValidator(array(
+                'haystack' => $this->getOptionAttributeValues(),
+                'strict'   => false
+            ));
+
+            $multiple = (isset($this->attributes['multiple']))
+                      ? $this->attributes['multiple'] : null;
+
+            if (true === $multiple || 'multiple' === $multiple) {
+                $validator = new ExplodeValidator(array(
+                    'validator'      => $validator,
+                    'valueDelimiter' => null, // skip explode if only one value
+                ));
+            }
+
+            $this->validator = $validator;
+        }
+        return $this->validator;
+    }
+
+    /**
+     * Provide default input rules for this element
+     *
+     * Attaches the captcha as a validator.
+     *
+     * @return array
+     */
+    public function getInputSpecification()
+    {
+        $spec = array(
+            'name' => $this->getName(),
+            'required' => true,
+            'validators' => array(
+                $this->getValidator()
+            )
+        );
+
+        return $spec;
+    }
+
+    /**
+     * Get only the values from the options attribute
+     *
+     * @return array
+     */
+    protected function getOptionAttributeValues()
+    {
+        $values = array();
+        $options = $this->getAttribute('options');
+        foreach ($options as $key => $optionSpec) {
+            $value = (is_array($optionSpec)) ? $optionSpec['value'] : $key;
+            $values[] = $value;
+        }
+        return $values;
+    }
 }

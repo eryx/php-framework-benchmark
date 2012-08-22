@@ -1,12 +1,23 @@
 <?php
+/**
+ * Zend Framework (http://framework.zend.com/)
+ *
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Http
+ */
 
 namespace Zend\Http\Header;
 
 /**
- * @throws Exception\InvalidArgumentException
- * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.5
+ * Accept Ranges Header
+ *
+ * @category   Zend
+ * @package    Zend\Http\Header
+ * @see        http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.5
  */
-class AcceptRanges implements HeaderDescription
+class AcceptRanges implements HeaderInterface
 {
 
     protected $rangeUnit = null;
@@ -15,7 +26,7 @@ class AcceptRanges implements HeaderDescription
     {
         $header = new static();
 
-        list($name, $value) = preg_split('#: #', $headerLine, 2);
+        list($name, $value) = explode(': ', $headerLine, 2);
 
         // check to ensure proper header type for this factory
         if (strtolower($name) !== 'accept-ranges') {
@@ -52,5 +63,5 @@ class AcceptRanges implements HeaderDescription
     {
         return 'Accept-Ranges: ' . $this->getFieldValue();
     }
-    
+
 }

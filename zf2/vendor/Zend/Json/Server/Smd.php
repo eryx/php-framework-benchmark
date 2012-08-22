@@ -1,43 +1,24 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Json
- * @subpackage Server
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Json
  */
 
-/**
- * @namespace
- */
 namespace Zend\Json\Server;
-use Zend\Json\Server\Exception\InvalidArgumentException,
-    Zend\Json\Server\Exception\RuntimeException;
+
+use Zend\Json\Server\Exception\InvalidArgumentException;
+use Zend\Json\Server\Exception\RuntimeException;
 
 /**
- * @uses       Zend\Json\Json
- * @uses       Zend\Json\Server\Exception\InvalidArgumentException
- * @uses       Zend\Json\Server\Exception\RuntimeException
- * @uses       Zend\Json\Server\Smd\Service
  * @category   Zend
  * @package    Zend_Json
  * @subpackage Server
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
-class SMD
+class Smd
 {
     const ENV_JSONRPC_1 = 'JSON-RPC-1.0';
     const ENV_JSONRPC_2 = 'JSON-RPC-2.0';
@@ -47,37 +28,37 @@ class SMD
      * Content type
      * @var string
      */
-    protected $_contentType = 'application/json';
+    protected $contentType = 'application/json';
 
     /**
      * Content type regex
      * @var string
      */
-    protected $_contentTypeRegex = '#[a-z]+/[a-z][a-z-]+#i';
+    protected $contentTypeRegex = '#[a-z]+/[a-z][a-z-]+#i';
 
     /**
      * Service description
      * @var string
      */
-    protected $_description;
+    protected $description;
 
     /**
      * Generate Dojo-compatible SMD
      * @var bool
      */
-    protected $_dojoCompatible = false;
+    protected $dojoCompatible = false;
 
     /**
      * Current envelope
      * @var string
      */
-    protected $_envelope = self::ENV_JSONRPC_1;
+    protected $envelope = self::ENV_JSONRPC_1;
 
     /**
      * Allowed envelope types
      * @var array
      */
-    protected $_envelopeTypes = array(
+    protected $envelopeTypes = array(
         self::ENV_JSONRPC_1,
         self::ENV_JSONRPC_2,
     );
@@ -86,37 +67,37 @@ class SMD
      * Service id
      * @var string
      */
-    protected $_id;
+    protected $id;
 
     /**
-     * Services offerred
+     * Services offered
      * @var array
      */
-    protected $_services = array();
+    protected $services = array();
 
     /**
      * Service target
      * @var string
      */
-    protected $_target;
+    protected $target;
 
     /**
      * Global transport
      * @var string
      */
-    protected $_transport = 'POST';
+    protected $transport = 'POST';
 
     /**
      * Allowed transport types
      * @var array
      */
-    protected $_transportTypes = array('POST');
+    protected $transportTypes = array('POST');
 
     /**
      * Set object state via options
      *
      * @param  array $options
-     * @return Zend\Json\Server\Smd
+     * @return Smd
      */
     public function setOptions(array $options)
     {
@@ -133,14 +114,14 @@ class SMD
      * Set transport
      *
      * @param  string $transport
-     * @return Zend\Json\Server\Smd
+     * @return \Zend\Json\Server\Smd
      */
     public function setTransport($transport)
     {
-        if (!in_array($transport, $this->_transportTypes)) {
+        if (!in_array($transport, $this->transportTypes)) {
             throw new InvalidArgumentException("Invalid transport '{$transport}' specified");
         }
-        $this->_transport = $transport;
+        $this->transport = $transport;
         return $this;
     }
 
@@ -151,21 +132,21 @@ class SMD
      */
     public function getTransport()
     {
-        return $this->_transport;
+        return $this->transport;
     }
 
     /**
      * Set envelope
      *
      * @param  string $envelopeType
-     * @return Zend\Json\Server\Smd
+     * @return Smd
      */
     public function setEnvelope($envelopeType)
     {
-        if (!in_array($envelopeType, $this->_envelopeTypes)) {
+        if (!in_array($envelopeType, $this->envelopeTypes)) {
             throw new InvalidArgumentException("Invalid envelope type '{$envelopeType}'");
         }
-        $this->_envelope = $envelopeType;
+        $this->envelope = $envelopeType;
         return $this;
     }
 
@@ -176,7 +157,7 @@ class SMD
      */
     public function getEnvelope()
     {
-        return $this->_envelope;
+        return $this->envelope;
     }
 
     // Content-Type of response; default to application/json
@@ -184,14 +165,14 @@ class SMD
      * Set content type
      *
      * @param  string $type
-     * @return Zend\Json\Server\Smd
+     * @return \Zend\Json\Server\Smd
      */
     public function setContentType($type)
     {
-        if (!preg_match($this->_contentTypeRegex, $type)) {
+        if (!preg_match($this->contentTypeRegex, $type)) {
             throw new InvalidArgumentException("Invalid content type '{$type}' specified");
         }
-        $this->_contentType = $type;
+        $this->contentType = $type;
         return $this;
     }
 
@@ -202,18 +183,18 @@ class SMD
      */
     public function getContentType()
     {
-        return $this->_contentType;
+        return $this->contentType;
     }
 
     /**
      * Set service target
      *
      * @param  string $target
-     * @return Zend\Json\Server\Smd
+     * @return Smd
      */
     public function setTarget($target)
     {
-        $this->_target = (string) $target;
+        $this->target = (string) $target;
         return $this;
     }
 
@@ -224,19 +205,19 @@ class SMD
      */
     public function getTarget()
     {
-        return $this->_target;
+        return $this->target;
     }
 
     /**
      * Set service ID
      *
      * @param  string $Id
-     * @return Zend\Json\Server\Smd
+     * @return Smd
      */
     public function setId($id)
     {
-        $this->_id = (string) $id;
-        return $this->_id;
+        $this->id = (string) $id;
+        return $this->id;
     }
 
     /**
@@ -246,19 +227,19 @@ class SMD
      */
     public function getId()
     {
-        return $this->_id;
+        return $this->id;
     }
 
     /**
      * Set service description
      *
      * @param  string $description
-     * @return Zend\Json\Server\Smd
+     * @return Smd
      */
     public function setDescription($description)
     {
-        $this->_description = (string) $description;
-        return $this->_description;
+        $this->description = (string) $description;
+        return $this->description;
     }
 
     /**
@@ -268,18 +249,18 @@ class SMD
      */
     public function getDescription()
     {
-        return $this->_description;
+        return $this->description;
     }
 
     /**
      * Indicate whether or not to generate Dojo-compatible SMD
      *
      * @param  bool $flag
-     * @return Zend\Json\Server\Smd
+     * @return Smd
      */
     public function setDojoCompatible($flag)
     {
-        $this->_dojoCompatible = (bool) $flag;
+        $this->dojoCompatible = (bool) $flag;
         return $this;
     }
 
@@ -290,14 +271,14 @@ class SMD
      */
     public function isDojoCompatible()
     {
-        return $this->_dojoCompatible;
+        return $this->dojoCompatible;
     }
 
     /**
      * Add Service
      *
-     * @param Zend\Json\Server\Smd\Service|array $service
-     * @return void
+     * @param Smd\Service|array $service
+     * @return Smd
      */
     public function addService($service)
     {
@@ -310,10 +291,10 @@ class SMD
             throw new InvalidArgumentException('Invalid service passed to addService()');
         }
 
-        if (array_key_exists($name, $this->_services)) {
+        if (array_key_exists($name, $this->services)) {
             throw new RuntimeException('Attempt to register a service already registered detected');
         }
-        $this->_services[$name] = $service;
+        $this->services[$name] = $service;
         return $this;
     }
 
@@ -321,7 +302,7 @@ class SMD
      * Add many services
      *
      * @param  array $services
-     * @return Zend\Json\Server\Smd
+     * @return Smd
      */
     public function addServices(array $services)
     {
@@ -335,11 +316,11 @@ class SMD
      * Overwrite existing services with new ones
      *
      * @param  array $services
-     * @return Zend\Json\Server\Smd
+     * @return Smd
      */
     public function setServices(array $services)
     {
-        $this->_services = array();
+        $this->services = array();
         return $this->addServices($services);
     }
 
@@ -347,12 +328,12 @@ class SMD
      * Get service object
      *
      * @param  string $name
-     * @return false|Zend\Json\Server\Smd\Service
+     * @return boolean|Smd\Service
      */
     public function getService($name)
     {
-        if (array_key_exists($name, $this->_services)) {
-            return $this->_services[$name];
+        if (array_key_exists($name, $this->services)) {
+            return $this->services[$name];
         }
         return false;
     }
@@ -364,7 +345,7 @@ class SMD
      */
     public function getServices()
     {
-        return $this->_services;
+        return $this->services;
     }
 
     /**
@@ -375,8 +356,8 @@ class SMD
      */
     public function removeService($name)
     {
-        if (array_key_exists($name, $this->_services)) {
-            unset($this->_services[$name]);
+        if (array_key_exists($name, $this->services)) {
+            unset($this->services[$name]);
             return true;
         }
         return false;
@@ -478,4 +459,3 @@ class SMD
         return $this->toJson();
     }
 }
-

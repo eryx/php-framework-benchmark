@@ -1,15 +1,26 @@
 <?php
+/**
+ * Zend Framework (http://framework.zend.com/)
+ *
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Mvc
+ */
 
 namespace Zend\Mvc\Controller\Plugin;
 
-use Zend\Http\Response,
-    Zend\Mvc\InjectApplicationEvent,
-    Zend\Mvc\Exception,
-    Zend\Mvc\MvcEvent,
-    Zend\Mvc\Router\RouteStack;
+use Zend\Http\Response;
+use Zend\Mvc\Exception;
+use Zend\Mvc\InjectApplicationEventInterface;
+use Zend\Mvc\MvcEvent;
+use Zend\Mvc\Router\RouteStackInterface;
 
 /**
- * @todo allow specifying status code as a default, or as an option to methods
+ * @todo       allow specifying status code as a default, or as an option to methods
+ * @category   Zend
+ * @package    Zend_Mvc
+ * @subpackage Controller
  */
 class Redirect extends AbstractPlugin
 {
@@ -20,11 +31,11 @@ class Redirect extends AbstractPlugin
     /**
      * Generates a URL based on a route
      *
-     * @param  string $route Route name
+     * @param  string $route RouteInterface name
      * @param  array $params Parameters to use in url generation, if any
-     * @param  array $options Route-specific options to use in url generation, if any
+     * @param  array $options RouteInterface-specific options to use in url generation, if any
      * @return Response
-     * @throws Exception\DomainException if composed controller does not implement InjectApplicationEvent, or
+     * @throws Exception\DomainException if composed controller does not implement InjectApplicationEventInterface, or
      *         router cannot be found in controller event
      */
     public function toRoute($route, array $params = array(), array $options = array())
@@ -34,7 +45,7 @@ class Redirect extends AbstractPlugin
 
         $options['name'] = $route;
         $url = $router->assemble($params, $options);
-        $response->headers()->addHeaderLine('Location', $url);
+        $response->getHeaders()->addHeaderLine('Location', $url);
         $response->setStatusCode(302);
         return $response;
     }
@@ -48,7 +59,7 @@ class Redirect extends AbstractPlugin
     public function toUrl($url)
     {
         $response = $this->getResponse();
-        $response->headers()->addHeaderLine('Location', $url);
+        $response->getHeaders()->addHeaderLine('Location', $url);
         $response->setStatusCode(302);
         return $response;
     }
@@ -56,7 +67,7 @@ class Redirect extends AbstractPlugin
     /**
      * Get the router
      *
-     * @return RouteStack
+     * @return RouteStackInterface
      * @throws Exception\DomainException if unable to find router
      */
     protected function getRouter()
@@ -67,7 +78,7 @@ class Redirect extends AbstractPlugin
 
         $event  = $this->getEvent();
         $router = $event->getRouter();
-        if (!$router instanceof RouteStack) {
+        if (!$router instanceof RouteStackInterface) {
             throw new Exception\DomainException('Redirect plugin requires event compose a router');
         }
         $this->router = $router;
@@ -108,8 +119,8 @@ class Redirect extends AbstractPlugin
         }
 
         $controller = $this->getController();
-        if (!$controller instanceof InjectApplicationEvent) {
-            throw new Exception\DomainException('Redirect plugin requires a controller that implements InjectApplicationEvent');
+        if (!$controller instanceof InjectApplicationEventInterface) {
+            throw new Exception\DomainException('Redirect plugin requires a controller that implements InjectApplicationEventInterface');
         }
 
         $event = $controller->getEvent();

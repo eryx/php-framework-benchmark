@@ -1,36 +1,19 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Log
- * @subpackage Writer
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Log
  */
 
-/**
- * @namespace
- */
 namespace Zend\Log\Writer;
 
 /**
- * @uses       \Zend\Log\Writer\AbstractWriter
  * @category   Zend
  * @package    Zend_Log
  * @subpackage Writer
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class ZendMonitor extends AbstractWriter
 {
@@ -39,37 +22,28 @@ class ZendMonitor extends AbstractWriter
      *
      * @var boolean
      */
-    protected $_isEnabled = true;
+    protected $isEnabled = true;
 
     /**
-     * Is this for a Zend Server intance?
+     * Is this for a Zend Server instance?
      *
      * @var boolean
      */
-    protected $_isZendServer = false;
+    protected $isZendServer = false;
 
     /**
-     * @return void
+     * Constructor
+     *
+     * @return ZendMonitor
      */
     public function __construct()
     {
         if (!function_exists('monitor_custom_event')) {
-            $this->_isEnabled = false;
+            $this->isEnabled = false;
         }
         if (function_exists('zend_monitor_custom_event')) {
-            $this->_isZendServer = true;
+            $this->isZendServer = true;
         }
-    }
-
-    /**
-     * Create a new instance of Zend_Log_Writer_ZendMonitor
-     *
-     * @param  array|\Zend\Config\Config $config
-     * @return \Zend\Log\Writer\ZendMonitor
-     */
-    static public function factory($config = array())
-    {
-        return new self();
     }
 
     /**
@@ -83,16 +57,16 @@ class ZendMonitor extends AbstractWriter
      */
     public function isEnabled()
     {
-        return $this->_isEnabled;
+        return $this->isEnabled;
     }
 
     /**
      * Log a message to this writer.
      *
-     * @param  array $event log data event
+     * @param array $event log data event
      * @return void
      */
-    public function write($event)
+    public function write(array $event)
     {
         if (!$this->isEnabled()) {
             return;
@@ -104,17 +78,17 @@ class ZendMonitor extends AbstractWriter
     /**
      * Write a message to the log.
      *
-     * @param  array  $event log data event
+     * @param array $event log data event
      * @return void
      */
-    protected function _write($event)
+    protected function doWrite(array $event)
     {
         $priority = $event['priority'];
         $message  = $event['message'];
         unset($event['priority'], $event['message']);
 
         if (!empty($event)) {
-            if ($this->_isZendServer) {
+            if ($this->isZendServer) {
                 // On Zend Server; third argument should be the event
                 zend_monitor_custom_event($priority, $message, $event);
             } else {

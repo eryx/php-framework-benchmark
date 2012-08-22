@@ -1,114 +1,101 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Log
- * @subpackage Writer
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Log
  */
 
-/**
- * @namespace
- */
 namespace Zend\Log\Writer;
 
-use Zend\Log\Formatter,
-    Zend\Log\Exception,
-    Zend\Db\Adapter\AbstractAdapter as DbAdapter;
+use Traversable;
+use Zend\Db\Adapter\Adapter;
+use Zend\Log\Exception;
+use Zend\Log\Formatter;
 
 /**
- * @uses       \Zend\Log\Exception\InvalidArgumentException
- * @uses       \Zend\Log\Exception\RuntimeException
- * @uses       \Zend\Log\Writer\AbstractWriter
  * @category   Zend
  * @package    Zend_Log
  * @subpackage Writer
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Db extends AbstractWriter
 {
     /**
-     * Database adapter instance
+     * Db adapter instance
      *
-     * @var DbAdapter
+     * @var Adapter
      */
-    protected $_db;
+    protected $db;
 
     /**
-     * Name of the log table in the database
+     * Table name
      *
      * @var string
      */
-    protected $_table;
+    protected $tableName;
 
     /**
      * Relates database columns names to log data field keys.
      *
      * @var null|array
      */
-    protected $_columnMap;
+    protected $columnMap;
 
     /**
-     * Class constructor
+     * Field separator for sub-elements
      *
-     * @param DbAdapter $db   Database adapter instance
-     * @param string $table         Log table in database
+     * @var string
+     */
+    protected $separator = '_';
+
+    /**
+     * Constructor
+     *
+     * We used the Adapter instead of Zend\Db for a performance reason.
+     *
+     * @param Adapter|array|Traversable $db
+     * @param string $tableName
      * @param array $columnMap
-     * @return void
+     * @param string $separator
+     * @return Db
+     * @throw Exception\InvalidArgumentException
      */
-    public function __construct($db, $table, $columnMap = null)
+    public function __construct($db, $tableName, array $columnMap = null, $separator = null)
     {
-        $this->_db        = $db;
-        $this->_table     = $table;
-        $this->_columnMap = $columnMap;
-    }
-
-    /**
-     * Create a new instance of Zend_Log_Writer_Db
-     *
-     * @param  array|\Zend\Config\Config $config
-     * @return self
-     */
-    static public function factory($config = array())
-    {
-        $config = self::_parseConfig($config);
-        $config = array_merge(array(
-            'db'        => null,
-            'table'     => null,
-            'columnMap' => null,
-        ), $config);
-
-        if (isset($config['columnmap'])) {
-            $config['columnMap'] = $config['columnmap'];
+        if ($db instanceof Traversable) {
+            $db = iterator_to_array($db);
         }
 
-        return new self(
-            $config['db'],
-            $config['table'],
-            $config['columnMap']
-        );
+        if (is_array($db)) {
+            $separator = isset($db['separator']) ? $db['separator'] : null;
+            $columnMap = isset($db['column']) ? $db['column'] : null;
+            $tableName = isset($db['table']) ? $db['table'] : null;
+            $db        = isset($db['db']) ? $db['db'] : null;
+        }
+
+        if (!$db instanceof Adapter) {
+            throw new Exception\InvalidArgumentException('You must pass a valid Zend\Db\Adapter\Adapter');
+        }
+
+        $this->db        = $db;
+        $this->tableName = $tableName;
+        $this->columnMap = $columnMap;
+
+        if (!empty($separator)) {
+            $this->separator = $separator;
+        }
     }
 
     /**
      * Formatting is not possible on this writer
      *
-     * @throws Exception\InvalidArgumentException
+     * @param Formatter\FormatterInterface $formatter
      * @return void
+     * @throws Exception\InvalidArgumentException
      */
-    public function setFormatter(Formatter $formatter)
+    public function setFormatter(Formatter\FormatterInterface $formatter)
     {
         throw new Exception\InvalidArgumentException(get_class() . ' does not support formatting');
     }
@@ -120,31 +107,102 @@ class Db extends AbstractWriter
      */
     public function shutdown()
     {
-        $this->_db = null;
+        $this->db = null;
     }
 
     /**
      * Write a message to the log.
      *
-     * @param  array  $event  event data
-     * @throws Exception\RuntimeException
+     * @param array $event event data
      * @return void
+     * @throws Exception\RuntimeException
      */
-    protected function _write($event)
+    protected function doWrite(array $event)
     {
-        if ($this->_db === null) {
+        if (null === $this->db) {
             throw new Exception\RuntimeException('Database adapter is null');
         }
 
-        if ($this->_columnMap === null) {
-            $dataToInsert = $event;
+        // Transform the event array into fields
+        if (null === $this->columnMap) {
+            $dataToInsert = $this->eventIntoColumn($event);
         } else {
-            $dataToInsert = array();
-            foreach ($this->_columnMap as $columnName => $fieldKey) {
-                $dataToInsert[$columnName] = $event[$fieldKey];
-            }
+            $dataToInsert = $this->mapEventIntoColumn($event, $this->columnMap);
         }
 
-        $this->_db->insert($this->_table, $dataToInsert);
+        $statement = $this->db->query($this->prepareInsert($this->db, $this->tableName, $dataToInsert));
+        $statement->execute($dataToInsert);
+
+    }
+
+    /**
+     * Prepare the INSERT SQL statement
+     *
+     * @param  Adapter $db
+     * @param  string $tableName
+     * @param  array $fields
+     * @return string
+     */
+    protected function prepareInsert(Adapter $db, $tableName, array $fields)
+    {
+        $keys = array_keys($fields);
+        $sql = 'INSERT INTO ' . $db->platform->quoteIdentifier($tableName) . ' (' .
+            implode(",",array_map(array($db->platform, 'quoteIdentifier'), $keys)) . ') VALUES (' .
+            implode(",",array_map(array($db->driver, 'formatParameterName'), $keys)) . ')';
+
+        return $sql;
+    }
+
+    /**
+     * Map event into column using the $columnMap array
+     *
+     * @param  array $event
+     * @param  array $columnMap
+     * @return array
+     */
+    protected function mapEventIntoColumn(array $event, array $columnMap = null)
+    {
+        if (empty($event)) {
+            return array();
+        }
+
+        $data = array();
+        foreach ($event as $name => $value) {
+            if (is_array($value)) {
+                foreach ($value as $key => $subvalue) {
+                    if (isset($columnMap[$name][$key])) {
+                        $data[$columnMap[$name][$key]] = $subvalue;
+                    }
+                }
+            } elseif (isset($columnMap[$name])) {
+                $data[$columnMap[$name]] = $value;
+            }
+        }
+        return $data;
+    }
+
+    /**
+     * Transform event into column for the db table
+     *
+     * @param  array $event
+     * @return array
+     */
+    protected function eventIntoColumn(array $event)
+    {
+        if (empty($event)) {
+            return array();
+        }
+
+        $data = array();
+        foreach ($event as $name => $value) {
+            if (is_array($value)) {
+                foreach ($value as $key => $subvalue) {
+                    $data[$name . $this->separator . $key] = $subvalue;
+                }
+            } else {
+                $data[$name] = $value;
+            }
+        }
+        return $data;
     }
 }

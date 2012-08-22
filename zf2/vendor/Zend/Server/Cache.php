@@ -1,43 +1,27 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Server
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Server
  */
 
-/**
- * @namespace
- */
 namespace Zend\Server;
 
 /**
  * \Zend\Server\Cache: cache server definitions
  *
- * @uses       \Zend\Server\Definition
  * @category   Zend
  * @package    Zend_Server
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Cache
 {
     /**
      * @var array Methods to skip when caching server
      */
-    protected static $_skipMethods = array();
+    protected static $skipMethods = array();
 
     /**
      * Cache a file containing the dispatch list.
@@ -65,7 +49,7 @@ class Cache
         if ($methods instanceof Definition) {
             $definition = new Definition();
             foreach ($methods as $method) {
-                if (in_array($method->getName(), self::$_skipMethods)) {
+                if (in_array($method->getName(), self::$skipMethods)) {
                     continue;
                 }
                 $definition->addMethod($method);

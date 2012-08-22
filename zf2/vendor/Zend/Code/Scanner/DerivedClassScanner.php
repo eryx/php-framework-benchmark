@@ -1,66 +1,72 @@
 <?php
+/**
+ * Zend Framework (http://framework.zend.com/)
+ *
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Code
+ */
 
 namespace Zend\Code\Scanner;
 
-use Zend\Code\Scanner\DirectoryScanner,
-    Zend\Code\Scanner\ClassScanner,
-    Zend\Code\Exception;
+use Zend\Code\Exception;
 
 class DerivedClassScanner extends ClassScanner
 {
 
     /**
-     * @var Zend\Code\Scanner\DirectoryScanner
+     * @var DirectoryScanner
      */
     protected $directoryScanner = null;
-    
+
     /**
-     * @var Zend\Code\Scanner\ClassScanner
-     */  
+     * @var ClassScanner
+     */
     protected $classScanner = null;
     protected $parentClassScanners = array();
     protected $interfaceClassScanners = array();
-    
+
     public function __construct(ClassScanner $classScanner, DirectoryScanner $directoryScanner)
     {
-        $this->classScanner = $classScanner;
+        $this->classScanner     = $classScanner;
         $this->directoryScanner = $directoryScanner;
-        
+
         $currentScannerClass = $classScanner;
-        
+
         while ($currentScannerClass && $currentScannerClass->hasParentClass()) {
             $currentParentClassName = $currentScannerClass->getParentClass();
             if ($directoryScanner->hasClass($currentParentClassName)) {
-                $currentParentClass = $directoryScanner->getClass($currentParentClassName);
+                $currentParentClass                                 = $directoryScanner->getClass($currentParentClassName);
                 $this->parentClassScanners[$currentParentClassName] = $currentParentClass;
-                $currentScannerClass = $currentParentClass;
+                $currentScannerClass                                = $currentParentClass;
             } else {
                 $currentScannerClass = false;
             }
         }
-        
+
         foreach ($interfaces = $this->classScanner->getInterfaces() as $iName) {
             if ($directoryScanner->hasClass($iName)) {
                 $this->interfaceClassScanners[$iName] = $directoryScanner->getClass($iName);
             }
         }
     }
-    
+
     public function getName()
     {
         return $this->classScanner->getName();
     }
-    
+
     public function getShortName()
     {
         return $this->classScanner->getShortName();
     }
-    
+
     public function isInstantiable()
     {
         return $this->classScanner->isInstantiable();
     }
-    
+
     public function isFinal()
     {
         return $this->classScanner->isFinal();
@@ -70,7 +76,7 @@ class DerivedClassScanner extends ClassScanner
     {
         return $this->classScanner->isAbstract();
     }
-    
+
     public function isInterface()
     {
         return $this->classScanner->isInterface();
@@ -80,30 +86,30 @@ class DerivedClassScanner extends ClassScanner
     {
         return array_keys($this->parentClassScanners);
     }
-    
+
     public function hasParentClass()
     {
         return ($this->classScanner->getParentClass() != null);
     }
-    
+
     public function getParentClass()
     {
         return $this->classScanner->getParentClass();
     }
-    
+
     public function getInterfaces($returnClassScanners = false)
     {
         if ($returnClassScanners) {
             return $this->interfaceClassScanners;
         }
-        
+
         $interfaces = $this->classScanner->getInterfaces();
         foreach ($this->parentClassScanners as $pClassScanner) {
             $interfaces = array_merge($interfaces, $pClassScanner->getInterfaces());
         }
         return $interfaces;
     }
-    
+
     public function getConstants()
     {
         $constants = $this->classScanner->getConstants();
@@ -112,7 +118,7 @@ class DerivedClassScanner extends ClassScanner
         }
         return $constants;
     }
-    
+
     public function getProperties($returnScannerProperty = false)
     {
         $properties = $this->classScanner->getProperties($returnScannerProperty);
@@ -122,19 +128,27 @@ class DerivedClassScanner extends ClassScanner
         return $properties;
     }
 
-    /**
-     * @param bool $returnScannerMethod
-     * @return MethodScanner[]
-     */
-    public function getMethods($returnScannerMethod = false)
+    public function getMethodNames()
     {
-        $methods = $this->classScanner->getMethods($returnScannerMethod);
+        $methods = $this->classScanner->getMethodNames();
         foreach ($this->parentClassScanners as $pClassScanner) {
-            $methods = array_merge($methods, $pClassScanner->getMethods($returnScannerMethod));
+            $methods = array_merge($methods, $pClassScanner->getMethodNames());
         }
         return $methods;
     }
-    
+
+    /**
+     * @return MethodScanner[]
+     */
+    public function getMethods()
+    {
+        $methods = $this->classScanner->getMethods();
+        foreach ($this->parentClassScanners as $pClassScanner) {
+            $methods = array_merge($methods, $pClassScanner->getMethods());
+        }
+        return $methods;
+    }
+
     public function getMethod($methodNameOrInfoIndex)
     {
         if ($this->classScanner->hasMethod($methodNameOrInfoIndex)) {
@@ -146,12 +160,12 @@ class DerivedClassScanner extends ClassScanner
             }
         }
         throw new Exception\InvalidArgumentException(sprintf(
-            'Method %s not found in %s',
-            $methodNameOrInfoIndex,
-            $this->classScanner->getName()
-        ));
+                                                         'Method %s not found in %s',
+                                                         $methodNameOrInfoIndex,
+                                                         $this->classScanner->getName()
+                                                     ));
     }
-    
+
     public function hasMethod($name)
     {
         if ($this->classScanner->hasMethod($name)) {

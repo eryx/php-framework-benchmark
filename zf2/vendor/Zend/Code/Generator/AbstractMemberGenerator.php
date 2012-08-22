@@ -1,39 +1,21 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_CodeGenerator
- * @subpackage PHP
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Code
  */
 
-/**
- * @namespace
- */
 namespace Zend\Code\Generator;
-use Zend\Code\Generator,
-    Zend\Code\Generator\Exception;
+
+use Zend\Code\Generator;
+use Zend\Code\Generator\Exception;
 
 /**
- * @uses       \Zend\Code\Generator\AbstractPhp
- * @uses       \Zend\Code\GeneratorDocblock
- * @uses       \Zend\Code\Generator\Exception
  * @category   Zend
- * @package    Zend_CodeGenerator
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @package    Zend_Code_Generator
  */
 abstract class AbstractMemberGenerator extends AbstractGenerator
 {
@@ -58,9 +40,9 @@ abstract class AbstractMemberGenerator extends AbstractGenerator
     /**#@-*/
 
     /**
-     * @var \Zend\Code\GeneratorDocblock
+     * @var \Zend\Code\Generator\DocBlockGenerator
      */
-    protected $docblock = null;
+    protected $docBlock = null;
 
     /**
      * @var string
@@ -72,12 +54,18 @@ abstract class AbstractMemberGenerator extends AbstractGenerator
      */
     protected $flags = self::FLAG_PUBLIC;
 
+    /**
+     * Set flags
+     *
+     * @param int|array $flags
+     * @return AbstractMemberGenerator
+     */
     public function setFlags($flags)
     {
 
         if (is_array($flags)) {
             $flagsArray = $flags;
-            $flags = 0x00;
+            $flags      = 0x00;
             foreach ($flagsArray as $flag) {
                 $flags |= $flag;
             }
@@ -87,12 +75,24 @@ abstract class AbstractMemberGenerator extends AbstractGenerator
         return $this;
     }
 
+    /**
+     * Add flag
+     *
+     * @param int $flag
+     * @return AbstractMemberGenerator
+     */
     public function addFlag($flag)
     {
         $this->setFlags($this->flags | $flag);
         return $this;
     }
 
+    /**
+     * Remove flag
+     *
+     * @param int $flag
+     * @return AbstractMemberGenerator
+     */
     public function removeFlag($flag)
     {
         $this->setFlags($this->flags & ~$flag);
@@ -101,38 +101,41 @@ abstract class AbstractMemberGenerator extends AbstractGenerator
 
 
     /**
-     * setDocblock() Set the docblock
+     * Set the DocBlock
      *
-     * @param DocblockGenerator|string $docblock
+     * @param DocBlockGenerator|string $docBlock
+     * @throws Exception\InvalidArgumentException
      * @return AbstractMemberGenerator
      */
-    public function setDocblock($docblock)
+    public function setDocBlock($docBlock)
     {
-        if (is_string($docblock)) {
-            $docblock = new DocblockGenerator($docblock);
-        } elseif (!$docblock instanceof DocblockGenerator) {
-            throw new Exception\InvalidArgumentException('setDocblock() is expecting either a string, array or an instance of Zend_CodeGenerator_Php_Docblock');
+        if (is_string($docBlock)) {
+            $docBlock = new DocBlockGenerator($docBlock);
+        } elseif (!$docBlock instanceof DocBlockGenerator) {
+            throw new Exception\InvalidArgumentException(
+                'setDocBlock() is expecting either a string, array or an instance of Zend\Code\Generator\DocBlockGenerator'
+            );
         }
 
-        $this->docblock = $docblock;
+        $this->docBlock = $docBlock;
         return $this;
     }
 
     /**
-     * getDocblock()
+     * getDocBlock()
      *
-     * @return DocblockGenerator
+     * @return DocBlockGenerator
      */
-    public function getDocblock()
+    public function getDocBlock()
     {
-        return $this->docblock;
+        return $this->docBlock;
     }
 
     /**
      * setAbstract()
      *
      * @param bool $isAbstract
-     * @return \AbstractMemberGenerator\Code\Generator\PhpMember\AbstractMember
+     * @return AbstractMemberGenerator
      */
     public function setAbstract($isAbstract)
     {
@@ -153,7 +156,7 @@ abstract class AbstractMemberGenerator extends AbstractGenerator
      * setFinal()
      *
      * @param bool $isFinal
-     * @return \AbstractMemberGenerator\Code\Generator\PhpMember\AbstractMember
+     * @return AbstractMemberGenerator
      */
     public function setFinal($isFinal)
     {
@@ -174,7 +177,7 @@ abstract class AbstractMemberGenerator extends AbstractGenerator
      * setStatic()
      *
      * @param bool $isStatic
-     * @return \AbstractMemberGenerator\Code\Generator\PhpMember\AbstractMember
+     * @return AbstractMemberGenerator
      */
     public function setStatic($isStatic)
     {
@@ -188,7 +191,7 @@ abstract class AbstractMemberGenerator extends AbstractGenerator
      */
     public function isStatic()
     {
-        return ($this->flags & self::FLAG_STATIC); // is FLAG_STATIC in flags
+        return (bool) ($this->flags & self::FLAG_STATIC); // is FLAG_STATIC in flags
     }
 
     /**
@@ -219,7 +222,7 @@ abstract class AbstractMemberGenerator extends AbstractGenerator
     /**
      * getVisibility()
      *
-     * @return const
+     * @return string
      */
     public function getVisibility()
     {
@@ -237,7 +240,7 @@ abstract class AbstractMemberGenerator extends AbstractGenerator
      * setName()
      *
      * @param string $name
-     * @return \AbstractMemberGenerator\Code\Generator\PhpMember\AbstractMember
+     * @return AbstractMemberGenerator
      */
     public function setName($name)
     {

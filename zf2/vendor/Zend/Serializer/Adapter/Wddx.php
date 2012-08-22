@@ -1,104 +1,112 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Serializer
- * @subpackage Adapter
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Serializer
  */
 
-/**
- * @namespace
- */
 namespace Zend\Serializer\Adapter;
 
-use Zend\Serializer\Exception\RuntimeException,
-    Zend\Serializer\Exception\ExtensionNotLoadedException;
+use Zend\Serializer\Exception;
+use Zend\Stdlib\ErrorHandler;
 
 /**
  * @link       http://www.infoloom.com/gcaconfs/WEB/chicago98/simeonov.HTM
  * @link       http://en.wikipedia.org/wiki/WDDX
- * @uses       SimpleXMLElement
- * @uses       Zend\Serializer\Adapter\AbstractAdapter
- * @uses       Zend\Serializer\Exception\RuntimeException
- * @uses       Zend\Serializer\Exception\ExtensionNotLoadedException
  * @category   Zend
  * @package    Zend_Serializer
  * @subpackage Adapter
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Wddx extends AbstractAdapter
 {
     /**
-     * @var array Default options
+     * @var WddxOptions
      */
-    protected $_options = array(
-        'comment' => null,
-    );
+    protected $options = null;
 
     /**
      * Constructor
-     * 
-     * @param  array $opts 
-     * @return void
-     * @throws Zend\Serializer\Exception if wddx extension not found
+     *
+     * @param  array|\Traversable|WddxOptions $options
+     * @throws Exception\ExtensionNotLoadedException if wddx extension not found
      */
-    public function __construct($opts = array())
+    public function __construct($options = null)
     {
         if (!extension_loaded('wddx')) {
-            throw new ExtensionNotLoadedException('PHP extension "wddx" is required for this adapter');
+            throw new Exception\ExtensionNotLoadedException(
+                'PHP extension "wddx" is required for this adapter'
+            );
         }
 
-        parent::__construct($opts);
+        parent::__construct($options);
+    }
+
+    /**
+     * Set options
+     *
+     * @param  array|\Traversable|WddxOptions $options
+     * @return Wddx
+     */
+    public function setOptions($options)
+    {
+        if (!$options instanceof WddxOptions) {
+            $options = new WddxOptions($options);
+        }
+
+        $this->options = $options;
+        return $this;
+    }
+
+    /**
+     * Get options
+     *
+     * @return WddxOptions
+     */
+    public function getOptions()
+    {
+        if ($this->options === null) {
+            $this->options = new WddxOptions();
+        }
+        return $this->options;
     }
 
     /**
      * Serialize PHP to WDDX
-     * 
-     * @param  mixed $value 
-     * @param  array $opts 
+     *
+     * @param  mixed $value
      * @return string
-     * @throws Zend\Serializer\Exception on wddx error
+     * @throws Exception\RuntimeException on wddx error
      */
-    public function serialize($value, array $opts = array())
+    public function serialize($value)
     {
-        $opts = $opts + $this->_options;
+        $comment = $this->getOptions()->getComment();
 
-        if (isset($opts['comment']) && $opts['comment']) {
-            $wddx = wddx_serialize_value($value, (string)$opts['comment']);
+        ErrorHandler::start();
+        if ($comment !== '') {
+            $wddx = wddx_serialize_value($value, $comment);
         } else {
             $wddx = wddx_serialize_value($value);
         }
+        $error = ErrorHandler::stop();
 
         if ($wddx === false) {
-            $lastErr = error_get_last();
-            throw new RuntimeException($lastErr['message']);
+            throw new Exception\RuntimeException('Serialization failed', 0, $error);
         }
+
         return $wddx;
     }
 
     /**
      * Unserialize from WDDX to PHP
-     * 
-     * @param  string $wddx 
-     * @param  array $opts 
+     *
+     * @param  string $wddx
      * @return mixed
-     * @throws Zend\Serializer\Exception on wddx error
+     * @throws Exception\RuntimeException on wddx error
      */
-    public function unserialize($wddx, array $opts = array())
+    public function unserialize($wddx)
     {
         $ret = wddx_deserialize($wddx);
 
@@ -106,13 +114,25 @@ class Wddx extends AbstractAdapter
             // check if the returned NULL is valid
             // or based on an invalid wddx string
             try {
-                $simpleXml = new \SimpleXMLElement($wddx);
+                $oldLibxmlDisableEntityLoader = libxml_disable_entity_loader(true);
+                $dom = new \DOMDocument;
+                $dom->loadXML($wddx);
+                foreach ($dom->childNodes as $child) {
+                    if ($child->nodeType === XML_DOCUMENT_TYPE_NODE) {
+                        throw new Exception\InvalidArgumentException(
+                            'Invalid XML: Detected use of illegal DOCTYPE'
+                        );
+                    }
+                }
+                $simpleXml = simplexml_import_dom($dom);
+                //$simpleXml = new \SimpleXMLElement($wddx);
+                libxml_disable_entity_loader($oldLibxmlDisableEntityLoader);
                 if (isset($simpleXml->data[0]->null[0])) {
                     return null; // valid null
                 }
-                throw new RuntimeException('Invalid wddx');
+                throw new Exception\RuntimeException('Unserialization failed: Invalid wddx packet');
             } catch (\Exception $e) {
-                throw new RuntimeException($e->getMessage(), 0, $e);
+                throw new Exception\RuntimeException('Unserialization failed: ' . $e->getMessage(), 0, $e);
             }
         }
 

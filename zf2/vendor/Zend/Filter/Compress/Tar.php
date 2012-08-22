@@ -1,42 +1,25 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Filter
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Filter
  */
 
-/**
- * @namespace
- */
 namespace Zend\Filter\Compress;
+
+use Archive_Tar;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use Zend\Filter\Exception;
 
 /**
  * Compression adapter for Tar
  *
- * @uses       Archive_Tar
- * @uses       RecursiveDirectoryIterator
- * @uses       RecursiveIteratorIterator
- * @uses       \Zend\Filter\Compress\AbstractCompressionAlgorithm
- * @uses       \Zend\Filter\Exception
- * @uses       \Zend\Loader
  * @category   Zend
  * @package    Zend_Filter
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Tar extends AbstractCompressionAlgorithm
 {
@@ -49,7 +32,7 @@ class Tar extends AbstractCompressionAlgorithm
      *
      * @var array
      */
-    protected $_options = array(
+    protected $options = array(
         'archive'  => null,
         'target'   => '.',
         'mode'     => null,
@@ -64,8 +47,8 @@ class Tar extends AbstractCompressionAlgorithm
     {
         if (!class_exists('Archive_Tar')) {
             throw new Exception\ExtensionNotLoadedException(
-                'This filter needs PEARs Archive_Tar.'.
-                'Ensure loading Archive_Tar (registering autoload or require_once)');
+                'This filter needs PEAR\'s Archive_Tar component. '
+                . 'Ensure loading Archive_Tar (registering autoload or require_once)');
         }
 
         parent::__construct($options);
@@ -78,38 +61,39 @@ class Tar extends AbstractCompressionAlgorithm
      */
     public function getArchive()
     {
-        return $this->_options['archive'];
+        return $this->options['archive'];
     }
 
     /**
      * Sets the archive to use for de-/compression
      *
-     * @param string $archive Archive to use
-     * @return \Zend\Filter\Compress\Tar
+     * @param  string $archive Archive to use
+     * @return Tar
      */
     public function setArchive($archive)
     {
-        $archive = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $archive);
-        $this->_options['archive'] = (string) $archive;
+        $archive = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, (string) $archive);
+        $this->options['archive'] = $archive;
 
         return $this;
     }
 
     /**
-     * Returns the set targetpath
+     * Returns the set target path
      *
      * @return string
      */
     public function getTarget()
     {
-        return $this->_options['target'];
+        return $this->options['target'];
     }
 
     /**
-     * Sets the targetpath to use
+     * Sets the target path to use
      *
-     * @param string $target
-     * @return \Zend\Filter\Compress\Tar
+     * @param  string $target
+     * @return Tar
+     * @throws Exception\InvalidArgumentException if target path does not exist
      */
     public function setTarget($target)
     {
@@ -117,24 +101,31 @@ class Tar extends AbstractCompressionAlgorithm
             throw new Exception\InvalidArgumentException("The directory '$target' does not exist");
         }
 
-        $target = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $target);
-        $this->_options['target'] = (string) $target;
+        $target = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, (string) $target);
+        $this->options['target'] = $target;
         return $this;
     }
 
     /**
      * Returns the set compression mode
+     *
+     * @return string
      */
     public function getMode()
     {
-        return $this->_options['mode'];
+        return $this->options['mode'];
     }
 
     /**
      * Compression mode to use
-     * Eighter Gz or Bz2
+     *
+     * Either Gz or Bz2.
      *
      * @param string $mode
+     * @return Tar
+     * @throws Exception\InvalidArgumentException for invalid $mode values
+     * @throws Exception\ExtensionNotLoadedException if bz2 mode selected but extension not loaded
+     * @throws Exception\ExtensionNotLoadedException if gz mode selected but extension not loaded
      */
     public function setMode($mode)
     {
@@ -150,6 +141,9 @@ class Tar extends AbstractCompressionAlgorithm
         if (($mode == 'Gz') && (!extension_loaded('zlib'))) {
             throw new Exception\ExtensionNotLoadedException('This mode needs the zlib extension');
         }
+
+        $this->options['mode'] = $mode;
+        return $this;
     }
 
     /**
@@ -157,10 +151,12 @@ class Tar extends AbstractCompressionAlgorithm
      *
      * @param  string $content
      * @return string
+     * @throws Exception\RuntimeException if unable to create temporary file
+     * @throws Exception\RuntimeException if unable to create archive
      */
     public function compress($content)
     {
-        $archive = new \Archive_Tar($this->getArchive(), $this->getMode());
+        $archive = new Archive_Tar($this->getArchive(), $this->getMode());
         if (!file_exists($content)) {
             $file = $this->getTarget();
             if (is_dir($file)) {
@@ -177,9 +173,9 @@ class Tar extends AbstractCompressionAlgorithm
 
         if (is_dir($content)) {
             // collect all file infos
-            foreach (new \RecursiveIteratorIterator(
-                        new \RecursiveDirectoryIterator($content, \RecursiveDirectoryIterator::KEY_AS_PATHNAME),
-                        \RecursiveIteratorIterator::SELF_FIRST
+            foreach (new RecursiveIteratorIterator(
+                        new RecursiveDirectoryIterator($content, RecursiveDirectoryIterator::KEY_AS_PATHNAME),
+                        RecursiveIteratorIterator::SELF_FIRST
                     ) as $directory => $info
             ) {
                 if ($info->isFile()) {
@@ -202,21 +198,22 @@ class Tar extends AbstractCompressionAlgorithm
      * Decompresses the given content
      *
      * @param  string $content
-     * @return boolean
+     * @return string
+     * @throws Exception\RuntimeException if unable to find archive
+     * @throws Exception\RuntimeException if error occurs decompressing archive
      */
     public function decompress($content)
     {
         $archive = $this->getArchive();
-        if (file_exists($content)) {
-            $archive = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, realpath($content));
-        } elseif (empty($archive) || !file_exists($archive)) {
+        if (empty($archive) || !file_exists($archive)) {
             throw new Exception\RuntimeException('Tar Archive not found');
         }
 
-        $archive = new \Archive_Tar($archive, $this->getMode());
+        $archive = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, realpath($content));
+        $archive = new Archive_Tar($archive, $this->getMode());
         $target  = $this->getTarget();
         if (!is_dir($target)) {
-            $target = dirname($target);
+            $target = dirname($target) . DIRECTORY_SEPARATOR;
         }
 
         $result = $archive->extract($target);
@@ -224,7 +221,7 @@ class Tar extends AbstractCompressionAlgorithm
             throw new Exception\RuntimeException('Error while extracting the Tar archive');
         }
 
-        return true;
+        return $target;
     }
 
     /**

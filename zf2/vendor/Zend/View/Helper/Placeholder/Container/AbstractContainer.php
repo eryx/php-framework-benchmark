@@ -1,27 +1,13 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_View
- * @subpackage Helper
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_View
  */
 
-/**
- * @namespace
- */
 namespace Zend\View\Helper\Placeholder\Container;
 
 use Zend\View\Exception;
@@ -29,12 +15,8 @@ use Zend\View\Exception;
 /**
  * Abstract class representing container for placeholder values
  *
- * @uses       ArrayObject
- * @uses       \Zend\View\Helper\Placeholder\Container\Exception
  * @package    Zend_View
  * @subpackage Helper
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 abstract class AbstractContainer extends \ArrayObject
 {
@@ -60,48 +42,47 @@ abstract class AbstractContainer extends \ArrayObject
      * What text to prefix the placeholder with when rendering
      * @var string
      */
-    protected $_prefix    = '';
+    protected $prefix    = '';
 
     /**
      * What text to append the placeholder with when rendering
      * @var string
      */
-    protected $_postfix   = '';
+    protected $postfix   = '';
 
     /**
      * What string to use between individual items in the placeholder when rendering
      * @var string
      */
-    protected $_separator = '';
+    protected $separator = '';
 
     /**
      * What string to use as the indentation of output, this will typically be spaces. Eg: '    '
      * @var string
      */
-    protected $_indent = '';
+    protected $indent = '';
 
     /**
      * Whether or not we're already capturing for this given container
      * @var bool
      */
-    protected $_captureLock = false;
+    protected $captureLock = false;
 
     /**
      * What type of capture (overwrite (set), append, prepend) to use
      * @var string
      */
-    protected $_captureType;
+    protected $captureType;
 
     /**
      * Key to which to capture content
      * @var string
      */
-    protected $_captureKey;
+    protected $captureKey;
 
     /**
      * Constructor - This is needed so that we can attach a class member as the ArrayObject container
      *
-     * @return void
      */
     public function __construct()
     {
@@ -159,7 +140,7 @@ abstract class AbstractContainer extends \ArrayObject
      */
     public function setPrefix($prefix)
     {
-        $this->_prefix = (string) $prefix;
+        $this->prefix = (string) $prefix;
         return $this;
     }
 
@@ -170,7 +151,7 @@ abstract class AbstractContainer extends \ArrayObject
      */
     public function getPrefix()
     {
-        return $this->_prefix;
+        return $this->prefix;
     }
 
     /**
@@ -181,7 +162,7 @@ abstract class AbstractContainer extends \ArrayObject
      */
     public function setPostfix($postfix)
     {
-        $this->_postfix = (string) $postfix;
+        $this->postfix = (string) $postfix;
         return $this;
     }
 
@@ -192,7 +173,7 @@ abstract class AbstractContainer extends \ArrayObject
      */
     public function getPostfix()
     {
-        return $this->_postfix;
+        return $this->postfix;
     }
 
     /**
@@ -205,7 +186,7 @@ abstract class AbstractContainer extends \ArrayObject
      */
     public function setSeparator($separator)
     {
-        $this->_separator = (string) $separator;
+        $this->separator = (string) $separator;
         return $this;
     }
 
@@ -216,7 +197,7 @@ abstract class AbstractContainer extends \ArrayObject
      */
     public function getSeparator()
     {
-        return $this->_separator;
+        return $this->separator;
     }
 
     /**
@@ -228,7 +209,7 @@ abstract class AbstractContainer extends \ArrayObject
      */
     public function setIndent($indent)
     {
-        $this->_indent = $this->getWhitespace($indent);
+        $this->indent = $this->getWhitespace($indent);
         return $this;
     }
 
@@ -239,7 +220,7 @@ abstract class AbstractContainer extends \ArrayObject
      */
     public function getIndent()
     {
-        return $this->_indent;
+        return $this->indent;
     }
 
     /**
@@ -266,16 +247,16 @@ abstract class AbstractContainer extends \ArrayObject
      */
     public function captureStart($type = AbstractContainer::APPEND, $key = null)
     {
-        if ($this->_captureLock) {
+        if ($this->captureLock) {
             throw new Exception\RuntimeException(
                 'Cannot nest placeholder captures for the same placeholder'
             );
         }
 
-        $this->_captureLock = true;
-        $this->_captureType = $type;
+        $this->captureLock = true;
+        $this->captureType = $type;
         if ((null !== $key) && is_scalar($key)) {
-            $this->_captureKey = (string) $key;
+            $this->captureKey = (string) $key;
         }
         ob_start();
     }
@@ -289,11 +270,11 @@ abstract class AbstractContainer extends \ArrayObject
     {
         $data               = ob_get_clean();
         $key                = null;
-        $this->_captureLock = false;
-        if (null !== $this->_captureKey) {
-            $key = $this->_captureKey;
+        $this->captureLock = false;
+        if (null !== $this->captureKey) {
+            $key = $this->captureKey;
         }
-        switch ($this->_captureType) {
+        switch ($this->captureType) {
             case self::SET:
                 if (null !== $key) {
                     $this[$key] = $data;

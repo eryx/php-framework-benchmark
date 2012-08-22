@@ -1,8 +1,23 @@
 <?php
+/**
+ * Zend Framework (http://framework.zend.com/)
+ *
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Di
+ */
+
 namespace Zend\Di\Display;
 
 use Zend\Di\Di;
 
+/**
+ * Exporter for class definitions
+ *
+ * @category   Zend
+ * @package    Zend_Di
+ */
 class Console
 {
 
@@ -10,8 +25,19 @@ class Console
      * @var Di
      */
     protected $di = null;
+
+    /**
+     * @var string[]
+     */
     protected $runtimeClasses = array();
 
+    /**
+     * Export
+     *
+     * @param  Di    $di
+     * @param  array $runtimeClasses
+     * @return void
+     */
     public static function export(Di $di, array $runtimeClasses = array())
     {
         $console = new static($di);
@@ -19,11 +45,19 @@ class Console
         $console->render($di);
     }
 
+    /**
+     * Constructor
+     *
+     * @param null|Di $di
+     */
     public function __construct(Di $di = null)
     {
         $this->di = ($di) ?: new Di;
     }
 
+    /**
+     * @param string[] $runtimeClasses
+     */
     public function addRuntimeClasses(array $runtimeClasses)
     {
         foreach ($runtimeClasses as $runtimeClass) {
@@ -31,11 +65,13 @@ class Console
         }
     }
 
+    /**
+     * @param string $runtimeClass
+     */
     public function addRuntimeClass($runtimeClass)
     {
         $this->runtimeClasses[] = $runtimeClass;
     }
-
 
     public function render()
     {
@@ -48,7 +84,7 @@ class Console
             $this->renderDefinition($definition);
             foreach ($definition->getClasses() as $class) {
                 $knownClasses[] = $class;
-                $this->renderClassDefinition($class);
+                $this->renderClassDefinition($definition, $class);
             }
             if (count($definition->getClasses()) == 0) {
                 echo PHP_EOL .'    No Classes Found' . PHP_EOL . PHP_EOL;
@@ -60,10 +96,9 @@ class Console
 
         $unknownRuntimeClasses = array_diff($this->runtimeClasses, $knownClasses);
         foreach ($unknownRuntimeClasses as $runtimeClass) {
-            //$definition = $this->di->definitions()->getDefinitionForClass($runtimeClass);
-            $this->renderClassDefinition($runtimeClass);
+            $definition = $this->di->definitions()->getDefinitionForClass($runtimeClass);
+            $this->renderClassDefinition($definition, $runtimeClass);
         }
-
 
         echo PHP_EOL . 'Instance Configuration Info:' . PHP_EOL;
 
@@ -83,9 +118,9 @@ class Console
         }
 
         echo PHP_EOL . '  Configurations:' . PHP_EOL;
-        
+
         foreach ($configuredTypes as $type) {
-            $info = $this->di->instanceManager()->getConfiguration($type);
+            $info = $this->di->instanceManager()->getConfig($type);
             echo '    ' . $type . PHP_EOL;
 
             if ($info['parameters']) {
@@ -105,6 +140,9 @@ class Console
 
     }
 
+    /**
+     * @param object $definition
+     */
     protected function renderDefinition($definition)
     {
         echo '  Definition Type: ' . get_class($definition) . PHP_EOL;
@@ -122,13 +160,15 @@ class Console
         }
     }
 
-    protected function renderClassDefinition($class)
+    /**
+     * @param \Zend\Di\Definition\DefinitionInterface $definition
+     * @param string                                  $class
+     */
+    protected function renderClassDefinition($definition, $class)
     {
-        $definitions = $this->di->definitions();
-
         echo PHP_EOL . '    Parameters For Class: ' . $class . PHP_EOL;
-        foreach ($definitions->getMethods($class) as $methodName => $methodIsRequired) {
-            foreach ($definitions->getMethodParameters($class, $methodName) as $fqName => $pData) {
+        foreach ($definition->getMethods($class) as $methodName => $methodIsRequired) {
+            foreach ($definition->getMethodParameters($class, $methodName) as $fqName => $pData) {
                 echo '      ' . $pData[0] . ' [type: ';
                 echo ($pData[1]) ? $pData[1] : 'scalar';
                 echo ($pData[2] === true && $methodIsRequired) ? ', required' : ', not required';

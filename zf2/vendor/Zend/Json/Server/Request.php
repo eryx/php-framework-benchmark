@@ -1,38 +1,22 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Json
- * @subpackage Server
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Json
  */
 
-/**
- * @namespace
- */
 namespace Zend\Json\Server;
+
 use Zend\Json;
 
 /**
  * @todo       Revised method regex to allow NS; however, should SMD be revised to strip PHP NS instead when attaching functions?
- * @uses       Zend\Json\Json
  * @category   Zend
  * @package    Zend_Json
  * @subpackage Server
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Request
 {
@@ -40,37 +24,37 @@ class Request
      * Request ID
      * @var mixed
      */
-    protected $_id;
+    protected $id;
 
     /**
      * Flag
      * @var bool
      */
-    protected $_isMethodError = false;
+    protected $isMethodError = false;
 
     /**
      * Requested method
      * @var string
      */
-    protected $_method;
+    protected $method;
 
     /**
      * Regex for method
      * @var string
      */
-    protected $_methodRegex = '/^[a-z][a-z0-9\\\\_.]*$/i';
+    protected $methodRegex = '/^[a-z][a-z0-9\\\\_.]*$/i';
 
     /**
      * Request parameters
      * @var array
      */
-    protected $_params = array();
+    protected $params = array();
 
     /**
      * JSON-RPC version of request
      * @var string
      */
-    protected $_version = '1.0';
+    protected $version = '1.0';
 
     /**
      * Set request state
@@ -102,10 +86,10 @@ class Request
     public function addParam($value, $key = null)
     {
         if ((null === $key) || !is_string($key)) {
-            $index = count($this->_params);
-            $this->_params[$index] = $value;
+            $index = count($this->params);
+            $this->params[$index] = $value;
         } else {
-            $this->_params[$key] = $value;
+            $this->params[$key] = $value;
         }
 
         return $this;
@@ -133,7 +117,7 @@ class Request
      */
     public function setParams(array $params)
     {
-        $this->_params = array();
+        $this->params = array();
         return $this->addParams($params);
     }
 
@@ -145,8 +129,8 @@ class Request
      */
     public function getParam($index)
     {
-        if (array_key_exists($index, $this->_params)) {
-            return $this->_params[$index];
+        if (array_key_exists($index, $this->params)) {
+            return $this->params[$index];
         }
 
         return null;
@@ -159,7 +143,7 @@ class Request
      */
     public function getParams()
     {
-        return $this->_params;
+        return $this->params;
     }
 
     /**
@@ -170,10 +154,10 @@ class Request
      */
     public function setMethod($name)
     {
-        if (!preg_match($this->_methodRegex, $name)) {
-            $this->_isMethodError = true;
+        if (!preg_match($this->methodRegex, $name)) {
+            $this->isMethodError = true;
         } else {
-            $this->_method = $name;
+            $this->method = $name;
         }
         return $this;
     }
@@ -185,7 +169,7 @@ class Request
      */
     public function getMethod()
     {
-        return $this->_method;
+        return $this->method;
     }
 
     /**
@@ -195,7 +179,7 @@ class Request
      */
     public function isMethodError()
     {
-        return $this->_isMethodError;
+        return $this->isMethodError;
     }
 
     /**
@@ -206,7 +190,7 @@ class Request
      */
     public function setId($name)
     {
-        $this->_id = (string) $name;
+        $this->id = (string) $name;
         return $this;
     }
 
@@ -217,7 +201,7 @@ class Request
      */
     public function getId()
     {
-        return $this->_id;
+        return $this->id;
     }
 
     /**
@@ -229,9 +213,9 @@ class Request
     public function setVersion($version)
     {
         if ('2.0' == $version) {
-            $this->_version = '2.0';
+            $this->version = '2.0';
         } else {
-            $this->_version = '1.0';
+            $this->version = '1.0';
         }
         return $this;
     }
@@ -243,7 +227,7 @@ class Request
      */
     public function getVersion()
     {
-        return $this->_version;
+        return $this->version;
     }
 
     /**

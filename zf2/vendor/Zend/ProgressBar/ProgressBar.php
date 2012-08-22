@@ -1,36 +1,23 @@
 <?php
 /**
- * LICENSE
+ * Zend Framework (http://framework.zend.com/)
  *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_ProgressBar
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_ProgressBar
  */
 
-/**
- * @namespace
- */
 namespace Zend\ProgressBar;
+
 use Zend\ProgressBar\Exception;
+use Zend\Session;
 
 /**
- * Zend_ProgressBar offers an interface for multiple enviroments.
+ * Zend_ProgressBar offers an interface for multiple environments.
  *
- * @uses      \Zend\ProgressBar\Exception
- * @uses      \Zend\Session\Namespace
  * @category  Zend
  * @package   Zend_ProgressBar
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license   http://framework.zend.com/license/new-bsd     New BSD License
  */
 class ProgressBar
 {
@@ -39,58 +26,58 @@ class ProgressBar
      *
      * @var float
      */
-    protected $_min;
+    protected $min;
 
     /**
      * Max value
      *
      * @var float
      */
-    protected $_max;
+    protected $max;
 
     /**
      * Current value
      *
      * @var float
      */
-    protected $_current;
+    protected $current;
 
     /**
      * Start time of the progressbar, required for ETA
      *
      * @var integer
      */
-    protected $_startTime;
+    protected $startTime;
 
     /**
      * Current status text
      *
      * @var string
      */
-    protected $_statusText = null;
+    protected $statusText = null;
 
     /**
      * Adapter for the output
      *
-     * @var \Zend\ProgressBar\Adapter\Adapter
+     * @var \Zend\ProgressBar\Adapter\AbstractAdapter
      */
-    protected $_adapter;
+    protected $adapter;
 
     /**
      * Namespace for keeping the progressbar persistent
      *
      * @var string
      */
-    protected $_persistenceNamespace = null;
+    protected $persistenceNamespace = null;
 
     /**
      * Create a new progressbar backend.
      *
-     * @param  \Zend\ProgressBar\Adapter\Adapter $adapter
-     * @param  float                    $min
-     * @param  float                    $max
-     * @param  string                   $persistenceNamespace
-     * @throws \Zend\ProgressBar\Exception When $min is greater than $max
+     * @param  Adapter\AbstractAdapter $adapter
+     * @param  float|int               $min
+     * @param  float|int               $max
+     * @param  string|null             $persistenceNamespace
+     * @throws Exception\OutOfRangeException When $min is greater than $max
      */
     public function __construct(Adapter\AbstractAdapter $adapter, $min = 0, $max = 100, $persistenceNamespace = null)
     {
@@ -99,32 +86,32 @@ class ProgressBar
             throw new Exception\OutOfRangeException('$max must be greater than $min');
         }
 
-        $this->_min     = (float) $min;
-        $this->_max     = (float) $max;
-        $this->_current = (float) $min;
+        $this->min     = (float) $min;
+        $this->max     = (float) $max;
+        $this->current = (float) $min;
 
         // See if we have to open a session namespace
         if ($persistenceNamespace !== null) {
-            $this->_persistenceNamespace = new \Zend\Session\SessionNamespace($persistenceNamespace);
+            $this->persistenceNamespace = new Session\Container($persistenceNamespace);
         }
 
         // Set adapter
-        $this->_adapter = $adapter;
+        $this->adapter = $adapter;
 
         // Track the start time
-        $this->_startTime = time();
+        $this->startTime = time();
 
         // See If a persistenceNamespace exists and handle accordingly
-        if ($this->_persistenceNamespace !== null) {
-            if (isset($this->_persistenceNamespace->isSet)) {
-                $this->_startTime  = $this->_persistenceNamespace->startTime;
-                $this->_current    = $this->_persistenceNamespace->current;
-                $this->_statusText = $this->_persistenceNamespace->statusText;
+        if ($this->persistenceNamespace !== null) {
+            if (isset($this->persistenceNamespace->isSet)) {
+                $this->startTime  = $this->persistenceNamespace->startTime;
+                $this->current    = $this->persistenceNamespace->current;
+                $this->statusText = $this->persistenceNamespace->statusText;
             } else {
-                $this->_persistenceNamespace->isSet      = true;
-                $this->_persistenceNamespace->startTime  = $this->_startTime;
-                $this->_persistenceNamespace->current    = $this->_current;
-                $this->_persistenceNamespace->statusText = $this->_statusText;
+                $this->persistenceNamespace->isSet      = true;
+                $this->persistenceNamespace->startTime  = $this->startTime;
+                $this->persistenceNamespace->current    = $this->current;
+                $this->persistenceNamespace->statusText = $this->statusText;
             }
         } else {
             $this->update();
@@ -134,11 +121,11 @@ class ProgressBar
     /**
      * Get the current adapter
      *
-     * @return \Zend\ProgressBar\Adapter\Adapter
+     * @return Adapter\AbstractAdapter
      */
     public function getAdapter()
     {
-        return $this->_adapter;
+        return $this->adapter;
     }
 
     /**
@@ -152,29 +139,29 @@ class ProgressBar
     {
         // Update value if given
         if ($value !== null) {
-            $this->_current = min($this->_max, max($this->_min, $value));
+            $this->current = min($this->max, max($this->min, $value));
         }
 
         // Update text if given
         if ($text !== null) {
-            $this->_statusText = $text;
+            $this->statusText = $text;
         }
 
         // See if we have to update a namespace
-        if ($this->_persistenceNamespace !== null) {
-            $this->_persistenceNamespace->current    = $this->_current;
-            $this->_persistenceNamespace->statusText = $this->_statusText;
+        if ($this->persistenceNamespace !== null) {
+            $this->persistenceNamespace->current    = $this->current;
+            $this->persistenceNamespace->statusText = $this->statusText;
         }
 
         // Calculate percent
-        if ($this->_min === $this->_max) {
+        if ($this->min === $this->max) {
             $percent = false;
         } else {
-            $percent = (float) ($this->_current - $this->_min) / ($this->_max - $this->_min);
+            $percent = (float) ($this->current - $this->min) / ($this->max - $this->min);
         }
 
         // Calculate ETA
-        $timeTaken = time() - $this->_startTime;
+        $timeTaken = time() - $this->startTime;
 
         if ($percent === .0 || $percent === false) {
             $timeRemaining = null;
@@ -183,7 +170,7 @@ class ProgressBar
         }
 
         // Poll the adapter
-        $this->_adapter->notify($this->_current, $this->_max, $percent, $timeTaken, $timeRemaining, $this->_statusText);
+        $this->adapter->notify($this->current, $this->max, $percent, $timeTaken, $timeRemaining, $this->statusText);
     }
 
     /**
@@ -194,7 +181,7 @@ class ProgressBar
      */
     public function next($diff = 1, $text = null)
     {
-        $this->update(max($this->_min, min($this->_max, $this->_current + $diff)), $text);
+        $this->update(max($this->min, min($this->max, $this->current + $diff)), $text);
     }
 
     /**
@@ -204,10 +191,10 @@ class ProgressBar
      */
     public function finish()
     {
-        if ($this->_persistenceNamespace !== null) {
-            unset($this->_persistenceNamespace->isSet);
+        if ($this->persistenceNamespace !== null) {
+            unset($this->persistenceNamespace->isSet);
         }
 
-        $this->_adapter->finish();
+        $this->adapter->finish();
     }
 }

@@ -1,47 +1,33 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Paginator
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Paginator
  */
 
-/**
- * @namespace
- */
 namespace Zend\Paginator;
 
-use ArrayIterator,
-    Countable,
-    Iterator,
-    IteratorAggregate,
-    Traversable,
-    Zend\Cache\Frontend\Core as CacheCore,
-    Zend\Db\Select as DbSelect,
-    Zend\Db\Table\AbstractRowset as DbAbstractRowset,
-    Zend\Db\Table\Select as DbTableSelect,
-    Zend\Filter\Filter,
-    Zend\Json\Json,
-    Zend\Stdlib\IteratorToArray,
-    Zend\View;
+use ArrayIterator;
+use Countable;
+use Iterator;
+use IteratorAggregate;
+use Traversable;
+use Zend\Cache\Storage\IteratorInterface as CacheIterator;
+use Zend\Cache\Storage\StorageInterface as CacheStorage;
+use Zend\Db\Sql;
+use Zend\Filter\FilterInterface;
+use Zend\Json\Json;
+use Zend\Paginator\Adapter\AdapterInterface;
+use Zend\Paginator\ScrollingStyle\ScrollingStyleInterface;
+use Zend\Stdlib\ArrayUtils;
+use Zend\View;
 
 /**
  * @category   Zend
  * @package    Zend_Paginator
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Paginator implements Countable, IteratorAggregate
 {
@@ -59,102 +45,102 @@ class Paginator implements Countable, IteratorAggregate
     const CACHE_TAG_PREFIX = 'Zend_Paginator_';
 
     /**
-     * Adapter broker
+     * Adapter plugin manager
      *
-     * @var AdapterBroker
+     * @var AdapterPluginManager
      */
-    protected static $_adapterBroker = null;
+    protected static $adapters = null;
 
     /**
      * Configuration file
      *
      * @var array|null
      */
-    protected static $_config = null;
+    protected static $config = null;
 
     /**
      * Default scrolling style
      *
      * @var string
      */
-    protected static $_defaultScrollingStyle = 'Sliding';
+    protected static $defaultScrollingStyle = 'Sliding';
 
     /**
      * Default item count per page
      *
      * @var int
      */
-    protected static $_defaultItemCountPerPage = 10;
+    protected static $defaultItemCountPerPage = 10;
 
     /**
-     * Scrolling style plugin loader
+     * Scrolling style plugin manager
      *
-     * @var ScrollingStyleBroker
+     * @var ScrollingStylePluginManager
      */
-    protected static $_scrollingStyleBroker = null;
+    protected static $scrollingStyles = null;
 
     /**
      * Cache object
      *
-     * @var CacheCore
+     * @var CacheStorage
      */
-    protected static $_cache;
+    protected static $cache;
 
     /**
-     * Enable or desable the cache by Zend_Paginator instance
+     * Enable or disable the cache by Zend\Paginator\Paginator instance
      *
      * @var bool
      */
-    protected $_cacheEnabled = true;
+    protected $cacheEnabled = true;
 
     /**
      * Adapter
      *
-     * @var Adapter
+     * @var AdapterInterface
      */
-    protected $_adapter = null;
+    protected $adapter = null;
 
     /**
      * Number of items in the current page
      *
      * @var integer
      */
-    protected $_currentItemCount = null;
+    protected $currentItemCount = null;
 
     /**
      * Current page items
      *
      * @var Traversable
      */
-    protected $_currentItems = null;
+    protected $currentItems = null;
 
     /**
      * Current page number (starting from 1)
      *
      * @var integer
      */
-    protected $_currentPageNumber = 1;
+    protected $currentPageNumber = 1;
 
     /**
      * Result filter
      *
-     * @var Filter
+     * @var FilterInterface
      */
-    protected $_filter = null;
+    protected $filter = null;
 
     /**
      * Number of items per page
      *
      * @var integer
      */
-    protected $_itemCountPerPage = null;
+    protected $itemCountPerPage = null;
 
     /**
      * Number of pages
      *
      * @var integer
      */
-    protected $_pageCount = null;
+    protected $pageCount = null;
 
     /**
      * Number of local pages (i.e., the number of discrete page numbers
@@ -162,47 +148,44 @@ class Paginator implements Countable, IteratorAggregate
      *
      * @var integer
      */
-    protected $_pageRange = 10;
+    protected $pageRange = 10;
 
     /**
      * Pages
      *
      * @var array
      */
-    protected $_pages = null;
+    protected $pages = null;
 
     /**
      * View instance used for self rendering
      *
-     * @var View\Renderer
+     * @var \Zend\View\Renderer\RendererInterface
      */
-    protected $_view = null;
+    protected $view = null;
 
     /**
      * Factory.
      *
-     * @param  mixed $data
+     * @param  mixed  $data
      * @param  string $adapter
-     * @param  array $prefixPaths
+     * @throws Exception\InvalidArgumentException
      * @return Paginator
      */
-    public static function factory($data, $adapter = self::INTERNAL_ADAPTER,
-                                   array $prefixPaths = null)
+    public static function factory($data, $adapter = self::INTERNAL_ADAPTER)
     {
-        if ($data instanceof AdapterAggregate) {
+        if ($data instanceof AdapterAggregateInterface) {
             return new self($data->getPaginatorAdapter());
         }
 
         if ($adapter == self::INTERNAL_ADAPTER) {
             if (is_array($data)) {
                 $adapter = 'array';
-            } else if ($data instanceof DbTableSelect) {
-                $adapter = 'db_table_select';
-            } else if ($data instanceof DbSelect) {
+            } elseif ($data instanceof Sql\Select) {
                 $adapter = 'db_select';
-            } else if ($data instanceof Iterator) {
+            } elseif ($data instanceof Iterator) {
                 $adapter = 'iterator';
-            } else if (is_integer($data)) {
+            } elseif (is_integer($data)) {
                 $adapter = 'null';
             } else {
                 $type = (is_object($data)) ? get_class($data) : gettype($data);
@@ -210,77 +193,78 @@ class Paginator implements Countable, IteratorAggregate
             }
         }
 
-        $broker  = self::getAdapterBroker();
-        $adapter = $broker->load($adapter, array($data));
+        $adapters = self::getAdapterPluginManager();
+        $adapter  = $adapters->get($adapter, $data);
         return new self($adapter);
     }
 
     /**
-     * Set the adapter broker
-     * 
-     * @param  Broker $broker 
-     * @return void
+     * Set the adapter plugin manager
+     *
+     * @param string|AdapterPluginManager $adapters
+     * @throws Exception\InvalidArgumentException
      */
-    public static function setAdapterBroker($broker)
+    public static function setAdapterPluginManager($adapters)
     {
-        if (is_string($broker)) {
-            if (!class_exists($broker)) {
+        if (is_string($adapters)) {
+            if (!class_exists($adapters)) {
                 throw new Exception\InvalidArgumentException(sprintf(
-                    'Unable to locate adapter broker of class "%s"',
-                    $broker
+                    'Unable to locate adapter plugin manager with class "%s"; class not found',
+                    $adapters
                 ));
             }
-            $broker = new $broker();
+            $adapters = new $adapters();
         }
-        if (!$broker instanceof AdapterBroker) {
+        if (!$adapters instanceof AdapterPluginManager) {
             throw new Exception\InvalidArgumentException(sprintf(
-                'Pagination adapter broker must extend AdapterBroker; received "%s"',
-                (is_object($broker) ? get_class($broker) : gettype($broker))
+                'Pagination adapter manager must extend AdapterPluginManager; received "%s"',
+                (is_object($adapters) ? get_class($adapters) : gettype($adapters))
             ));
         }
-        self::$_adapterBroker = $broker;
+        self::$adapters = $adapters;
     }
 
     /**
-     * Returns the adapter broker.  If it doesn't exist it's created.
+     * Returns the adapter plugin manager.  If it doesn't exist it's created.
      *
-     * @return AdapterBroker
+     * @return AdapterPluginManager
      */
-    public static function getAdapterBroker()
+    public static function getAdapterPluginManager()
     {
-        if (self::$_adapterBroker === null) {
-            self::setAdapterBroker(new AdapterBroker());
+        if (self::$adapters === null) {
+            self::setAdapterPluginManager(new AdapterPluginManager());
         }
 
-        return self::$_adapterBroker;
+        return self::$adapters;
     }
 
     /**
      * Set a global config
      *
-     * @param array|Traversable $config
+     * @param array|\Traversable $config
+     * @throws Exception\InvalidArgumentException
      */
-    public static function setConfig($config)
+    public static function setOptions($config)
     {
         if ($config instanceof Traversable) {
-            $config = IteratorToArray::convert($config);
+            $config = ArrayUtils::iteratorToArray($config);
         }
         if (!is_array($config)) {
             throw new Exception\InvalidArgumentException(__METHOD__ . ' expects an array or Traversable');
         }
 
-        self::$_config = $config;
+        self::$config = $config;
 
-        if (isset($config['adapter_broker']) 
-            && null !== ($broker = $config['adapter_broker'])
+        if (isset($config['adapter_plugins'])
+            && null !== ($adapters = $config['adapter_plugins'])
         ) {
-            self::setAdapterBroker($broker);
+            self::setAdapterPluginManager($adapters);
         }
 
-        if (isset($config['scrolling_style_broker']) 
-            && null !== ($broker = $config['scrolling_style_broker'])
+        if (isset($config['scrolling_style_plugins'])
+            && null !== ($adapters = $config['scrolling_style_plugins'])
         ) {
-            self::setScrollingStyleBroker($broker);
+            self::setScrollingStylePluginManager($adapters);
         }
 
         $scrollingStyle = isset($config['scrolling_style']) ? $config['scrolling_style'] : null;
@@ -297,7 +281,7 @@ class Paginator implements Countable, IteratorAggregate
      */
     public static function getDefaultScrollingStyle()
     {
-        return self::$_defaultScrollingStyle;
+        return self::$defaultScrollingStyle;
     }
 
     /**
@@ -307,7 +291,7 @@ class Paginator implements Countable, IteratorAggregate
      */
     public static function getDefaultItemCountPerPage()
     {
-        return self::$_defaultItemCountPerPage;
+        return self::$defaultItemCountPerPage;
     }
 
     /**
@@ -317,17 +301,17 @@ class Paginator implements Countable, IteratorAggregate
      */
     public static function setDefaultItemCountPerPage($count)
     {
-        self::$_defaultItemCountPerPage = (int) $count;
+        self::$defaultItemCountPerPage = (int) $count;
     }
 
     /**
      * Sets a cache object
      *
-     * @param CacheCore $cache
+     * @param CacheStorage $cache
      */
-    public static function setCache(CacheCore $cache)
+    public static function setCache(CacheStorage $cache)
     {
-        self::$_cache = $cache;
+        self::$cache = $cache;
     }
 
     /**
@@ -337,63 +321,64 @@ class Paginator implements Countable, IteratorAggregate
      */
     public static function setDefaultScrollingStyle($scrollingStyle = 'Sliding')
     {
-        self::$_defaultScrollingStyle = $scrollingStyle;
+        self::$defaultScrollingStyle = $scrollingStyle;
     }
 
-    public static function setScrollingStyleBroker($broker)
+    public static function setScrollingStylePluginManager($scrollingAdapters)
     {
-        if (is_string($broker)) {
-            if (!class_exists($broker)) {
+        if (is_string($scrollingAdapters)) {
+            if (!class_exists($scrollingAdapters)) {
                 throw new Exception\InvalidArgumentException(sprintf(
-                    'Unable to locate scrolling style broker of class "%s"',
-                    $broker
+                    'Unable to locate scrolling style plugin manager with class "%s"; class not found',
+                    $scrollingAdapters
                 ));
             }
-            $broker = new $broker();
+            $scrollingAdapters = new $scrollingAdapters();
         }
-        if (!$broker instanceof ScrollingStyleBroker) {
+        if (!$scrollingAdapters instanceof ScrollingStylePluginManager) {
             throw new Exception\InvalidArgumentException(sprintf(
-                'Pagination scrolling-style broker must extend ScrollingStyleBroker; received "%s"',
-                (is_object($broker) ? get_class($broker) : gettype($broker))
+                'Pagination scrolling-style manager must extend ScrollingStylePluginManager; received "%s"',
+                (is_object($scrollingAdapters) ? get_class($scrollingAdapters) : gettype($scrollingAdapters))
             ));
         }
-        self::$_scrollingStyleBroker = $broker;
+        self::$scrollingStyles = $scrollingAdapters;
     }
 
     /**
-     * Returns the scrolling style broker.  If it doesn't exist it's
+     * Returns the scrolling style manager.  If it doesn't exist it's
      * created.
      *
-     * @return ScrollingStyleBroker
+     * @return ScrollingStylePluginManager
      */
-    public static function getScrollingStyleBroker()
+    public static function getScrollingStylePluginManager()
     {
-        if (self::$_scrollingStyleBroker === null) {
-            self::$_scrollingStyleBroker = new ScrollingStyleBroker();
+        if (self::$scrollingStyles === null) {
+            self::$scrollingStyles = new ScrollingStylePluginManager();
         }
 
-        return self::$_scrollingStyleBroker;
+        return self::$scrollingStyles;
     }
 
     /**
      * Constructor.
      *
-     * @param Adapter|AdapterAggregate $adapter
+     * @param AdapterInterface|AdapterAggregateInterface $adapter
+     * @throws Exception\InvalidArgumentException
      */
     public function __construct($adapter)
     {
-        if ($adapter instanceof Adapter) {
-            $this->_adapter = $adapter;
-        } else if ($adapter instanceof AdapterAggregate) {
-            $this->_adapter = $adapter->getPaginatorAdapter();
+        if ($adapter instanceof AdapterInterface) {
+            $this->adapter = $adapter;
+        } elseif ($adapter instanceof AdapterAggregateInterface) {
+            $this->adapter = $adapter->getPaginatorAdapter();
         } else {
             throw new Exception\InvalidArgumentException(
                 'Zend_Paginator only accepts instances of the type ' .
-                'Zend_Paginator_Adapter_Interface or Zend_Paginator_AdapterAggregate.'
+                'Zend\Paginator\Adapter\AdapterInterface or Zend\Paginator\AdapterAggregateInterface.'
             );
         }
 
-        $config = self::$_config;
+        $config = self::$config;
 
         if (!empty($config)) {
             $setupMethods = array('ItemCountPerPage', 'PageRange');
@@ -435,7 +420,7 @@ class Paginator implements Countable, IteratorAggregate
      */
     public function setCacheEnabled($enable)
     {
-        $this->_cacheEnabled = (bool)$enable;
+        $this->cacheEnabled = (bool)$enable;
         return $this;
     }
 
@@ -446,11 +431,11 @@ class Paginator implements Countable, IteratorAggregate
      */
     public function count()
     {
-        if (!$this->_pageCount) {
-            $this->_pageCount = $this->_calculatePageCount();
+        if (!$this->pageCount) {
+            $this->pageCount = $this->_calculatePageCount();
         }
 
-        return $this->_pageCount;
+        return $this->pageCount;
     }
 
     /**
@@ -471,19 +456,25 @@ class Paginator implements Countable, IteratorAggregate
      */
     public function clearPageItemCache($pageNumber = null)
     {
-        if (!$this->_cacheEnabled()) {
+        if (!$this->cacheEnabled()) {
             return $this;
         }
 
         if (null === $pageNumber) {
-            foreach (self::$_cache->getIdsMatchingTags(array($this->_getCacheInternalId())) as $id) {
-                if (preg_match('|'.self::CACHE_TAG_PREFIX."(\d+)_.*|", $id, $page)) {
-                    self::$_cache->remove($this->_getCacheId($page[1]));
+            $prefixLength  = strlen(self::CACHE_TAG_PREFIX);
+            $cacheIterator = self::$cache->getIterator();
+            $cacheIterator->setMode(CacheIterator::CURRENT_AS_KEY);
+            foreach ($cacheIterator as $key) {
+                $tags = self::$cache->getTags($key);
+                if ($tags && in_array($this->_getCacheInternalId(), $tags)) {
+                    if (substr($key, 0, $prefixLength) == self::CACHE_TAG_PREFIX) {
+                        self::$cache->removeItem($this->_getCacheId((int)substr($key, $prefixLength)));
+                    }
                 }
             }
         } else {
             $cleanId = $this->_getCacheId($pageNumber);
-            self::$_cache->remove($cleanId);
+            self::$cache->removeItem($cleanId);
         }
         return $this;
     }
@@ -511,11 +502,11 @@ class Paginator implements Countable, IteratorAggregate
     /**
      * Returns the adapter.
      *
-     * @return Adapter
+     * @return AdapterInterface
      */
     public function getAdapter()
     {
-        return $this->_adapter;
+        return $this->adapter;
     }
 
     /**
@@ -525,11 +516,11 @@ class Paginator implements Countable, IteratorAggregate
      */
     public function getCurrentItemCount()
     {
-        if ($this->_currentItemCount === null) {
-            $this->_currentItemCount = $this->getItemCount($this->getCurrentItems());
+        if ($this->currentItemCount === null) {
+            $this->currentItemCount = $this->getItemCount($this->getCurrentItems());
         }
 
-        return $this->_currentItemCount;
+        return $this->currentItemCount;
     }
 
     /**
@@ -539,11 +530,11 @@ class Paginator implements Countable, IteratorAggregate
      */
     public function getCurrentItems()
     {
-        if ($this->_currentItems === null) {
-            $this->_currentItems = $this->getItemsByPage($this->getCurrentPageNumber());
+        if ($this->currentItems === null) {
+            $this->currentItems = $this->getItemsByPage($this->getCurrentPageNumber());
         }
 
-        return $this->_currentItems;
+        return $this->currentItems;
     }
 
     /**
@@ -553,7 +544,7 @@ class Paginator implements Countable, IteratorAggregate
      */
     public function getCurrentPageNumber()
     {
-        return $this->normalizePageNumber($this->_currentPageNumber);
+        return $this->normalizePageNumber($this->currentPageNumber);
     }
 
     /**
@@ -564,9 +555,9 @@ class Paginator implements Countable, IteratorAggregate
      */
     public function setCurrentPageNumber($pageNumber)
     {
-        $this->_currentPageNumber = (integer) $pageNumber;
-        $this->_currentItems      = null;
-        $this->_currentItemCount  = null;
+        $this->currentPageNumber = (integer) $pageNumber;
+        $this->currentItems      = null;
+        $this->currentItemCount  = null;
 
         return $this;
     }
@@ -574,39 +565,40 @@ class Paginator implements Countable, IteratorAggregate
     /**
      * Get the filter
      *
-     * @return Filter
+     * @return FilterInterface
      */
     public function getFilter()
     {
-        return $this->_filter;
+        return $this->filter;
     }
 
     /**
      * Set a filter chain
      *
-     * @param  Filter $filter
+     * @param  FilterInterface $filter
      * @return Paginator
      */
-    public function setFilter(Filter $filter)
+    public function setFilter(FilterInterface $filter)
     {
-        $this->_filter = $filter;
+        $this->filter = $filter;
 
         return $this;
     }
 
     /**
      * Returns an item from a page.  The current page is used if there's no
-     * page sepcified.
+     * page specified.
      *
      * @param  integer $itemNumber Item number (1 to itemCountPerPage)
      * @param  integer $pageNumber
+     * @throws Exception\InvalidArgumentException
      * @return mixed
      */
     public function getItem($itemNumber, $pageNumber = null)
     {
         if ($pageNumber == null) {
             $pageNumber = $this->getCurrentPageNumber();
-        } else if ($pageNumber < 0) {
+        } elseif ($pageNumber < 0) {
             $pageNumber = ($this->count() + 1) + $pageNumber;
         }
 
@@ -638,11 +630,11 @@ class Paginator implements Countable, IteratorAggregate
      */
     public function getItemCountPerPage()
     {
-        if (empty($this->_itemCountPerPage)) {
-            $this->_itemCountPerPage = self::getDefaultItemCountPerPage();
+        if (empty($this->itemCountPerPage)) {
+            $this->itemCountPerPage = self::getDefaultItemCountPerPage();
         }
 
-        return $this->_itemCountPerPage;
+        return $this->itemCountPerPage;
     }
 
     /**
@@ -653,13 +645,13 @@ class Paginator implements Countable, IteratorAggregate
      */
     public function setItemCountPerPage($itemCountPerPage = -1)
     {
-        $this->_itemCountPerPage = (integer) $itemCountPerPage;
-        if ($this->_itemCountPerPage < 1) {
-            $this->_itemCountPerPage = $this->getTotalItemCount();
+        $this->itemCountPerPage = (integer) $itemCountPerPage;
+        if ($this->itemCountPerPage < 1) {
+            $this->itemCountPerPage = $this->getTotalItemCount();
         }
-        $this->_pageCount        = $this->_calculatePageCount();
-        $this->_currentItems     = null;
-        $this->_currentItemCount = null;
+        $this->pageCount        = $this->_calculatePageCount();
+        $this->currentItems     = null;
+        $this->currentItemCount = null;
 
         return $this;
     }
@@ -676,7 +668,7 @@ class Paginator implements Countable, IteratorAggregate
 
         if (is_array($items) || $items instanceof Countable) {
             $itemCount = count($items);
-        } else { // $items is something like LimitIterator
+        } elseif ($items instanceof Traversable) { // $items is something like LimitIterator
             $itemCount = iterator_count($items);
         }
 
@@ -686,22 +678,23 @@ class Paginator implements Countable, IteratorAggregate
     /**
      * Returns the items for a given page.
      *
-     * @return Traversable
+     * @param integer $pageNumber
+     * @return mixed
      */
     public function getItemsByPage($pageNumber)
     {
         $pageNumber = $this->normalizePageNumber($pageNumber);
 
-        if ($this->_cacheEnabled()) {
-            $data = self::$_cache->load($this->_getCacheId($pageNumber));
-            if ($data !== false) {
+        if ($this->cacheEnabled()) {
+            $data = self::$cache->getItem($this->_getCacheId($pageNumber));
+            if ($data) {
                 return $data;
             }
         }
 
         $offset = ($pageNumber - 1) * $this->getItemCountPerPage();
 
-        $items = $this->_adapter->getItems($offset, $this->getItemCountPerPage());
+        $items = $this->adapter->getItems($offset, $this->getItemCountPerPage());
 
         $filter = $this->getFilter();
 
@@ -713,8 +706,10 @@ class Paginator implements Countable, IteratorAggregate
             $items = new ArrayIterator($items);
         }
 
-        if ($this->_cacheEnabled()) {
-            self::$_cache->save($items, $this->_getCacheId($pageNumber), array($this->_getCacheInternalId()));
+        if ($this->cacheEnabled()) {
+            $cacheId = $this->_getCacheId($pageNumber);
+            self::$cache->setItem($cacheId, $items);
+            self::$cache->setTags($cacheId, array($this->_getCacheInternalId()));
         }
 
         return $items;
@@ -723,6 +718,7 @@ class Paginator implements Countable, IteratorAggregate
     /**
      * Returns a foreach-compatible iterator.
      *
+     * @throws Exception\RuntimeException
      * @return Traversable
      */
     public function getIterator()
@@ -741,7 +737,7 @@ class Paginator implements Countable, IteratorAggregate
      */
     public function getPageRange()
     {
-        return $this->_pageRange;
+        return $this->pageRange;
     }
 
     /**
@@ -752,7 +748,7 @@ class Paginator implements Countable, IteratorAggregate
      */
     public function setPageRange($pageRange)
     {
-        $this->_pageRange = (integer) $pageRange;
+        $this->pageRange = (integer) $pageRange;
 
         return $this;
     }
@@ -765,11 +761,11 @@ class Paginator implements Countable, IteratorAggregate
      */
     public function getPages($scrollingStyle = null)
     {
-        if ($this->_pages === null) {
-            $this->_pages = $this->_createPages($scrollingStyle);
+        if ($this->pages === null) {
+            $this->pages = $this->_createPages($scrollingStyle);
         }
 
-        return $this->_pages;
+        return $this->pages;
     }
 
     /**
@@ -801,41 +797,47 @@ class Paginator implements Countable, IteratorAggregate
     public function getPageItemCache()
     {
         $data = array();
-        if ($this->_cacheEnabled()) {
-            foreach (self::$_cache->getIdsMatchingTags(array($this->_getCacheInternalId())) as $id) {
-                    if (preg_match('|'.self::CACHE_TAG_PREFIX."(\d+)_.*|", $id, $page)) {
-                        $data[$page[1]] = self::$_cache->load($this->_getCacheId($page[1]));
+        if ($this->cacheEnabled()) {
+            $prefixLength  = strlen(self::CACHE_TAG_PREFIX);
+            $cacheIterator = self::$cache->getIterator();
+            $cacheIterator->setMode(CacheIterator::CURRENT_AS_VALUE);
+            foreach ($cacheIterator as $key => $value) {
+                $tags = self::$cache->getTags($key);
+                if ($tags && in_array($this->_getCacheInternalId(), $tags)) {
+                    if (substr($key, 0, $prefixLength) == self::CACHE_TAG_PREFIX) {
+                        $data[(int)substr($key, $prefixLength)] = $value;
                     }
+                }
             }
         }
         return $data;
     }
 
     /**
-     * Retrieves the view instance.  
+     * Retrieves the view instance.
      *
      * If none registered, instantiates a PhpRenderer instance.
      *
-     * @return View\Renderer|null
+     * @return \Zend\View\Renderer\RendererInterface|null
      */
     public function getView()
     {
-        if ($this->_view === null) {
-            $this->setView(new View\PhpRenderer());
+        if ($this->view === null) {
+            $this->setView(new View\Renderer\PhpRenderer());
         }
 
-        return $this->_view;
+        return $this->view;
     }
 
     /**
      * Sets the view object.
      *
-     * @param  View\Renderer $view
+     * @param  \Zend\View\Renderer\RendererInterface $view
      * @return Paginator
      */
-    public function setView(View\Renderer $view = null)
+    public function setView(View\Renderer\RendererInterface $view = null)
     {
-        $this->_view = $view;
+        $this->view = $view;
 
         return $this;
     }
@@ -887,10 +889,10 @@ class Paginator implements Countable, IteratorAggregate
     /**
      * Renders the paginator.
      *
-     * @param  View\Renderer $view
+     * @param  \Zend\View\Renderer\RendererInterface $view
      * @return string
      */
-    public function render(View\Renderer $view = null)
+    public function render(View\Renderer\RendererInterface $view = null)
     {
         if (null !== $view) {
             $this->setView($view);
@@ -919,13 +921,13 @@ class Paginator implements Countable, IteratorAggregate
 
     /**
      * Tells if there is an active cache object
-     * and if the cache has not been desabled
+     * and if the cache has not been disabled
      *
      * @return bool
      */
-    protected function _cacheEnabled()
+    protected function cacheEnabled()
     {
-        return ((self::$_cache !== null) && $this->_cacheEnabled);
+        return ((self::$cache !== null) && $this->cacheEnabled);
     }
 
     /**
@@ -1021,27 +1023,27 @@ class Paginator implements Countable, IteratorAggregate
      * Loads a scrolling style.
      *
      * @param string $scrollingStyle
-     * @return ScrollingStyle
+     * @return ScrollingStyleInterface
      * @throws Exception\InvalidArgumentException
      */
     protected function _loadScrollingStyle($scrollingStyle = null)
     {
         if ($scrollingStyle === null) {
-            $scrollingStyle = self::$_defaultScrollingStyle;
+            $scrollingStyle = self::$defaultScrollingStyle;
         }
 
         switch (strtolower(gettype($scrollingStyle))) {
             case 'object':
-                if (!$scrollingStyle instanceof ScrollingStyle) {
+                if (!$scrollingStyle instanceof ScrollingStyleInterface) {
                     throw new Exception\InvalidArgumentException(
-                        'Scrolling style must implement Zend_Paginator_ScrollingStyle_Interface'
+                        'Scrolling style must implement Zend\Paginator\ScrollingStyle\ScrollingStyleInterface'
                     );
                 }
 
                 return $scrollingStyle;
 
             case 'string':
-                return self::getScrollingStyleBroker()->load($scrollingStyle);
+                return self::getScrollingStylePluginManager()->get($scrollingStyle);
 
             case 'null':
                 // Fall through to default case
@@ -1049,7 +1051,7 @@ class Paginator implements Countable, IteratorAggregate
             default:
                 throw new Exception\InvalidArgumentException(
                     'Scrolling style must be a class ' .
-                    'name or object implementing Zend\Paginator\ScrollingStyle'
+                    'name or object implementing Zend\Paginator\ScrollingStyle\ScrollingStyleInterface'
                 );
         }
     }

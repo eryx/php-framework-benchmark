@@ -1,47 +1,31 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Mvc_Router
- * @subpackage Http
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Mvc
  */
 
-/**
- * @namespace
- */
 namespace Zend\Mvc\Router\Http;
 
-use Traversable,
-    Zend\Stdlib\IteratorToArray,
-    Zend\Stdlib\RequestDescription as Request,
-    Zend\Mvc\Router\Exception;
+use Traversable;
+use Zend\Mvc\Router\Exception;
+use Zend\Stdlib\ArrayUtils;
+use Zend\Stdlib\RequestInterface as Request;
 
 /**
  * Literal route.
  *
  * @package    Zend_Mvc_Router
  * @subpackage Http
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @see        http://manuals.rubyonrails.com/read/chapter/65
  */
-class Literal implements Route
+class Literal implements RouteInterface
 {
     /**
-     * Route to match.
+     * RouteInterface to match.
      *
      * @var string
      */
@@ -56,33 +40,30 @@ class Literal implements Route
 
     /**
      * Create a new literal route.
-     * 
+     *
      * @param  string $route
-     * @param  array  $defaults 
-     * @return void
+     * @param  array  $defaults
      */
     public function __construct($route, array $defaults = array())
     {
         $this->route    = $route;
         $this->defaults = $defaults;
     }
-    
+
     /**
-     * factory(): defined by Route interface.
+     * factory(): defined by RouteInterface interface.
      *
      * @see    Route::factory()
      * @param  array|Traversable $options
-     * @return void
+     * @throws Exception\InvalidArgumentException
+     * @return Literal
      */
     public static function factory($options = array())
     {
-        if (!is_array($options) && !$options instanceof Traversable) {
+        if ($options instanceof Traversable) {
+            $options = ArrayUtils::iteratorToArray($options);
+        } elseif (!is_array($options)) {
             throw new Exception\InvalidArgumentException(__METHOD__ . ' expects an array or Traversable set of options');
-        }
-
-        // Convert options to array if Traversable object not implementing ArrayAccess
-        if ($options instanceof Traversable && !$options instanceof ArrayAccess) {
-            $options = IteratorToArray::convert($options);
         }
 
         if (!isset($options['route'])) {
@@ -97,19 +78,20 @@ class Literal implements Route
     }
 
     /**
-     * match(): defined by Route interface.
+     * match(): defined by RouteInterface interface.
      *
      * @see    Route::match()
-     * @param  Request $request
-     * @return RouteMatch
+     * @param  Request  $request
+     * @param  int|null $pathOffset
+     * @return RouteMatch|null
      */
     public function match(Request $request, $pathOffset = null)
     {
-        if (!method_exists($request, 'uri')) {
+        if (!method_exists($request, 'getUri')) {
             return null;
         }
 
-        $uri  = $request->uri();
+        $uri  = $request->getUri();
         $path = $uri->getPath();
 
         if ($pathOffset !== null) {
@@ -118,7 +100,7 @@ class Literal implements Route
                     return new RouteMatch($this->defaults, strlen($this->route));
                 }
             }
-            
+
             return null;
         }
 
@@ -130,7 +112,7 @@ class Literal implements Route
     }
 
     /**
-     * assemble(): Defined by Route interface.
+     * assemble(): Defined by RouteInterface interface.
      *
      * @see    Route::assemble()
      * @param  array $params
@@ -141,10 +123,10 @@ class Literal implements Route
     {
         return $this->route;
     }
-    
+
     /**
-     * getAssembledParams(): defined by Route interface.
-     * 
+     * getAssembledParams(): defined by RouteInterface interface.
+     *
      * @see    Route::getAssembledParams
      * @return array
      */

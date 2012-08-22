@@ -1,27 +1,17 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Memory
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Memory
  */
 
-/**
- * @namespace
- */
 namespace Zend\Memory;
+
+use ArrayAccess;
+use Countable;
 
 /**
  * String value object
@@ -29,35 +19,31 @@ namespace Zend\Memory;
  * It's an OO string wrapper.
  * Used to intercept string updates.
  *
- * @uses       ArrayAccess
- * @uses       Countable
  * @category   Zend
  * @package    Zend_Memory
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
-class Value implements \ArrayAccess,\Countable
+class Value implements ArrayAccess, Countable
 {
     /**
      * Value
      *
      * @var string
      */
-    private $_value;
+    private $value;
 
     /**
      * Container
      *
-     * @var \Zend\Memory\Container
+     * @var Container\Movable
      */
-    private $_container;
+    private $container;
 
     /**
      * Boolean flag which signals to trace value modifications
      *
      * @var boolean
      */
-    private $_trace;
+    private $trace;
 
 
     /**
@@ -68,9 +54,9 @@ class Value implements \ArrayAccess,\Countable
      */
     public function __construct($value, Container\Movable $container)
     {
-        $this->_container = $container;
+        $this->container = $container;
 
-        $this->_value = (string)$value;
+        $this->value = (string)$value;
 
         /**
          * Object is marked as just modified by memory manager
@@ -80,17 +66,17 @@ class Value implements \ArrayAccess,\Countable
          *
          * It reduces overall numberr of calls necessary to modification trace
          */
-        $this->_trace = false;
+        $this->trace = false;
     }
 
     /**
      * Countable
-     * 
+     *
      * @return int
      */
     public function count()
     {
-        return strlen($this->_value);
+        return strlen($this->value);
     }
 
     /**
@@ -102,7 +88,7 @@ class Value implements \ArrayAccess,\Countable
      */
     public function offsetExists($offset)
     {
-        return $offset >= 0  &&  $offset < strlen($this->_value);
+        return $offset >= 0  &&  $offset < strlen($this->value);
     }
 
     /**
@@ -114,7 +100,7 @@ class Value implements \ArrayAccess,\Countable
      */
     public function offsetGet($offset)
     {
-        return $this->_value[$offset];
+        return $this->value[$offset];
     }
 
     /**
@@ -126,11 +112,11 @@ class Value implements \ArrayAccess,\Countable
      */
     public function offsetSet($offset, $char)
     {
-        $this->_value[$offset] = $char;
+        $this->value[$offset] = $char;
 
-        if ($this->_trace) {
-            $this->_trace = false;
-            $this->_container->processUpdate();
+        if ($this->trace) {
+            $this->trace = false;
+            $this->container->processUpdate();
         }
     }
 
@@ -142,11 +128,11 @@ class Value implements \ArrayAccess,\Countable
      */
     public function offsetUnset($offset)
     {
-        unset($this->_value[$offset]);
+        unset($this->value[$offset]);
 
-        if ($this->_trace) {
-            $this->_trace = false;
-            $this->_container->processUpdate();
+        if ($this->trace) {
+            $this->trace = false;
+            $this->container->processUpdate();
         }
     }
 
@@ -158,7 +144,7 @@ class Value implements \ArrayAccess,\Countable
      */
     public function __toString()
     {
-        return $this->_value;
+        return $this->value;
     }
 
 
@@ -173,7 +159,7 @@ class Value implements \ArrayAccess,\Countable
      */
     public function &getRef()
     {
-        return $this->_value;
+        return $this->value;
     }
 
     /**
@@ -186,6 +172,6 @@ class Value implements \ArrayAccess,\Countable
      */
     public function startTrace()
     {
-        $this->_trace = true;
+        $this->trace = true;
     }
 }

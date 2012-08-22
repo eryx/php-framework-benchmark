@@ -15,30 +15,29 @@
  * @category   Zend
  * @package    Zend_Form
  * @subpackage Element
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Form\Element;
 
+use Zend\Form\Element;
+
 /**
- * Textarea form element
- *
- * @uses       \Zend\Form\Element\Xhtml
  * @category   Zend
  * @package    Zend_Form
  * @subpackage Element
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
-class Textarea extends Xhtml
+class Textarea extends Element
 {
     /**
-     * Use formTextarea view helper by default
-     * @var string
+     * Seed attributes
+     *
+     * @var array
      */
-    public $helper = 'formTextarea';
+    protected $attributes = array(
+        'type' => 'textarea',
+    );
 }

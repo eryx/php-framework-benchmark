@@ -1,41 +1,23 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Filter
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Filter
  */
 
-/**
- * @namespace
- */
 namespace Zend\Filter;
 
-use Zend\Loader\Broker,
-    Zend\Stdlib\SplPriorityQueue;
+use Countable;
+use Zend\Stdlib\PriorityQueue;
 
 /**
- * @uses       Zend\Filter\Exception
- * @uses       Zend\Filter\AbstractFilter
- * @uses       Zend\Loader
  * @category   Zend
  * @package    Zend_Filter
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
-class FilterChain extends AbstractFilter
+class FilterChain extends AbstractFilter implements Countable
 {
     /**
      * Default priority at which filters are added
@@ -43,25 +25,24 @@ class FilterChain extends AbstractFilter
     const DEFAULT_PRIORITY = 1000;
 
     /**
-     * @var Broker
+     * @var FilterPluginManager
      */
-    protected $broker;
+    protected $plugins;
 
     /**
      * Filter chain
      *
-     * @var SplPriorityQueue
+     * @var PriorityQueue
      */
     protected $filters;
 
     /**
      * Initialize filter chain
-     * 
-     * @return void
+     *
      */
     public function __construct($options = null)
     {
-        $this->filters = new SplPriorityQueue();
+        $this->filters = new PriorityQueue();
 
         if (null !== $options) {
             $this->setOptions($options);
@@ -108,52 +89,64 @@ class FilterChain extends AbstractFilter
     }
 
     /**
-     * Plugin Broker
+     * Return the count of attached filters
      *
-     * Set or retrieve the plugin broker, or retrieve a specific plugin from it.
-     *
-     * If $name is null, the broker instance is returned; it will be lazy-loaded
-     * if not already present.
-     *
-     * If $name is a Broker instance, this broker instance will replace or set 
-     * the internal broker, and the instance will be returned.
-     *
-     * If $name is a string, $name and $options will be passed to the broker's 
-     * load() method.
-     * 
-     * @param  null|Broker|string $name 
-     * @param array $options 
-     * @return Broker|Filter
+     * @return int
      */
-    public function broker($name = null, $options = array())
+    public function count()
     {
-        if ($name instanceof Broker) {
-            $this->broker = $name;
-            return $this->broker;
-        } 
+        return count($this->filters);
+    }
 
-        if (null === $this->broker) {
-            $this->broker = new FilterBroker();
+    /**
+     * Get plugin manager instance
+     *
+     * @return FilterPluginManager
+     */
+    public function getPluginManager()
+    {
+        if (!$this->plugins) {
+            $this->setPluginManager(new FilterPluginManager());
         }
+        return $this->plugins;
+    }
 
-        if (null === $name) {
-            return $this->broker;
-        }
+    /**
+     * Set plugin manager instance
+     *
+     * @param  FilterPluginManager $plugins
+     * @return FilterChain
+     */
+    public function setPluginManager(FilterPluginManager $plugins)
+    {
+        $this->plugins = $plugins;
+        return $this;
+    }
 
-        return $this->broker->load($name, $options);
+    /**
+     * Retrieve a filter plugin by name
+     *
+     * @param  mixed $name
+     * @param  array $options
+     * @return Filter
+     */
+    public function plugin($name, array $options = array())
+    {
+        $plugins = $this->getPluginManager();
+        return $plugins->get($name, $options);
     }
 
     /**
      * Attach a filter to the chain
-     * 
-     * @param  callback|Filter $callback A Filter implementation or valid PHP callback
+     *
+     * @param  callable|FilterInterface $callback A Filter implementation or valid PHP callback
      * @param  int $priority Priority at which to enqueue filter; defaults to 1000 (higher executes earlier)
      * @return FilterChain
      */
     public function attach($callback, $priority = self::DEFAULT_PRIORITY)
     {
         if (!is_callable($callback)) {
-            if (!$callback instanceof Filter) {
+            if (!$callback instanceof FilterInterface) {
                 throw new Exception\InvalidArgumentException(sprintf(
                     'Expected a valid PHP callback; received "%s"',
                     (is_object($callback) ? get_class($callback) : gettype($callback))
@@ -168,11 +161,11 @@ class FilterChain extends AbstractFilter
     /**
      * Attach a filter to the chain using a short name
      *
-     * Retrieves the filter from the attached plugin broker, and then calls attach() 
+     * Retrieves the filter from the attached plugin broker, and then calls attach()
      * with the retrieved instance.
-     * 
-     * @param  string $name 
-     * @param  mixed $options 
+     *
+     * @param  string $name
+     * @param  mixed $options
      * @param  int $priority Priority at which to enqueue filter; defaults to 1000 (higher executes earlier)
      * @return FilterChain
      */
@@ -180,19 +173,32 @@ class FilterChain extends AbstractFilter
     {
         if (!is_array($options)) {
             $options = (array) $options;
-        } else {
-            if (range(0, count($options) - 1) != array_keys($options)) {
-                $options = array($options);
-            }
+        } elseif (empty($options)) {
+            $options = null;
         }
-        $filter = $this->broker($name, $options);
+        $filter = $this->getPluginManager()->get($name, $options);
         return $this->attach($filter, $priority);
+    }
+
+    /**
+     * Merge the filter chain with the one given in parameter
+     *
+     * @param FilterChain $filterChain
+     * @return FilterChain
+     */
+    public function merge(FilterChain $filterChain)
+    {
+        foreach ($filterChain->filters as $filter) {
+            $this->attach($filter);
+        }
+
+        return $this;
     }
 
     /**
      * Get all the filters
      *
-     * @return SplPriorityQueue
+     * @return PriorityQueue
      */
     public function getFilters()
     {

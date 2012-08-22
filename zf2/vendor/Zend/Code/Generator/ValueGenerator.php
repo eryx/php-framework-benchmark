@@ -1,27 +1,13 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_CodeGenerator
- * @subpackage PHP
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Code
  */
 
-/**
- * @namespace
- */
 namespace Zend\Code\Generator;
 
 class ValueGenerator extends AbstractGenerator
@@ -46,7 +32,7 @@ class ValueGenerator extends AbstractGenerator
     /**#@-*/
 
     const OUTPUT_MULTIPLE_LINE = 'multipleLine';
-    const OUTPUT_SINGLE_LINE = 'singleLine';
+    const OUTPUT_SINGLE_LINE   = 'singleLine';
 
     /**
      * @var mixed
@@ -56,7 +42,7 @@ class ValueGenerator extends AbstractGenerator
     /**
      * @var string
      */
-    protected $type  = self::TYPE_AUTO;
+    protected $type = self::TYPE_AUTO;
 
     /**
      * @var int
@@ -249,6 +235,7 @@ class ValueGenerator extends AbstractGenerator
     /**
      * generate()
      *
+     * @throws Exception\RuntimeException
      * @return string
      */
     public function generate()
@@ -268,7 +255,7 @@ class ValueGenerator extends AbstractGenerator
                 $rii = new \RecursiveIteratorIterator(
                     $it = new \RecursiveArrayIterator($value),
                     \RecursiveIteratorIterator::SELF_FIRST
-                    );
+                );
                 foreach ($rii as $curKey => $curValue) {
                     if (!$curValue instanceof ValueGenerator) {
                         $curValue = new self($curValue);
@@ -286,7 +273,7 @@ class ValueGenerator extends AbstractGenerator
         switch ($type) {
             case self::TYPE_BOOLEAN:
             case self::TYPE_BOOL:
-                $output .= ( $value ? 'true' : 'false' );
+                $output .= ($value ? 'true' : 'false');
                 break;
             case self::TYPE_STRING:
                 $output .= self::escape($value);
@@ -312,7 +299,7 @@ class ValueGenerator extends AbstractGenerator
                     }
                 }
                 $outputParts = array();
-                $noKeyIndex = 0;
+                $noKeyIndex  = 0;
                 foreach ($value as $n => $v) {
                     /* @var $v ValueGenerator */
                     $v->setArrayDepth($this->arrayDepth + 1);
@@ -347,7 +334,7 @@ class ValueGenerator extends AbstractGenerator
      * Quotes value for PHP code.
      *
      * @param string $input Raw string.
-     * @param bool $quote Whether add surrounding quotes or not.
+     * @param bool   $quote Whether add surrounding quotes or not.
      * @return string PHP-ready code.
      */
     public static function escape($input, $quote = true)

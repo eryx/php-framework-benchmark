@@ -1,47 +1,31 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Reader\Reader
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Feed
  */
 
-/**
-* @namespace
-*/
 namespace Zend\Feed\Reader\Entry;
+
+use DOMElement;
+use DOMXPath;
 use Zend\Feed\Reader;
 
 /**
-* @uses \Zend\Feed\Reader\Reader
-* @uses \Zend\Feed\Reader\Entry\AbstractEntry
-* @uses \Zend\Feed\Reader\Entry
-* @uses \Zend\Feed\Reader\Extension\Atom\Entry
 * @category Zend
 * @package Zend_Feed_Reader
-* @copyright Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
-* @license http://framework.zend.com/license/new-bsd New BSD License
 */
-class Atom extends AbstractEntry implements Reader\Entry
+class Atom extends AbstractEntry implements EntryInterface
 {
     /**
      * XPath query
      *
      * @var string
      */
-    protected $_xpathQuery = '';
+    protected $xpathQuery = '';
 
     /**
      * Constructor
@@ -49,23 +33,24 @@ class Atom extends AbstractEntry implements Reader\Entry
      * @param  DOMElement $entry
      * @param  int $entryKey
      * @param  string $type
-     * @return void
      */
-    public function __construct(\DOMElement $entry, $entryKey, $type = null)
+    public function __construct(DOMElement $entry, $entryKey, $type = null)
     {
         parent::__construct($entry, $entryKey, $type);
 
         // Everyone by now should know XPath indices start from 1 not 0
-        $this->_xpathQuery = '//atom:entry[' . ($this->_entryKey + 1) . ']';
+        $this->xpathQuery = '//atom:entry[' . ($this->entryKey + 1) . ']';
 
-        $atomClass = Reader\Reader::getPluginLoader()->getClassName('Atom\\Entry');
-        $this->_extensions['Atom\\Entry'] = new $atomClass($entry, $entryKey, $type);
+        $manager    = Reader\Reader::getExtensionManager();
+        $extensions = array('Atom\Entry', 'Thread\Entry', 'DublinCore\Entry');
 
-        $threadClass = Reader\Reader::getPluginLoader()->getClassName('Thread\\Entry');
-        $this->_extensions['Thread\\Entry'] = new $threadClass($entry, $entryKey, $type);
-        
-        $threadClass = Reader\Reader::getPluginLoader()->getClassName('DublinCore\\Entry');
-        $this->_extensions['DublinCore\\Entry'] = new $threadClass($entry, $entryKey, $type);
+        foreach ($extensions as $name) {
+            $extension = $manager->get($name);
+            $extension->setEntryElement($entry);
+            $extension->setEntryKey($entryKey);
+            $extension->setType($type);
+            $this->extensions[$name] = $extension;
+        }
     }
 
     /**
@@ -92,15 +77,15 @@ class Atom extends AbstractEntry implements Reader\Entry
      */
     public function getAuthors()
     {
-        if (array_key_exists('authors', $this->_data)) {
-            return $this->_data['authors'];
+        if (array_key_exists('authors', $this->data)) {
+            return $this->data['authors'];
         }
 
         $people = $this->getExtension('Atom')->getAuthors();
 
-        $this->_data['authors'] = $people;
+        $this->data['authors'] = $people;
 
-        return $this->_data['authors'];
+        return $this->data['authors'];
     }
 
     /**
@@ -110,15 +95,15 @@ class Atom extends AbstractEntry implements Reader\Entry
      */
     public function getContent()
     {
-        if (array_key_exists('content', $this->_data)) {
-            return $this->_data['content'];
+        if (array_key_exists('content', $this->data)) {
+            return $this->data['content'];
         }
 
         $content = $this->getExtension('Atom')->getContent();
 
-        $this->_data['content'] = $content;
+        $this->data['content'] = $content;
 
-        return $this->_data['content'];
+        return $this->data['content'];
     }
 
     /**
@@ -128,15 +113,15 @@ class Atom extends AbstractEntry implements Reader\Entry
      */
     public function getDateCreated()
     {
-        if (array_key_exists('datecreated', $this->_data)) {
-            return $this->_data['datecreated'];
+        if (array_key_exists('datecreated', $this->data)) {
+            return $this->data['datecreated'];
         }
 
         $dateCreated = $this->getExtension('Atom')->getDateCreated();
 
-        $this->_data['datecreated'] = $dateCreated;
+        $this->data['datecreated'] = $dateCreated;
 
-        return $this->_data['datecreated'];
+        return $this->data['datecreated'];
     }
 
     /**
@@ -146,15 +131,15 @@ class Atom extends AbstractEntry implements Reader\Entry
      */
     public function getDateModified()
     {
-        if (array_key_exists('datemodified', $this->_data)) {
-            return $this->_data['datemodified'];
+        if (array_key_exists('datemodified', $this->data)) {
+            return $this->data['datemodified'];
         }
 
         $dateModified = $this->getExtension('Atom')->getDateModified();
 
-        $this->_data['datemodified'] = $dateModified;
+        $this->data['datemodified'] = $dateModified;
 
-        return $this->_data['datemodified'];
+        return $this->data['datemodified'];
     }
 
     /**
@@ -164,15 +149,15 @@ class Atom extends AbstractEntry implements Reader\Entry
      */
     public function getDescription()
     {
-        if (array_key_exists('description', $this->_data)) {
-            return $this->_data['description'];
+        if (array_key_exists('description', $this->data)) {
+            return $this->data['description'];
         }
 
         $description = $this->getExtension('Atom')->getDescription();
 
-        $this->_data['description'] = $description;
+        $this->data['description'] = $description;
 
-        return $this->_data['description'];
+        return $this->data['description'];
     }
 
     /**
@@ -182,15 +167,15 @@ class Atom extends AbstractEntry implements Reader\Entry
      */
     public function getEnclosure()
     {
-        if (array_key_exists('enclosure', $this->_data)) {
-            return $this->_data['enclosure'];
+        if (array_key_exists('enclosure', $this->data)) {
+            return $this->data['enclosure'];
         }
 
         $enclosure = $this->getExtension('Atom')->getEnclosure();
 
-        $this->_data['enclosure'] = $enclosure;
+        $this->data['enclosure'] = $enclosure;
 
-        return $this->_data['enclosure'];
+        return $this->data['enclosure'];
     }
 
     /**
@@ -200,15 +185,15 @@ class Atom extends AbstractEntry implements Reader\Entry
      */
     public function getId()
     {
-        if (array_key_exists('id', $this->_data)) {
-            return $this->_data['id'];
+        if (array_key_exists('id', $this->data)) {
+            return $this->data['id'];
         }
 
         $id = $this->getExtension('Atom')->getId();
 
-        $this->_data['id'] = $id;
+        $this->data['id'] = $id;
 
-        return $this->_data['id'];
+        return $this->data['id'];
     }
 
     /**
@@ -219,12 +204,12 @@ class Atom extends AbstractEntry implements Reader\Entry
      */
     public function getLink($index = 0)
     {
-        if (!array_key_exists('links', $this->_data)) {
+        if (!array_key_exists('links', $this->data)) {
             $this->getLinks();
         }
 
-        if (isset($this->_data['links'][$index])) {
-            return $this->_data['links'][$index];
+        if (isset($this->data['links'][$index])) {
+            return $this->data['links'][$index];
         }
 
         return null;
@@ -237,15 +222,15 @@ class Atom extends AbstractEntry implements Reader\Entry
      */
     public function getLinks()
     {
-        if (array_key_exists('links', $this->_data)) {
-            return $this->_data['links'];
+        if (array_key_exists('links', $this->data)) {
+            return $this->data['links'];
         }
 
         $links = $this->getExtension('Atom')->getLinks();
 
-        $this->_data['links'] = $links;
+        $this->data['links'] = $links;
 
-        return $this->_data['links'];
+        return $this->data['links'];
     }
 
     /**
@@ -265,15 +250,15 @@ class Atom extends AbstractEntry implements Reader\Entry
      */
     public function getTitle()
     {
-        if (array_key_exists('title', $this->_data)) {
-            return $this->_data['title'];
+        if (array_key_exists('title', $this->data)) {
+            return $this->data['title'];
         }
 
         $title = $this->getExtension('Atom')->getTitle();
 
-        $this->_data['title'] = $title;
+        $this->data['title'] = $title;
 
-        return $this->_data['title'];
+        return $this->data['title'];
     }
 
     /**
@@ -283,8 +268,8 @@ class Atom extends AbstractEntry implements Reader\Entry
      */
     public function getCommentCount()
     {
-        if (array_key_exists('commentcount', $this->_data)) {
-            return $this->_data['commentcount'];
+        if (array_key_exists('commentcount', $this->data)) {
+            return $this->data['commentcount'];
         }
 
         $commentcount = $this->getExtension('Thread')->getCommentCount();
@@ -293,9 +278,9 @@ class Atom extends AbstractEntry implements Reader\Entry
             $commentcount = $this->getExtension('Atom')->getCommentCount();
         }
 
-        $this->_data['commentcount'] = $commentcount;
+        $this->data['commentcount'] = $commentcount;
 
-        return $this->_data['commentcount'];
+        return $this->data['commentcount'];
     }
 
     /**
@@ -305,15 +290,15 @@ class Atom extends AbstractEntry implements Reader\Entry
      */
     public function getCommentLink()
     {
-        if (array_key_exists('commentlink', $this->_data)) {
-            return $this->_data['commentlink'];
+        if (array_key_exists('commentlink', $this->data)) {
+            return $this->data['commentlink'];
         }
 
         $commentlink = $this->getExtension('Atom')->getCommentLink();
 
-        $this->_data['commentlink'] = $commentlink;
+        $this->data['commentlink'] = $commentlink;
 
-        return $this->_data['commentlink'];
+        return $this->data['commentlink'];
     }
 
     /**
@@ -323,67 +308,68 @@ class Atom extends AbstractEntry implements Reader\Entry
      */
     public function getCommentFeedLink()
     {
-        if (array_key_exists('commentfeedlink', $this->_data)) {
-            return $this->_data['commentfeedlink'];
+        if (array_key_exists('commentfeedlink', $this->data)) {
+            return $this->data['commentfeedlink'];
         }
 
         $commentfeedlink = $this->getExtension('Atom')->getCommentFeedLink();
 
-        $this->_data['commentfeedlink'] = $commentfeedlink;
+        $this->data['commentfeedlink'] = $commentfeedlink;
 
-        return $this->_data['commentfeedlink'];
+        return $this->data['commentfeedlink'];
     }
-    
+
     /**
      * Get category data as a Reader\Reader_Collection_Category object
      *
-     * @return Reader\Reader_Collection_Category
+     * @return Reader\Collection\Category
      */
     public function getCategories()
     {
-        if (array_key_exists('categories', $this->_data)) {
-            return $this->_data['categories'];
+        if (array_key_exists('categories', $this->data)) {
+            return $this->data['categories'];
         }
 
         $categoryCollection = $this->getExtension('Atom')->getCategories();
-        
+
         if (count($categoryCollection) == 0) {
             $categoryCollection = $this->getExtension('DublinCore')->getCategories();
         }
 
-        $this->_data['categories'] = $categoryCollection;
+        $this->data['categories'] = $categoryCollection;
 
-        return $this->_data['categories'];
+        return $this->data['categories'];
     }
-    
+
     /**
      * Get source feed metadata from the entry
      *
-     * @return Reader\Reader_Feed_Atom_Source|null
+     * @return Reader\Feed\Atom\Source|null
      */
     public function getSource()
     {
-        if (array_key_exists('source', $this->_data)) {
-            return $this->_data['source'];
+        if (array_key_exists('source', $this->data)) {
+            return $this->data['source'];
         }
 
         $source = $this->getExtension('Atom')->getSource();
 
-        $this->_data['source'] = $source;
+        $this->data['source'] = $source;
 
-        return $this->_data['source']; 
+        return $this->data['source'];
     }
 
     /**
      * Set the XPath query (incl. on all Extensions)
      *
-     * @param \DOMXPath $xpath
+     * @param DOMXPath $xpath
+     * @return void
      */
-    public function setXpath(\DOMXPath $xpath)
+    public function setXpath(DOMXPath $xpath)
     {
         parent::setXpath($xpath);
-        foreach ($this->_extensions as $extension) {
-            $extension->setXpath($this->_xpath);
+        foreach ($this->extensions as $extension) {
+            $extension->setXpath($this->xpath);
         }
     }
 }

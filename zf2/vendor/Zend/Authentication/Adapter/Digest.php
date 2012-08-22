@@ -1,69 +1,51 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Authentication
- * @subpackage Adapter
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Authentication
  */
 
-/**
- * @namespace
- */
 namespace Zend\Authentication\Adapter;
-use Zend\Authentication\Adapter as AuthenticationAdapter,
-    Zend\Authentication\Result as AuthenticationResult;
+
+use Zend\Authentication\Result as AuthenticationResult;
 
 /**
- * @uses       Zend\Authentication\Adapter\Exception
- * @uses       Zend\Authentication\Adapter
  * @category   Zend
  * @package    Zend_Authentication
  * @subpackage Adapter
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
-class Digest implements AuthenticationAdapter
+class Digest implements AdapterInterface
 {
     /**
      * Filename against which authentication queries are performed
      *
      * @var string
      */
-    protected $_filename;
+    protected $filename;
 
     /**
      * Digest authentication realm
      *
      * @var string
      */
-    protected $_realm;
+    protected $realm;
 
     /**
      * Digest authentication user
      *
      * @var string
      */
-    protected $_username;
+    protected $username;
 
     /**
      * Password for the user of the realm
      *
      * @var string
      */
-    protected $_password;
+    protected $password;
 
     /**
      * Sets adapter options
@@ -72,7 +54,6 @@ class Digest implements AuthenticationAdapter
      * @param  mixed $realm
      * @param  mixed $username
      * @param  mixed $password
-     * @return void
      */
     public function __construct($filename = null, $realm = null, $username = null, $password = null)
     {
@@ -92,18 +73,18 @@ class Digest implements AuthenticationAdapter
      */
     public function getFilename()
     {
-        return $this->_filename;
+        return $this->filename;
     }
 
     /**
      * Sets the filename option value
      *
      * @param  mixed $filename
-     * @return Zend\Authentication\Adapter\Digest Provides a fluent interface
+     * @return Digest Provides a fluent interface
      */
     public function setFilename($filename)
     {
-        $this->_filename = (string) $filename;
+        $this->filename = (string) $filename;
         return $this;
     }
 
@@ -114,18 +95,18 @@ class Digest implements AuthenticationAdapter
      */
     public function getRealm()
     {
-        return $this->_realm;
+        return $this->realm;
     }
 
     /**
      * Sets the realm option value
      *
      * @param  mixed $realm
-     * @return Zend\Authentication\Adapter\Digest Provides a fluent interface
+     * @return Digest Provides a fluent interface
      */
     public function setRealm($realm)
     {
-        $this->_realm = (string) $realm;
+        $this->realm = (string) $realm;
         return $this;
     }
 
@@ -136,18 +117,18 @@ class Digest implements AuthenticationAdapter
      */
     public function getUsername()
     {
-        return $this->_username;
+        return $this->username;
     }
 
     /**
      * Sets the username option value
      *
      * @param  mixed $username
-     * @return Zend\Authentication\Adapter\Digest Provides a fluent interface
+     * @return Digest Provides a fluent interface
      */
     public function setUsername($username)
     {
-        $this->_username = (string) $username;
+        $this->username = (string) $username;
         return $this;
     }
 
@@ -158,55 +139,55 @@ class Digest implements AuthenticationAdapter
      */
     public function getPassword()
     {
-        return $this->_password;
+        return $this->password;
     }
 
     /**
      * Sets the password option value
      *
      * @param  mixed $password
-     * @return Zend\Authentication\Adapter\Digest Provides a fluent interface
+     * @return Digest Provides a fluent interface
      */
     public function setPassword($password)
     {
-        $this->_password = (string) $password;
+        $this->password = (string) $password;
         return $this;
     }
 
     /**
-     * Defined by Zend_Auth_Adapter_Interface
+     * Defined by Zend\Authentication\Adapter\AdapterInterface
      *
-     * @throws Zend\Authentication\Adapter\Exception\RuntimeException
-     * @return Zend\Authentication\Result
+     * @throws Exception\ExceptionInterface
+     * @return AuthenticationResult
      */
     public function authenticate()
     {
         $optionsRequired = array('filename', 'realm', 'username', 'password');
         foreach ($optionsRequired as $optionRequired) {
-            if (null === $this->{"_$optionRequired"}) {
+            if (null === $this->$optionRequired) {
                 throw new Exception\RuntimeException("Option '$optionRequired' must be set before authentication");
             }
         }
 
-        if (false === ($fileHandle = @fopen($this->_filename, 'r'))) {
-            throw new Exception\UnexpectedValueException("Cannot open '$this->_filename' for reading");
+        if (false === ($fileHandle = @fopen($this->filename, 'r'))) {
+            throw new Exception\UnexpectedValueException("Cannot open '$this->filename' for reading");
         }
 
-        $id       = "$this->_username:$this->_realm";
+        $id       = "$this->username:$this->realm";
         $idLength = strlen($id);
 
         $result = array(
             'code'  => AuthenticationResult::FAILURE,
             'identity' => array(
-                'realm'    => $this->_realm,
-                'username' => $this->_username,
+                'realm'    => $this->realm,
+                'username' => $this->username,
                 ),
             'messages' => array()
             );
 
         while ($line = trim(fgets($fileHandle))) {
             if (substr($line, 0, $idLength) === $id) {
-                if ($this->_secureStringCompare(substr($line, -32), md5("$this->_username:$this->_realm:$this->_password"))) {
+                if ($this->_secureStringCompare(substr($line, -32), md5("$this->username:$this->realm:$this->password"))) {
                     $result['code'] = AuthenticationResult::SUCCESS;
                 } else {
                     $result['code'] = AuthenticationResult::FAILURE_CREDENTIAL_INVALID;
@@ -217,7 +198,7 @@ class Digest implements AuthenticationAdapter
         }
 
         $result['code'] = AuthenticationResult::FAILURE_IDENTITY_NOT_FOUND;
-        $result['messages'][] = "Username '$this->_username' and realm '$this->_realm' combination not found";
+        $result['messages'][] = "Username '$this->username' and realm '$this->realm' combination not found";
         return new AuthenticationResult($result['code'], $result['identity'], $result['messages']);
     }
 

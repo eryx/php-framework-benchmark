@@ -1,43 +1,27 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Navigation
- * @subpackage Page
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Navigation
  */
 
-/**
- * @namespace
- */
 namespace Zend\Navigation\Page;
 
-use Zend\Mvc\Router\RouteMatch,
-    Zend\Navigation\AbstractPage,
-    Zend\Navigation\Exception,
-    Zend\View\Helper\Url as UrlHelper;
+use Zend\Mvc\Router\RouteMatch;
+use Zend\Mvc\Router\RouteStackInterface;
+use Zend\Navigation\Exception;
+use Zend\View\Helper\Url as UrlHelper;
 
 /**
- * Represents a page that is defined using module, controller, action, route
+ * Represents a page that is defined using controller, action, route
  * name and route params to assemble the href
  *
  * @category   Zend
  * @package    Zend_Navigation
  * @subpackage Page
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Mvc extends AbstractPage
 {
@@ -47,11 +31,6 @@ class Mvc extends AbstractPage
      * @var string
      */
     protected $action;
-
-    /**
-     * @var bool
-     */
-    protected $active = false;
 
     /**
      * Controller name to use when assembling URL
@@ -69,7 +48,7 @@ class Mvc extends AbstractPage
     protected $params = array();
 
     /**
-     * Route name to use when assembling URL
+     * RouteInterface name to use when assembling URL
      *
      * @see getHref()
      * @var string
@@ -88,19 +67,28 @@ class Mvc extends AbstractPage
     protected $hrefCache;
 
     /**
-     * Route matches; used for routing parameters and testing validity
-     * 
+     * RouteInterface matches; used for routing parameters and testing validity
+     *
      * @var RouteMatch
      */
     protected $routeMatch;
 
     /**
-     * Action helper for assembling URLs
+     * Router for assembling URLs
      *
      * @see getHref()
-     * @var UrlHelper
+     * @var RouteStackInterface
      */
-    protected $urlHelper = null;
+    protected $router = null;
+
+    /**
+     * Default router to be used if router is not given.
+     *
+     * @see getHref()
+     *
+     * @var RouteStackInterface
+     */
+    protected static $defaultRouter= null;
 
     // Accessors:
 
@@ -120,7 +108,23 @@ class Mvc extends AbstractPage
         if (!$this->active) {
             $reqParams = array();
             if ($this->routeMatch instanceof RouteMatch) {
-                $reqParams = $this->routeMatch->getParams();
+                $reqParams  = $this->routeMatch->getParams();
+
+                $myParams   = $this->params;
+                if (null !== $this->controller) {
+                    $myParams['controller'] = $this->controller;
+                }
+                if (null !== $this->action) {
+                    $myParams['action'] = $this->action;
+                }
+
+                if (null !== $this->getRoute()
+                    && $this->routeMatch->getMatchedRouteName() === $this->getRoute()
+                    && (count(array_intersect_assoc($reqParams, $myParams)) == count($myParams))
+                ) {
+                    $this->active = true;
+                    return true;
+                }
             }
 
             $myParams = $this->params;
@@ -140,11 +144,10 @@ class Mvc extends AbstractPage
                 /**
                  * @todo In ZF1, this was configurable and pulled from the front controller
                  */
-                $myParams['action'] = 'action';
+                $myParams['action'] = 'index';
             }
 
-            if (count(array_intersect_assoc($reqParams, $myParams)) ==
-                count($myParams)) {
+            if (count(array_intersect_assoc($reqParams, $myParams)) == count($myParams)) {
                 $this->active = true;
                 return true;
             }
@@ -156,10 +159,12 @@ class Mvc extends AbstractPage
     /**
      * Returns href for this page
      *
-     * This method uses {@link Zend_Controller_Action_Helper_Url} to assemble
+     * This method uses {@link RouteStackInterface} to assemble
      * the href based on the page's properties.
      *
+     * @see RouteStackInterface
      * @return string  page href
+     * @throws Exception\DomainException if no router is set
      */
     public function getHref()
     {
@@ -167,8 +172,16 @@ class Mvc extends AbstractPage
             return $this->hrefCache;
         }
 
-        if (null === $this->urlHelper) {
-            throw new Exception\DomainException(__METHOD__ . ' cannot execute as no Zend\View\Helper\Url instance is composed');
+        $router = $this->router;
+        if (null === $router) {
+            $router = self::$defaultRouter;
+        }
+
+        if (!$router instanceof RouteStackInterface) {
+            throw new Exception\DomainException(
+                __METHOD__
+                . ' cannot execute as no Zend\Mvc\Router\RouteStackInterface instance is composed'
+            );
         }
 
         $params = $this->getParams();
@@ -180,18 +193,26 @@ class Mvc extends AbstractPage
         if (($param = $this->getAction()) != null) {
             $params['action'] = $param;
         }
-        
-        $helper = $this->urlHelper;
-        $url    = $helper(
-            $this->getRoute(),
-            $params
-        );
+
+        switch (true) {
+            case ($this->getRoute() !== null):
+                $name = $this->getRoute();
+                break;
+            case ($this->getRouteMatch() !== null):
+                $name = $this->getRouteMatch()->getMatchedRouteName();
+                break;
+            default:
+                throw new Exception\DomainException('No route name could be found');
+        }
+
+        $options = array('name' => $name);
+        $url = $router->assemble($params, $options);
 
         // Add the fragment identifier if it is set
-        $fragment = $this->getFragment();       
+        $fragment = $this->getFragment();
         if (null !== $fragment) {
             $url .= '#' . $fragment;
-        } 
+        }
 
         return $this->hrefCache = $url;
     }
@@ -209,10 +230,11 @@ class Mvc extends AbstractPage
     {
         if (null !== $action && !is_string($action)) {
             throw new Exception\InvalidArgumentException(
-                    'Invalid argument: $action must be a string or null');
+                'Invalid argument: $action must be a string or null'
+            );
         }
 
-        $this->action = $action;
+        $this->action    = $action;
         $this->hrefCache = null;
         return $this;
     }
@@ -242,11 +264,12 @@ class Mvc extends AbstractPage
     {
         if (null !== $controller && !is_string($controller)) {
             throw new Exception\InvalidArgumentException(
-                    'Invalid argument: $controller must be a string or null');
+                'Invalid argument: $controller must be a string or null'
+            );
         }
 
         $this->controller = $controller;
-        $this->hrefCache = null;
+        $this->hrefCache  = null;
         return $this;
     }
 
@@ -263,46 +286,12 @@ class Mvc extends AbstractPage
     }
 
     /**
-     * Sets module name to use when assembling URL
-     *
-     * @see getHref()
-     *
-     * @param  string|null $module        module name
-     * @return Mvc   fluent interface, returns self
-     * @throws Exception\InvalidArgumentException  if invalid module name is given
-     */
-    public function setModule($module)
-    {
-        if (null !== $module && !is_string($module)) {
-            throw new Exception\InvalidArgumentException(
-                    'Invalid argument: $module must be a string or null');
-        }
-
-        $this->module = $module;
-        $this->hrefCache = null;
-        return $this;
-    }
-
-    /**
-     * Returns module name to use when assembling URL
-     *
-     * @see getHref()
-     *
-     * @return string|null  module name or null
-     */
-    public function getModule()
-    {
-        return $this->module;
-    }
-
-    /**
      * Sets params to use when assembling URL
      *
      * @see getHref()
-     *
-     * @param  array|null $params        [optional] page params. Default is null
-     *                                   which sets no params.
-     * @return \Zend\Navigation\Page\Mvc  fluent interface, returns self
+     * @param  array|null $params [optional] page params. Default is null
+     *                            which sets no params.
+     * @return Mvc  fluent interface, returns self
      */
     public function setParams(array $params = null)
     {
@@ -342,10 +331,11 @@ class Mvc extends AbstractPage
     {
         if (null !== $route && (!is_string($route) || strlen($route) < 1)) {
             throw new Exception\InvalidArgumentException(
-                 'Invalid argument: $route must be a non-empty string or null');
+                'Invalid argument: $route must be a non-empty string or null'
+            );
         }
 
-        $this->route = $route;
+        $this->route     = $route;
         $this->hrefCache = null;
         return $this;
     }
@@ -363,10 +353,20 @@ class Mvc extends AbstractPage
     }
 
     /**
+     * Get the route match.
+     *
+     * @return \Zend\Mvc\Router\RouteMatch
+     */
+    public function getRouteMatch()
+    {
+        return $this->routeMatch;
+    }
+
+    /**
      * Set route match object from which parameters will be retrieved
-     * 
-     * @param  RouteMatch $matches 
-     * @return Mvc
+     *
+     * @param  RouteMatch $matches
+     * @return Mvc fluent interface, returns self
      */
     public function setRouteMatch(RouteMatch $matches)
     {
@@ -375,17 +375,49 @@ class Mvc extends AbstractPage
     }
 
     /**
-     * Sets action helper for assembling URLs
+     * Get the router.
+     *
+     * @return null|RouteStackInterface
+     */
+    public function getRouter()
+    {
+        return $this->router;
+    }
+
+    /**
+     * Sets router for assembling URLs
      *
      * @see getHref()
      *
-     * @param  UrlHelper $uh  URL plugin
-     * @return Mvc
+     * @param  RouteStackInterface $router Router
+     * @return Mvc    fluent interface, returns self
      */
-    public function setUrlHelper(UrlHelper $helper)
+    public function setRouter(RouteStackInterface $router)
     {
-        $this->urlHelper = $helper;
+        $this->router = $router;
         return $this;
+    }
+
+    /**
+     * Sets the default router for assembling URLs.
+     *
+     * @see getHref()
+     * @param  RouteStackInterface $router Router
+     * @return void
+     */
+    public static function setDefaultRouter($router)
+    {
+        self::$defaultRouter = $router;
+    }
+
+    /**
+     * Gets the default router for assembling URLs.
+     *
+     * @return RouteStackInterface
+     */
+    public static function getDefaultRouter()
+    {
+        return self::$defaultRouter;
     }
 
     // Public methods:
@@ -400,10 +432,11 @@ class Mvc extends AbstractPage
         return array_merge(
             parent::toArray(),
             array(
-                'action'       => $this->getAction(),
-                'controller'   => $this->getController(),
-                'params'       => $this->getParams(),
-                'route'        => $this->getRoute(),
-            ));
+                 'action'     => $this->getAction(),
+                 'controller' => $this->getController(),
+                 'params'     => $this->getParams(),
+                 'route'      => $this->getRoute(),
+            )
+        );
     }
 }

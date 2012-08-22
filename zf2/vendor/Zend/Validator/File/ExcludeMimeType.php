@@ -1,41 +1,22 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category  Zend
- * @package   Zend_Validate
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license   http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Validator
  */
 
-/**
- * @namespace
- */
 namespace Zend\Validator\File;
 
-use finfo,
-    Zend\Loader;
+use finfo;
 
 /**
  * Validator for the mime type of a file
  *
- * @uses      finfo
- * @uses      \Zend\Loader
- * @uses      \Zend\Validator\File\MimeType
  * @category  Zend
  * @package   Zend_Validate
- * @copyright Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license   http://framework.zend.com/license/new-bsd     New BSD License
  */
 class ExcludeMimeType extends MimeType
 {
@@ -62,51 +43,52 @@ class ExcludeMimeType extends MimeType
         }
 
         // Is file readable ?
-        if (!Loader::isReadable($value)) {
-            return $this->_throw($file, self::NOT_READABLE);
+        if (false === stream_resolve_include_path($value)) {
+            return $this->createError($file, self::NOT_READABLE);
         }
 
         $mimefile = $this->getMagicFile();
         if (class_exists('finfo', false)) {
             $const = defined('FILEINFO_MIME_TYPE') ? FILEINFO_MIME_TYPE : FILEINFO_MIME;
-            if (!$this->isMagicFileDisabled() && (!empty($mimefile) && empty($this->_finfo))) {
-                $this->_finfo = @finfo_open($const, $mimefile);
+            if (!$this->isMagicFileDisabled() && (!empty($mimefile) && empty($this->finfo))) {
+                $this->finfo = finfo_open($const, $mimefile);
             }
 
-            if (empty($this->_finfo)) {
-                $this->_finfo = @finfo_open($const);
+            if (empty($this->finfo)) {
+                $this->finfo = finfo_open($const);
             }
 
-            $this->_type = null;
-            if (!empty($this->_finfo)) {
-                $this->_type = finfo_file($this->_finfo, $value);
+            $this->type = null;
+            if (!empty($this->finfo)) {
+                $this->type = finfo_file($this->finfo, $value);
             }
         }
 
-        if (empty($this->_type) &&
-            (function_exists('mime_content_type') && ini_get('mime_magic.magicfile'))) {
-                $this->_type = mime_content_type($value);
+        if (empty($this->type) &&
+            (function_exists('mime_content_type') && ini_get('mime_magic.magicfile'))
+        ) {
+            $this->type = mime_content_type($value);
         }
 
-        if (empty($this->_type) && $this->getHeaderCheck()) {
-            $this->_type = $file['type'];
+        if (empty($this->type) && $this->getHeaderCheck()) {
+            $this->type = $file['type'];
         }
 
-        if (empty($this->_type)) {
-            return $this->_throw($file, self::NOT_DETECTED);
+        if (empty($this->type)) {
+            return $this->createError($file, self::NOT_DETECTED);
         }
 
         $mimetype = $this->getMimeType(true);
-        if (in_array($this->_type, $mimetype)) {
-            return $this->_throw($file, self::FALSE_TYPE);
+        if (in_array($this->type, $mimetype)) {
+            return $this->createError($file, self::FALSE_TYPE);
         }
 
-        $types = explode('/', $this->_type);
-        $types = array_merge($types, explode('-', $this->_type));
-        $types = array_merge($types, explode(';', $this->_type));
-        foreach($mimetype as $mime) {
+        $types = explode('/', $this->type);
+        $types = array_merge($types, explode('-', $this->type));
+        $types = array_merge($types, explode(';', $this->type));
+        foreach ($mimetype as $mime) {
             if (in_array($mime, $types)) {
-                return $this->_throw($file, self::FALSE_TYPE);
+                return $this->createError($file, self::FALSE_TYPE);
             }
         }
 

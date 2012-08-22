@@ -1,39 +1,25 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category  Zend
- * @package   Zend_Validate
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license   http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Validator
  */
 
-/**
- * @namespace
- */
 namespace Zend\Validator\File;
+
+use Zend\Validator\AbstractValidator;
+use Zend\Validator\Exception;
 
 /**
  * Validator for the maximum size of a file up to a max of 2GB
  *
- * @uses      \Zend\Validator\AbstractValidator
- * @uses      \Zend\Validator\Exception
  * @category  Zend
  * @package   Zend_Validate
- * @copyright Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license   http://framework.zend.com/license/new-bsd     New BSD License
  */
-class Upload extends \Zend\Validator\AbstractValidator
+class Upload extends AbstractValidator
 {
     /**
      * @const string Error constants
@@ -52,7 +38,7 @@ class Upload extends \Zend\Validator\AbstractValidator
     /**
      * @var array Error message templates
      */
-    protected $_messageTemplates = array(
+    protected $messageTemplates = array(
         self::INI_SIZE       => "File '%value%' exceeds the defined ini size",
         self::FORM_SIZE      => "File '%value%' exceeds the defined form size",
         self::PARTIAL        => "File '%value%' was only partially uploaded",
@@ -76,12 +62,11 @@ class Upload extends \Zend\Validator\AbstractValidator
      * If no files are given the $_FILES array will be used automatically.
      * NOTE: This validator will only work with HTTP POST uploads!
      *
-     * @param  array|Zend_Config $options Array of files in syntax of \Zend\File\Transfer\Transfer
-     * @return void
+     * @param  array|\Traversable $options Array of files in syntax of \Zend\File\Transfer\Transfer
      */
     public function __construct($options = array())
     {
-        if (!array_key_exists('files', $options)) {
+        if (is_array($options) && !array_key_exists('files', $options)) {
             $options = array('files' => $options);
         }
 
@@ -91,9 +76,9 @@ class Upload extends \Zend\Validator\AbstractValidator
     /**
      * Returns the array of set files
      *
-     * @param  string $files (Optional) The file to return in detail
+     * @param  string $file (Optional) The file to return in detail
      * @return array
-     * @throws \Zend\Validator\Exception If file is not found
+     * @throws Exception\InvalidArgumentException If file is not found
      */
     public function getFiles($file = null)
     {
@@ -110,7 +95,7 @@ class Upload extends \Zend\Validator\AbstractValidator
             }
 
             if (count($return) === 0) {
-                throw new \Zend\Validator\Exception\InvalidArgumentException("The file '$file' was not found");
+                throw new Exception\InvalidArgumentException("The file '$file' was not found");
             }
 
             return $return;
@@ -123,7 +108,7 @@ class Upload extends \Zend\Validator\AbstractValidator
      * Sets the files to be checked
      *
      * @param  array $files The files to check in syntax of \Zend\File\Transfer\Transfer
-     * @return \Zend\Validator\File\Upload Provides a fluent interface
+     * @return Upload Provides a fluent interface
      */
     public function setFiles($files = array())
     {
@@ -137,7 +122,7 @@ class Upload extends \Zend\Validator\AbstractValidator
             $this->options['files'] = array();
         }
 
-        foreach($this->options['files'] as $file => $content) {
+        foreach ($this->options['files'] as $file => $content) {
             if (!isset($content['error'])) {
                 unset($this->options['files'][$file]);
             }
@@ -151,6 +136,7 @@ class Upload extends \Zend\Validator\AbstractValidator
      *
      * @param  string $value Single file to check for upload errors, when giving null the $_FILES array
      *                       from initialization will be used
+     * @param  mixed  $file
      * @return boolean
      */
     public function isValid($value, $file = null)
@@ -172,48 +158,48 @@ class Upload extends \Zend\Validator\AbstractValidator
         }
 
         if (empty($files)) {
-            return $this->_throw($file, self::FILE_NOT_FOUND);
+            return $this->throwError($file, self::FILE_NOT_FOUND);
         }
 
         foreach ($files as $file => $content) {
-            $this->_value = $file;
-            switch($content['error']) {
+            $this->value = $file;
+            switch ($content['error']) {
                 case 0:
                     if (!is_uploaded_file($content['tmp_name'])) {
-                        $this->_throw($file, self::ATTACK);
+                        $this->throwError($file, self::ATTACK);
                     }
                     break;
 
                 case 1:
-                    $this->_throw($file, self::INI_SIZE);
+                    $this->throwError($file, self::INI_SIZE);
                     break;
 
                 case 2:
-                    $this->_throw($file, self::FORM_SIZE);
+                    $this->throwError($file, self::FORM_SIZE);
                     break;
 
                 case 3:
-                    $this->_throw($file, self::PARTIAL);
+                    $this->throwError($file, self::PARTIAL);
                     break;
 
                 case 4:
-                    $this->_throw($file, self::NO_FILE);
+                    $this->throwError($file, self::NO_FILE);
                     break;
 
                 case 6:
-                    $this->_throw($file, self::NO_TMP_DIR);
+                    $this->throwError($file, self::NO_TMP_DIR);
                     break;
 
                 case 7:
-                    $this->_throw($file, self::CANT_WRITE);
+                    $this->throwError($file, self::CANT_WRITE);
                     break;
 
                 case 8:
-                    $this->_throw($file, self::EXTENSION);
+                    $this->throwError($file, self::EXTENSION);
                     break;
 
                 default:
-                    $this->_throw($file, self::UNKNOWN);
+                    $this->throwError($file, self::UNKNOWN);
                     break;
             }
         }
@@ -232,15 +218,15 @@ class Upload extends \Zend\Validator\AbstractValidator
      * @param  string $errorType
      * @return false
      */
-    protected function _throw($file, $errorType)
+    protected function throwError($file, $errorType)
     {
         if ($file !== null) {
             if (is_array($file)) {
-                if(array_key_exists('name', $file)) {
-                    $this->_value = $file['name'];
+                if (array_key_exists('name', $file)) {
+                    $this->value = $file['name'];
                 }
-            } else if (is_string($file)) {
-                $this->_value = $file;
+            } elseif (is_string($file)) {
+                $this->value = $file;
             }
         }
 

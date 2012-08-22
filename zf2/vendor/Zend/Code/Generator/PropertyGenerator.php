@@ -1,39 +1,20 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_CodeGenerator
- * @subpackage PHP
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Code
  */
 
-/**
- * @namespace
- */
 namespace Zend\Code\Generator;
 
 use Zend\Code\Reflection\PropertyReflection;
 
 /**
- * @uses       \Zend\Code\Generator\Exception
- * @uses       \Zend\Code\Generator\PhpMember\AbstractMember
- * @uses       \Zend\Code\Generator\PhpPropertyValue
  * @category   Zend
- * @package    Zend_CodeGenerator
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @package    Zend_Code_Generator
  */
 class PropertyGenerator extends AbstractMemberGenerator
 {
@@ -53,7 +34,7 @@ class PropertyGenerator extends AbstractMemberGenerator
     /**
      * fromReflection()
      *
-     * @param ReflectionProperty $reflectionProperty
+     * @param PropertyReflection $reflectionProperty
      * @return PropertyGenerator
      */
     public static function fromReflection(PropertyReflection $reflectionProperty)
@@ -67,7 +48,7 @@ class PropertyGenerator extends AbstractMemberGenerator
         $property->setDefaultValue($allDefaultProperties[$reflectionProperty->getName()]);
 
         if ($reflectionProperty->getDocComment() != '') {
-            $property->setDocblock(DocblockGenerator::fromReflection($reflectionProperty->getDocComment()));
+            $property->setDocBlock(DocBlockGenerator::fromReflection($reflectionProperty->getDocComment()));
         }
 
         if ($reflectionProperty->isStatic()) {
@@ -110,6 +91,9 @@ class PropertyGenerator extends AbstractMemberGenerator
     {
         if ($const) {
             $this->removeFlag(self::FLAG_PUBLIC | self::FLAG_PRIVATE | self::FLAG_PROTECTED);
+            $this->setFlags(self::FLAG_CONSTANT);
+        } else {
+            $this->removeFlag(self::FLAG_CONSTANT);
         }
     }
 
@@ -126,15 +110,16 @@ class PropertyGenerator extends AbstractMemberGenerator
     /**
      * setDefaultValue()
      *
-     * @param \PropertyValueGenerator\Code\Generator\PhpPropertyValue|string|array $defaultValue
-     * @return \PropertyGenerator\Code\Generator\PhpProperty
+     * @param PropertyValueGenerator|string|array $defaultValue
+     * @return PropertyGenerator
      */
     public function setDefaultValue($defaultValue)
     {
         // if it looks like
         if (is_array($defaultValue)
             && array_key_exists('value', $defaultValue)
-            && array_key_exists('type', $defaultValue)) {
+            && array_key_exists('type', $defaultValue)
+        ) {
             $defaultValue = new PropertyValueGenerator($defaultValue);
         }
 
@@ -143,6 +128,7 @@ class PropertyGenerator extends AbstractMemberGenerator
         }
 
         $this->defaultValue = $defaultValue;
+
         return $this;
     }
 
@@ -159,6 +145,7 @@ class PropertyGenerator extends AbstractMemberGenerator
     /**
      * generate()
      *
+     * @throws Exception\RuntimeException
      * @return string
      */
     public function generate()
@@ -168,15 +155,15 @@ class PropertyGenerator extends AbstractMemberGenerator
 
         $output = '';
 
-        if (($docblock = $this->getDocblock()) !== null) {
-            $docblock->setIndentation('    ');
-            $output .= $docblock->generate();
+        if (($docBlock = $this->getDocBlock()) !== null) {
+            $docBlock->setIndentation('    ');
+            $output .= $docBlock->generate();
         }
 
         if ($this->isConst()) {
             if ($defaultValue != null && !$defaultValue->isValidConstantType()) {
                 throw new Exception\RuntimeException('The property ' . $this->name . ' is said to be '
-                    . 'constant but does not have a valid constant value.');
+                                                         . 'constant but does not have a valid constant value.');
             }
             $output .= $this->indentation . 'const ' . $name . ' = '
                 . (($defaultValue !== null) ? $defaultValue->generate() : 'null;');
@@ -187,6 +174,7 @@ class PropertyGenerator extends AbstractMemberGenerator
                 . ' $' . $name . ' = '
                 . (($defaultValue !== null) ? $defaultValue->generate() : 'null;');
         }
+
         return $output;
     }
 

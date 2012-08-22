@@ -1,37 +1,23 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Http
- * @subpackage Cookie
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Http
  */
 
-/**
- * @namespace
- */
 namespace Zend\Http\Header;
 
-use Zend\Uri,
-    ArrayObject;
+use ArrayObject;
+use Zend\Uri;
 
 /**
  * @see http://www.ietf.org/rfc/rfc2109.txt
  * @see http://www.w3.org/Protocols/rfc2109/rfc2109
  */
-class Cookie extends ArrayObject implements HeaderDescription
+class Cookie extends ArrayObject implements HeaderInterface
 {
 
     protected $encodeValue = true;
@@ -57,11 +43,11 @@ class Cookie extends ArrayObject implements HeaderDescription
     {
         $header = new static();
 
-        list($name, $value) = preg_split('#: #', $headerLine, 2);
+        list($name, $value) = explode(': ', $headerLine, 2);
 
         // check to ensure proper header type for this factory
         if (strtolower($name) !== 'cookie') {
-            throw new Exception\InvalidArgumentException('Invalid header line for Server string');
+            throw new Exception\InvalidArgumentException('Invalid header line for Server string: "' . $name . '"');
         }
 
         $nvPairs = preg_split('#;\s*#', $value);
@@ -77,7 +63,7 @@ class Cookie extends ArrayObject implements HeaderDescription
         }
 
         $header->exchangeArray($arrayInfo);
-        
+
         return $header;
     }
 
@@ -112,7 +98,7 @@ class Cookie extends ArrayObject implements HeaderDescription
 
         return implode('; ', $nvPairs);
     }
-    
+
     public function toString()
     {
         return 'Cookie: ' . $this->getFieldValue();

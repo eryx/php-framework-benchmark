@@ -1,45 +1,28 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Barcode
- * @subpackage Renderer
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Barcode
  */
 
-/**
- * @namespace
- */
 namespace Zend\Barcode\Renderer;
 
-use Traversable,
-    Zend\Barcode\Barcode,
-    Zend\Barcode\Exception as BarcodeException,
-    Zend\Barcode\Object,
-    Zend\Barcode\Renderer,
-    Zend\Stdlib\IteratorToArray;
+use Traversable;
+use Zend\Barcode\Barcode;
+use Zend\Barcode\Exception as BarcodeException;
+use Zend\Barcode\Object;
+use Zend\Stdlib\ArrayUtils;
 
 /**
  * Class for rendering the barcode
  *
  * @category   Zend
  * @package    Zend_Barcode
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
-abstract class AbstractRenderer implements Renderer
+abstract class AbstractRenderer implements RendererInterface
 {
     /**
      * Namespace of the renderer for autoloading
@@ -91,7 +74,7 @@ abstract class AbstractRenderer implements Renderer
 
     /**
      * Barcode object
-     * @var Object
+     * @var Object\ObjectInterface
      */
     protected $barcode;
 
@@ -103,18 +86,17 @@ abstract class AbstractRenderer implements Renderer
     /**
      * Constructor
      * @param array|Traversable $options
-     * @return void
      */
     public function __construct($options = null)
     {
         if ($options instanceof Traversable) {
-            $options = IteratorToArray::convert($options);
+            $options = ArrayUtils::iteratorToArray($options);
         }
         if (is_array($options)) {
             $this->setOptions($options);
         }
         $this->type = strtolower(substr(
-            get_class($this),
+            get_called_class(),
             strlen($this->rendererNamespace) + 1
         ));
     }
@@ -221,6 +203,7 @@ abstract class AbstractRenderer implements Renderer
     /**
      * Activate/Deactivate the automatic rendering of exception
      * @param boolean $value
+     * @return AbstractRenderer
      */
     public function setAutomaticRenderError($value)
     {
@@ -318,23 +301,18 @@ abstract class AbstractRenderer implements Renderer
 
     /**
      * Set the barcode object
-     * @param  Object $barcode
+     * @param  Object\ObjectInterface $barcode
      * @return AbstractRenderer
      */
-    public function setBarcode($barcode)
+    public function setBarcode(Object\ObjectInterface $barcode)
     {
-        if (!$barcode instanceof Object) {
-            throw new Exception\InvalidArgumentException(
-                'Invalid barcode object provided to setBarcode()'
-            );
-        }
         $this->barcode = $barcode;
         return $this;
     }
 
     /**
      * Retrieve the barcode object
-     * @return Object
+     * @return Object\ObjectInterface
      */
     public function getBarcode()
     {
@@ -420,7 +398,7 @@ abstract class AbstractRenderer implements Renderer
             $this->checkParams();
             $this->initRenderer();
             $this->drawInstructionList();
-        } catch (BarcodeException $e) {
+        } catch (BarcodeException\ExceptionInterface $e) {
             if ($this->automaticRenderError && !($e instanceof BarcodeException\RendererCreationException)) {
                 $barcode = Barcode::makeBarcode(
                     'error',

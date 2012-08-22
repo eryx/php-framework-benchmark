@@ -1,41 +1,25 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category  Zend
- * @package   Zend_Validate
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license   http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Validator
  */
 
-/**
- * @namespace
- */
 namespace Zend\Validator\File;
-use Zend\Validator,
-    Zend\Validator\Exception;
+
+use Zend\Validator\AbstractValidator;
+use Zend\Validator\Exception;
 
 /**
  * Validator which checks if the file already exists in the directory
  *
- * @uses      \Zend\Validator\AbstractValidator
- * @uses      \Zend\Validator\Exception
  * @category  Zend
  * @package   Zend_Validate
- * @copyright Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license   http://framework.zend.com/license/new-bsd     New BSD License
  */
-class Exists extends Validator\AbstractValidator
+class Exists extends AbstractValidator
 {
     /**
      * @const string Error constants
@@ -45,7 +29,7 @@ class Exists extends Validator\AbstractValidator
     /**
      * @var array Error message templates
      */
-    protected $_messageTemplates = array(
+    protected $messageTemplates = array(
         self::DOES_NOT_EXIST => "File '%value%' does not exist",
     );
 
@@ -61,15 +45,14 @@ class Exists extends Validator\AbstractValidator
     /**
      * @var array Error message template variables
      */
-    protected $_messageVariables = array(
+    protected $messageVariables = array(
         'directory' => array('options' => 'directory'),
     );
 
     /**
      * Sets validator options
      *
-     * @param  string|array|\Zend\Config\Config $options
-     * @return void
+     * @param  string|array|\Traversable $options
      */
     public function __construct($options = null)
     {
@@ -87,7 +70,7 @@ class Exists extends Validator\AbstractValidator
     /**
      * Returns the set file directories which are checked
      *
-     * @param  boolean $asArray Returns the values as array, when false an concated string is returned
+     * @param  boolean $asArray Returns the values as array, when false an concatenated string is returned
      * @return string
      */
     public function getDirectory($asArray = false)
@@ -105,7 +88,7 @@ class Exists extends Validator\AbstractValidator
      * Sets the file directory which will be checked
      *
      * @param  string|array $directory The directories to validate
-     * @return \Zend\Validator\File\Extension Provides a fluent interface
+     * @return Extension Provides a fluent interface
      */
     public function setDirectory($directory)
     {
@@ -118,7 +101,8 @@ class Exists extends Validator\AbstractValidator
      * Adds the file directory which will be checked
      *
      * @param  string|array $directory The directory to add for validation
-     * @return \Zend\Validator\File\Extension Provides a fluent interface
+     * @return Extension Provides a fluent interface
+     * @throws Exception\InvalidArgumentException
      */
     public function addDirectory($directory)
     {
@@ -126,7 +110,7 @@ class Exists extends Validator\AbstractValidator
 
         if (is_string($directory)) {
             $directory = explode(',', $directory);
-        } else if (!is_array($directory)) {
+        } elseif (!is_array($directory)) {
             throw new Exception\InvalidArgumentException('Invalid options to validator provided');
         }
 
@@ -154,7 +138,7 @@ class Exists extends Validator\AbstractValidator
     /**
      * Returns true if and only if the file already exists in the set directories
      *
-     * @param  string  $value Real file to check for existance
+     * @param  string  $value Real file to check for existence
      * @param  array   $file  File data from \Zend\File\Transfer\Transfer
      * @return boolean
      */
@@ -163,7 +147,7 @@ class Exists extends Validator\AbstractValidator
         $directories = $this->getDirectory(true);
         if (($file !== null) and (!empty($file['destination']))) {
             $directories[] = $file['destination'];
-        } else if (!isset($file['name'])) {
+        } elseif (!isset($file['name'])) {
             $file['name'] = $value;
         }
 
@@ -175,12 +159,12 @@ class Exists extends Validator\AbstractValidator
 
             $check = true;
             if (!file_exists($directory . DIRECTORY_SEPARATOR . $file['name'])) {
-                return $this->_throw($file, self::DOES_NOT_EXIST);
+                return $this->throwError($file, self::DOES_NOT_EXIST);
             }
         }
 
         if (!$check) {
-            return $this->_throw($file, self::DOES_NOT_EXIST);
+            return $this->throwError($file, self::DOES_NOT_EXIST);
         }
 
         return true;
@@ -193,14 +177,14 @@ class Exists extends Validator\AbstractValidator
      * @param  string $errorType
      * @return false
      */
-    protected function _throw($file, $errorType)
+    protected function throwError($file, $errorType)
     {
         if ($file !== null) {
             if (is_array($file)) {
-                if(array_key_exists('name', $file)) {
+                if (array_key_exists('name', $file)) {
                     $this->value = basename($file['name']);
                 }
-            } else if (is_string($file)) {
+            } elseif (is_string($file)) {
                 $this->value = basename($file);
             }
         }

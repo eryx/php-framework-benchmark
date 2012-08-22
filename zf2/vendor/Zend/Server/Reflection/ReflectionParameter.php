@@ -1,27 +1,13 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Server
- * @subpackage Zend_Server_Reflection
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Server
  */
 
-/**
- * @namespace
- */
 namespace Zend\Server\Reflection;
 
 /**
@@ -29,37 +15,34 @@ namespace Zend\Server\Reflection;
  *
  * Decorates a ReflectionParameter to allow setting the parameter type
  *
- * @uses       \Zend\Server\Reflection\Exception
  * @category   Zend
  * @package    Zend_Server
  * @subpackage Zend_Server_Reflection
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class ReflectionParameter
 {
     /**
      * @var ReflectionParameter
      */
-    protected $_reflection;
+    protected $reflection;
 
     /**
      * Parameter position
      * @var int
      */
-    protected $_position;
+    protected $position;
 
     /**
      * Parameter type
      * @var string
      */
-    protected $_type;
+    protected $type;
 
     /**
      * Parameter description
      * @var string
      */
-    protected $_description;
+    protected $description;
 
     /**
      * Constructor
@@ -70,7 +53,7 @@ class ReflectionParameter
      */
     public function __construct(\ReflectionParameter $r, $type = 'mixed', $description = '')
     {
-        $this->_reflection = $r;
+        $this->reflection = $r;
         $this->setType($type);
         $this->setDescription($description);
     }
@@ -84,8 +67,8 @@ class ReflectionParameter
      */
     public function __call($method, $args)
     {
-        if (method_exists($this->_reflection, $method)) {
-            return call_user_func_array(array($this->_reflection, $method), $args);
+        if (method_exists($this->reflection, $method)) {
+            return call_user_func_array(array($this->reflection, $method), $args);
         }
 
         throw new Exception\BadMethodCallException('Invalid reflection method');
@@ -98,7 +81,7 @@ class ReflectionParameter
      */
     public function getType()
     {
-        return $this->_type;
+        return $this->type;
     }
 
     /**
@@ -113,7 +96,7 @@ class ReflectionParameter
             throw new Exception\InvalidArgumentException('Invalid parameter type');
         }
 
-        $this->_type = $type;
+        $this->type = $type;
     }
 
     /**
@@ -123,7 +106,7 @@ class ReflectionParameter
      */
     public function getDescription()
     {
-        return $this->_description;
+        return $this->description;
     }
 
     /**
@@ -138,7 +121,7 @@ class ReflectionParameter
             throw new Exception\InvalidArgumentException('Invalid parameter description');
         }
 
-        $this->_description = $description;
+        $this->description = $description;
     }
 
     /**
@@ -149,7 +132,7 @@ class ReflectionParameter
      */
     public function setPosition($index)
     {
-        $this->_position = (int) $index;
+        $this->position = (int) $index;
     }
 
     /**
@@ -159,6 +142,6 @@ class ReflectionParameter
      */
     public function getPosition()
     {
-        return $this->_position;
+        return $this->position;
     }
 }

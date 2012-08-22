@@ -1,35 +1,18 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Validate
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Validator
  */
 
-/**
- * @namespace
- */
 namespace Zend\Validator;
 
 /**
- * @uses       \Zend\Validator\AbstractValidator
- * @uses       \Zend\Validator\Exception
  * @category   Zend
  * @package    Zend_Validate
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Callback extends AbstractValidator
 {
@@ -48,8 +31,8 @@ class Callback extends AbstractValidator
      *
      * @var array
      */
-    protected $_messageTemplates = array(
-        self::INVALID_VALUE    => "'%value%' is not valid",
+    protected $messageTemplates = array(
+        self::INVALID_VALUE    => "The input is not valid",
         self::INVALID_CALLBACK => "An exception has been raised within the callback",
     );
 
@@ -66,7 +49,7 @@ class Callback extends AbstractValidator
     /**
      * Constructor
      *
-     * @param array $options
+     * @param array|callable $options
      */
     public function __construct($options = null)
     {
@@ -90,8 +73,9 @@ class Callback extends AbstractValidator
     /**
      * Sets the callback
      *
-     * @param  string|array $callback
-     * @return \Zend\Validator\Callback Provides a fluent interface
+     * @param  string|array|callable $callback
+     * @return Callback Provides a fluent interface
+     * @throws Exception\InvalidArgumentException
      */
     public function setCallback($callback)
     {
@@ -116,8 +100,8 @@ class Callback extends AbstractValidator
     /**
      * Sets options for the callback
      *
-     * @param  mixed $max
-     * @return \Zend\Validator\Callback Provides a fluent interface
+     * @param  mixed $options
+     * @return Callback Provides a fluent interface
      */
     public function setCallbackOptions($options)
     {
@@ -130,9 +114,11 @@ class Callback extends AbstractValidator
      * for the provided $value
      *
      * @param  mixed $value
+     * @param  mixed $context Additional context to provide to the callback
      * @return boolean
+     * @throws Exception\InvalidArgumentException
      */
-    public function isValid($value)
+    public function isValid($value, $context = null)
     {
         $this->setValue($value);
 
@@ -142,11 +128,20 @@ class Callback extends AbstractValidator
             throw new Exception\InvalidArgumentException('No callback given');
         }
 
-        $args     = func_get_args();
-        $options  = array_merge($args, $options);
+        $args = array($value);
+        if (empty($options) && !empty($context)) {
+            $args[] = $context;
+        }
+        if (!empty($options) && empty($context)) {
+            $args = array_merge($args, $options);
+        }
+        if (!empty($options) && !empty($context)) {
+            $args[] = $context;
+            $args   = array_merge($args, $options);
+        }
 
         try {
-            if (!call_user_func_array($callback, $options)) {
+            if (!call_user_func_array($callback, $args)) {
                 $this->error(self::INVALID_VALUE);
                 return false;
             }

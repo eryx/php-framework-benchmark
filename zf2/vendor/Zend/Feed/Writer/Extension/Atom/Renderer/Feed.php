@@ -1,35 +1,22 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Feed_Writer
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Feed
  */
- 
-/**
-* @namespace
-*/
+
 namespace Zend\Feed\Writer\Extension\Atom\Renderer;
+
+use DOMDocument;
+use DOMElement;
 use Zend\Feed\Writer\Extension;
 
 /**
-* @uses \Zend\Feed\Writer\Extension\AbstractRenderer
 * @category Zend
 * @package Zend_Feed_Writer
-* @copyright Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
-* @license http://framework.zend.com/license/new-bsd New BSD License
 */
 class Feed extends Extension\AbstractRenderer
 {
@@ -41,11 +28,11 @@ class Feed extends Extension\AbstractRenderer
      *
      * @var bool
      */
-    protected $_called = false;
-    
+    protected $called = false;
+
     /**
      * Render feed
-     * 
+     *
      * @return void
      */
     public function render()
@@ -57,35 +44,35 @@ class Feed extends Extension\AbstractRenderer
         if (strtolower($this->getType()) == 'atom') {
             return;
         }
-        $this->_setFeedLinks($this->_dom, $this->_base);
-        $this->_setHubs($this->_dom, $this->_base);
-        if ($this->_called) {
+        $this->_setFeedLinks($this->dom, $this->base);
+        $this->_setHubs($this->dom, $this->base);
+        if ($this->called) {
             $this->_appendNamespaces();
         }
     }
-    
+
     /**
      * Append namespaces to root element of feed
-     * 
+     *
      * @return void
      */
     protected function _appendNamespaces()
     {
         $this->getRootElement()->setAttribute('xmlns:atom',
-            'http://www.w3.org/2005/Atom');  
+            'http://www.w3.org/2005/Atom');
     }
 
     /**
      * Set feed link elements
-     * 
-     * @param  DOMDocument $dom 
-     * @param  DOMElement $root 
+     *
+     * @param  DOMDocument $dom
+     * @param  DOMElement $root
      * @return void
      */
-    protected function _setFeedLinks(\DOMDocument $dom, \DOMElement $root)
+    protected function _setFeedLinks(DOMDocument $dom, DOMElement $root)
     {
         $flinks = $this->getDataContainer()->getFeedLinks();
-        if(!$flinks || empty($flinks)) {
+        if (!$flinks || empty($flinks)) {
             return;
         }
         foreach ($flinks as $type => $href) {
@@ -96,17 +83,17 @@ class Feed extends Extension\AbstractRenderer
             $flink->setAttribute('type', $mime);
             $flink->setAttribute('href', $href);
         }
-        $this->_called = true;
+        $this->called = true;
     }
-    
+
     /**
      * Set PuSH hubs
-     * 
-     * @param  DOMDocument $dom 
-     * @param  DOMElement $root 
+     *
+     * @param  DOMDocument $dom
+     * @param  DOMElement $root
      * @return void
      */
-    protected function _setHubs(\DOMDocument $dom, \DOMElement $root)
+    protected function _setHubs(DOMDocument $dom, DOMElement $root)
     {
         $hubs = $this->getDataContainer()->getHubs();
         if (!$hubs || empty($hubs)) {
@@ -118,6 +105,6 @@ class Feed extends Extension\AbstractRenderer
             $hub->setAttribute('href', $hubUrl);
             $root->appendChild($hub);
         }
-        $this->_called = true;
+        $this->called = true;
     }
 }

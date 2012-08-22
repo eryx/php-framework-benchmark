@@ -1,16 +1,30 @@
 <?php
+/**
+ * Zend Framework (http://framework.zend.com/)
+ *
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Http
+ */
 
 namespace Zend\Http;
 
-use Zend\Stdlib\RequestDescription,
-    Zend\Stdlib\Message,
-    Zend\Stdlib\ParametersDescription,
-    Zend\Stdlib\Parameters,
-    Zend\Uri\Http as HttpUri;
+use Zend\Stdlib\Parameters;
+use Zend\Stdlib\ParametersInterface;
+use Zend\Stdlib\RequestInterface;
+use Zend\Uri\Exception as UriException;
+use Zend\Uri\Http as HttpUri;
 
-class Request extends Message implements RequestDescription
+/**
+ * HTTP Request
+ *
+ * @category  Zend
+ * @package   Zend_Http
+ * @link      http://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html#sec5
+ */
+class Request extends AbstractMessage implements RequestInterface
 {
-
     /**#@+
      * @const string METHOD constant names
      */
@@ -22,13 +36,7 @@ class Request extends Message implements RequestDescription
     const METHOD_DELETE  = 'DELETE';
     const METHOD_TRACE   = 'TRACE';
     const METHOD_CONNECT = 'CONNECT';
-    /**#@-*/
-
-    /**#@+
-     * @const string Version constant numbers
-     */
-    const VERSION_11 = '1.1';
-    const VERSION_10 = '1.0';
+    const METHOD_PATCH   = 'PATCH';
     /**#@-*/
 
     /**
@@ -42,62 +50,46 @@ class Request extends Message implements RequestDescription
     protected $uri = null;
 
     /**
-     * @var string
-     */
-    protected $version = self::VERSION_11;
-
-    /**
-     * @var \Zend\Stdlib\ParametersDescription
+     * @var ParametersInterface
      */
     protected $queryParams = null;
 
     /**
-     * @var \Zend\Stdlib\ParametersDescription
+     * @var ParametersInterface
      */
     protected $postParams = null;
 
     /**
-     * @var \Zend\Stdlib\ParametersDescription
+     * @var ParametersInterface
      */
     protected $fileParams = null;
 
     /**
-     * @var \Zend\Stdlib\ParametersDescription
-     */
-    protected $serverParams = null;
-
-    /**
-     * @var \Zend\Stdlib\ParametersDescription
-     */
-    protected $envParams = null;
-
-    /**
-     * @var string|\Zend\Http\Headers
-     */
-    protected $headers = null;
-
-    /**
      * A factory that produces a Request object from a well-formed Http Request string
      *
-     * @param string $string
-     * @return \Zend\Http\Request
+     * @param  string $string
+     * @return Request
+     * @throws Exception\InvalidArgumentException
      */
     public static function fromString($string)
     {
         $request = new static();
 
-        $lines = preg_split('/\r\n/', $string);
+        $lines = explode("\r\n", $string);
 
         // first line must be Method/Uri/Version string
         $matches = null;
         $methods = implode('|', array(
             self::METHOD_OPTIONS, self::METHOD_GET, self::METHOD_HEAD, self::METHOD_POST,
-            self::METHOD_PUT, self::METHOD_DELETE, self::METHOD_TRACE, self::METHOD_CONNECT
+            self::METHOD_PUT, self::METHOD_DELETE, self::METHOD_TRACE, self::METHOD_CONNECT,
+            self::METHOD_PATCH
         ));
-        $regex = '^(?P<method>' . $methods . ')\s(?<uri>[^ ]*)(?:\sHTTP\/(?<version>\d+\.\d+)){0,1}';
+        $regex     = '#^(?P<method>' . $methods . ')\s(?P<uri>[^ ]*)(?:\sHTTP\/(?P<version>\d+\.\d+)){0,1}#';
         $firstLine = array_shift($lines);
-        if (!preg_match('#' . $regex . '#', $firstLine, $matches)) {
-            throw new Exception\InvalidArgumentException('A valid request line was not found in the provided string');
+        if (!preg_match($regex, $firstLine, $matches)) {
+            throw new Exception\InvalidArgumentException(
+                'A valid request line was not found in the provided string'
+            );
         }
 
         $request->setMethod($matches['method']);
@@ -120,9 +112,9 @@ class Request extends Message implements RequestDescription
                 continue;
             }
             if ($isHeader) {
-                $headers[] .= $nextLine;
+                $headers[] = $nextLine;
             } else {
-                $rawBody[] .= $nextLine;
+                $rawBody[] = $nextLine;
             }
         }
 
@@ -140,12 +132,14 @@ class Request extends Message implements RequestDescription
     /**
      * Set the method for this request
      *
-     * @param string $method
+     * @param  string $method
      * @return Request
+     * @throws Exception\InvalidArgumentException
      */
     public function setMethod($method)
     {
-        if (!defined('static::METHOD_'.strtoupper($method))) {
+        $method = strtoupper($method);
+        if (!defined('static::METHOD_' . $method)) {
             throw new Exception\InvalidArgumentException('Invalid HTTP method passed');
         }
         $this->method = $method;
@@ -172,11 +166,19 @@ class Request extends Message implements RequestDescription
     public function setUri($uri)
     {
         if (is_string($uri)) {
-            if (!\Zend\Uri\Uri::validateHost($uri)) {
-                throw new Exception\InvalidArgumentException('Invalid URI passed as string');
+            try {
+                $uri = new HttpUri($uri);
+            } catch (UriException\InvalidUriPartException $e) {
+                throw new Exception\InvalidArgumentException(
+                    sprintf('Invalid URI passed as string (%s)', (string) $uri),
+                    $e->getCode(),
+                    $e
+                );
             }
-        } elseif (!($uri instanceof \Zend\Uri\Http)) {
-            throw new Exception\InvalidArgumentException('URI must be an instance of Zend\Uri\Http or a string');
+        } elseif (!($uri instanceof HttpUri)) {
+            throw new Exception\InvalidArgumentException(
+                'URI must be an instance of Zend\Uri\Http or a string'
+            );
         }
         $this->uri = $uri;
 
@@ -186,9 +188,22 @@ class Request extends Message implements RequestDescription
     /**
      * Return the URI for this request object
      *
-     * @return string
+     * @return HttpUri
      */
     public function getUri()
+    {
+        if ($this->uri === null || is_string($this->uri)) {
+            $this->uri = new HttpUri($this->uri);
+        }
+        return $this->uri;
+    }
+
+    /**
+     * Return the URI for this request object as a string
+     *
+     * @return string
+     */
+    public function getUriString()
     {
         if ($this->uri instanceof HttpUri) {
             return $this->uri->toString();
@@ -197,217 +212,152 @@ class Request extends Message implements RequestDescription
     }
 
     /**
-     * Return the URI for this request object as an instance of Zend\Uri\Http
+     * Provide an alternate Parameter Container implementation for query parameters in this object,
+     * (this is NOT the primary API for value setting, for that see getQuery())
      *
-     * @return HttpUri
-     */
-    public function uri()
-    {
-        if ($this->uri === null || is_string($this->uri)) {
-            $this->uri = new \Zend\Uri\Http($this->uri);
-        }
-        return $this->uri;
-    }
-
-    /**
-     * Set the HTTP version for this object, one of 1.0 or 1.1 (Request::VERSION_10, Request::VERSION_11)
-     *
-     * @throws Exception\InvalidArgumentException
-     * @param string $version (Must be 1.0 or 1.1)
+     * @param \Zend\Stdlib\ParametersInterface $query
      * @return Request
      */
-    public function setVersion($version)
-    {
-        if (!in_array($version, array(self::VERSION_10, self::VERSION_11))) {
-            throw new Exception\InvalidArgumentException('Version provided is not a valid version for this HTTP request object');
-        }
-        $this->version = $version;
-        return $this;
-    }
-
-    /**
-     * Return the HTTP version for this request
-     *
-     * @return string
-     */
-    public function getVersion()
-    {
-        return $this->version;
-    }
-
-    /**
-     * Provide an alternate Parameter Container implementation for query parameters in this object, (this is NOT the
-     * primary API for value setting, for that see query())
-     *
-     * @param \Zend\Stdlib\ParametersDescription $query
-     * @return Request
-     */
-    public function setQuery(ParametersDescription $query)
+    public function setQuery(ParametersInterface $query)
     {
         $this->queryParams = $query;
         return $this;
     }
 
     /**
-     * Return the parameter container responsible for query parameters
+     * Return the parameter container responsible for query parameters or a single query parameter
      *
-     * @return \Zend\Stdlib\ParametersDescription
+     * @param string|null           $name            Parameter name to retrieve, or null to get the whole container.
+     * @param mixed|null            $default         Default value to use when the parameter is missing.
+     * @return \Zend\Stdlib\ParametersInterface|mixed
      */
-    public function query()
+    public function getQuery($name = null, $default = null)
     {
         if ($this->queryParams === null) {
             $this->queryParams = new Parameters();
         }
 
-        return $this->queryParams;
+        if ($name === null) {
+            return $this->queryParams;
+        }
+
+        return $this->queryParams->get($name, $default);
     }
 
     /**
-     * Provide an alternate Parameter Container implementation for post parameters in this object, (this is NOT the
-     * primary API for value setting, for that see post())
+     * Provide an alternate Parameter Container implementation for post parameters in this object,
+     * (this is NOT the primary API for value setting, for that see getPost())
      *
-     * @param \Zend\Stdlib\ParametersDescription $post
+     * @param \Zend\Stdlib\ParametersInterface $post
      * @return Request
      */
-    public function setPost(ParametersDescription $post)
+    public function setPost(ParametersInterface $post)
     {
         $this->postParams = $post;
         return $this;
     }
 
     /**
-     * Return the parameter container responsible for post parameters
+     * Return the parameter container responsible for post parameters or a single post parameter.
      *
-     * @return \Zend\Stdlib\ParametersDescription
+     * @param string|null           $name            Parameter name to retrieve, or null to get the whole container.
+     * @param mixed|null            $default         Default value to use when the parameter is missing.
+     * @return \Zend\Stdlib\ParametersInterface|mixed
      */
-    public function post()
+    public function getPost($name = null, $default = null)
     {
         if ($this->postParams === null) {
             $this->postParams = new Parameters();
         }
 
-        return $this->postParams;
+        if ($name === null) {
+            return $this->postParams;
+        }
+
+        return $this->postParams->get($name, $default);
     }
 
     /**
-     * Return the Cookie header, this is the same as calling $request->headers()->get('Cookie');
+     * Return the Cookie header, this is the same as calling $request->getHeaders()->get('Cookie');
      *
-     * @convenience $request->headers()->get('Cookie');
+     * @convenience $request->getHeaders()->get('Cookie');
      * @return Header\Cookie
      */
-    public function cookie()
+    public function getCookie()
     {
-        return $this->headers()->get('Cookie');
+        return $this->getHeaders()->get('Cookie');
     }
 
     /**
-     * Provide an alternate Parameter Container implementation for file parameters in this object, (this is NOT the
-     * primary API for value setting, for that see file())
+     * Provide an alternate Parameter Container implementation for file parameters in this object,
+     * (this is NOT the primary API for value setting, for that see getFiles())
      *
-     * @param \Zend\Stdlib\ParametersDescription $files
+     * @param  ParametersInterface $files
      * @return Request
      */
-    public function setFile(ParametersDescription $files)
+    public function setFiles(ParametersInterface $files)
     {
         $this->fileParams = $files;
         return $this;
     }
 
     /**
-     * Return the parameter container responsible for file parameters
+     * Return the parameter container responsible for file parameters or a single file.
      *
-     * @return ParametersDescription
+     * @param string|null           $name            Parameter name to retrieve, or null to get the whole container.
+     * @param mixed|null            $default         Default value to use when the parameter is missing.
+     * @return ParametersInterface|mixed
      */
-    public function file()
+    public function getFiles($name = null, $default = null)
     {
         if ($this->fileParams === null) {
             $this->fileParams = new Parameters();
         }
 
-        return $this->fileParams;
-    }
-
-    /**
-     * Provide an alternate Parameter Container implementation for server parameters in this object, (this is NOT the
-     * primary API for value setting, for that see server())
-     *
-     * @param \Zend\Stdlib\ParametersDescription $server
-     * @return Request
-     */
-    public function setServer(ParametersDescription $server)
-    {
-        $this->serverParams = $server;
-        return $this;
-    }
-
-    /**
-     * Return the parameter container responsible for server parameters
-     *
-     * @see http://www.faqs.org/rfcs/rfc3875.html
-     * @return \Zend\Stdlib\ParametersDescription
-     */
-    public function server()
-    {
-        if ($this->serverParams === null) {
-            $this->serverParams = new Parameters();
+        if ($name === null) {
+            return $this->fileParams;
         }
 
-        return $this->serverParams;
+        return $this->fileParams->get($name, $default);
     }
 
     /**
-     * Provide an alternate Parameter Container implementation for env parameters in this object, (this is NOT the
-     * primary API for value setting, for that see env())
+     * Return the header container responsible for headers or all headers of a certain name/type
      *
-     * @param \Zend\Stdlib\ParametersDescription $env
-     * @return \Zend\Http\Request
+     * @see \Zend\Http\Headers::get()
+     * @param string|null           $name            Header name to retrieve, or null to get the whole container.
+     * @param mixed|null            $default         Default value to use when the requested header is missing.
+     * @return \Zend\Http\Headers|bool|\Zend\Http\Header\HeaderInterface|\ArrayIterator
      */
-    public function setEnv(ParametersDescription $env)
-    {
-        $this->envParams = $env;
-        return $this;
-    }
-
-    /**
-     * Return the parameter container responsible for env parameters
-     *
-     * @return \Zend\Stdlib\ParametersDescription
-     */
-    public function env()
-    {
-        if ($this->envParams === null) {
-            $this->envParams = new Parameters();
-        }
-
-        return $this->envParams;
-    }
-
-    /**
-     * Provide an alternate Parameter Container implementation for headers in this object, (this is NOT the
-     * primary API for value setting, for that see headers())
-     *
-     * @param \Zend\Http\Headers $headers
-     * @return \Zend\Http\Request
-     */
-    public function setHeaders(Headers $headers)
-    {
-        $this->headers = $headers;
-        return $this;
-    }
-
-    /**
-     * Return the header container responsible for headers
-     *
-     * @return \Zend\Http\Headers
-     */
-    public function headers()
+    public function getHeaders($name = null, $default = false)
     {
         if ($this->headers === null || is_string($this->headers)) {
             // this is only here for fromString lazy loading
             $this->headers = (is_string($this->headers)) ? Headers::fromString($this->headers) : new Headers();
         }
 
-        return $this->headers;
+        if ($name === null) {
+            return $this->headers;
+        }
+
+        if ($this->headers->has($name)) {
+            return $this->headers->get($name);
+        }
+
+        return $default;
+    }
+
+    /**
+     * Get all headers of a certain name/type.
+     *
+     * @see Request::getHeaders()
+     * @param string|null           $name            Header name to retrieve, or null to get the whole container.
+     * @param mixed|null            $default         Default value to use when the requested header is missing.
+     * @return \Zend\Http\Headers|bool|\Zend\Http\Header\HeaderInterface|\ArrayIterator
+     */
+    public function getHeader($name, $default = false)
+    {
+        return $this->getHeaders($name, $default);
     }
 
     /**
@@ -490,6 +440,40 @@ class Request extends Message implements RequestDescription
         return ($this->method === self::METHOD_CONNECT);
     }
 
+    /*
+     * Is this a PATCH method request?
+     *
+     * @return bool
+     */
+    public function isPatch()
+    {
+        return ($this->method === self::METHOD_PATCH);
+    }
+
+    /**
+     * Is the request a Javascript XMLHttpRequest?
+     *
+     * Should work with Prototype/Script.aculo.us, possibly others.
+     *
+     * @return boolean
+     */
+    public function isXmlHttpRequest()
+    {
+        $header = $this->getHeaders()->get('X_REQUESTED_WITH');
+        return false !== $header && $header->getFieldValue() == 'XMLHttpRequest';
+    }
+
+    /**
+     * Is this a Flash request?
+     *
+     * @return boolean
+     */
+    public function isFlashRequest()
+    {
+        $header = $this->getHeaders()->get('USER_AGENT');
+        return false !== $header && stristr($header->getFieldValue(), ' flash');
+    }
+
     /**
      * Return the formatted request line (first line) for this http request
      *
@@ -513,15 +497,4 @@ class Request extends Message implements RequestDescription
         $str .= $this->getContent();
         return $str;
     }
-
-    /**
-     * Allow PHP casting of this object
-     *
-     * @return string
-     */
-    public function __toString()
-    {
-        return $this->toString();
-    }
-
 }

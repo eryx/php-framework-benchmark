@@ -1,55 +1,73 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Authentication
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Authentication
  */
 
-/**
- * @namespace
- */
 namespace Zend\Authentication;
 
 /**
- * @uses       Zend\Authentication\Storage\Session
  * @category   Zend
  * @package    Zend_Authentication
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class AuthenticationService
 {
     /**
      * Persistent storage handler
      *
-     * @var Zend\Authentication\Storage
+     * @var Storage\StorageInterface
      */
-    protected $_storage = null;
+    protected $storage = null;
+
+    /**
+     * Authentication adapter
+     *
+     * @var Adapter\AdapterInterface
+     */
+    protected $adapter = null;
 
     /**
      * Constructor
-     * 
-     * @param  Storage $storage 
-     * @return void
+     *
+     * @param  Storage\StorageInterface $storage
+     * @param  Adapter\AdapterInterface $adapter
      */
-    public function __construct(Storage $storage = null)
+    public function __construct(Storage\StorageInterface $storage = null, Adapter\AdapterInterface $adapter = null)
     {
         if (null !== $storage) {
             $this->setStorage($storage);
         }
+        if (null !== $adapter) {
+            $this->setAdapter($adapter);
+        }
+    }
+
+    /**
+     * Returns the authentication adapter
+     *
+     * The adapter does not have a default if the storage adapter has not been set.
+     *
+     * @return Adapter\AdapterInterface|null
+     */
+    public function getAdapter()
+    {
+        return $this->adapter;
+    }
+
+    /**
+     * Sets the authentication adapter
+     *
+     * @param  Adapter\AdapterInterface $adapter
+     * @return AuthenticationService Provides a fluent interface
+     */
+    public function setAdapter(Adapter\AdapterInterface $adapter)
+    {
+        $this->adapter = $adapter;
+        return $this;
     }
 
     /**
@@ -57,41 +75,47 @@ class AuthenticationService
      *
      * Session storage is used by default unless a different storage adapter has been set.
      *
-     * @return Zend\Authentication\Storage
+     * @return Storage\StorageInterface
      */
     public function getStorage()
     {
-        if (null === $this->_storage) {
+        if (null === $this->storage) {
             $this->setStorage(new Storage\Session());
         }
 
-        return $this->_storage;
+        return $this->storage;
     }
 
     /**
      * Sets the persistent storage handler
      *
-     * @param  Zend\Authentication\Storage $storage
-     * @return Zend\Authentication\AuthenticationService Provides a fluent interface
+     * @param  Storage\StorageInterface $storage
+     * @return AuthenticationService Provides a fluent interface
      */
-    public function setStorage(Storage $storage)
+    public function setStorage(Storage\StorageInterface $storage)
     {
-        $this->_storage = $storage;
+        $this->storage = $storage;
         return $this;
     }
 
     /**
      * Authenticates against the supplied adapter
      *
-     * @param  Zend\Authentication\Adapter $adapter
-     * @return Zend\Authentication\Result
+     * @param  Adapter\AdapterInterface $adapter
+     * @return Result
+     * @throws Exception\RuntimeException
      */
-    public function authenticate(Adapter $adapter)
+    public function authenticate(Adapter\AdapterInterface $adapter = null)
     {
+        if (!$adapter) {
+            if (!$adapter = $this->getAdapter()) {
+                throw new Exception\RuntimeException('An adapter must be set or passed prior to calling authenticate()');
+            }
+        }
         $result = $adapter->authenticate();
 
         /**
-         * ZF-7546 - prevent multiple succesive calls from storing inconsistent results
+         * ZF-7546 - prevent multiple successive calls from storing inconsistent results
          * Ensure storage has clean state
          */
         if ($this->hasIdentity()) {

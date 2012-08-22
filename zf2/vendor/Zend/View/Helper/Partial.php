@@ -1,27 +1,13 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_View
- * @subpackage Helper
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_View
  */
 
-/**
- * @namespace
- */
 namespace Zend\View\Helper;
 
 use Zend\View\Exception;
@@ -31,8 +17,6 @@ use Zend\View\Exception;
  *
  * @package    Zend_View
  * @subpackage Helper
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Partial extends AbstractHelper
 {
@@ -40,7 +24,7 @@ class Partial extends AbstractHelper
      * Variable to which object will be assigned
      * @var string
      */
-    protected $_objectKey;
+    protected $objectKey;
 
     /**
      * Renders a template fragment within a variable scope distinct from the
@@ -92,12 +76,12 @@ class Partial extends AbstractHelper
     /**
      * Clone the current View
      *
-     * @return \Zend\View\Renderer
+     * @return \Zend\View\Renderer\RendererInterface
      */
     public function cloneView()
     {
         $view = clone $this->view;
-        $view->vars()->clear();
+        $view->setVars(array());
         return $view;
     }
 
@@ -110,9 +94,9 @@ class Partial extends AbstractHelper
     public function setObjectKey($key)
     {
         if (null === $key) {
-            $this->_objectKey = null;
+            $this->objectKey = null;
         } else {
-            $this->_objectKey = (string) $key;
+            $this->objectKey = (string) $key;
         }
 
         return $this;
@@ -128,6 +112,6 @@ class Partial extends AbstractHelper
      */
     public function getObjectKey()
     {
-        return $this->_objectKey;
+        return $this->objectKey;
     }
 }

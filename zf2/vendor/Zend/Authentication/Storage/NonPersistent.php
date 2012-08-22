@@ -1,30 +1,14 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Authentication
- * @subpackage Storage
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Authentication
  */
 
-/**
- * @namespace
- */
 namespace Zend\Authentication\Storage;
-
-use Zend\Authentication\Storage as AuthenticationStorage;
 
 /**
  * Non-Persistent Authentication Storage
@@ -33,29 +17,25 @@ use Zend\Authentication\Storage as AuthenticationStorage;
  * re-populated. So there's no need to use sessions, this simple value class
  * will hold the data for rest of the current request.
  *
- * @uses       Zend\Authentication\Storage
  * @category   Zend
  * @package    Zend_Authentication
  * @subpackage Storage
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
-class NonPersistent implements AuthenticationStorage
+class NonPersistent implements StorageInterface
 {
     /**
      * Holds the actual auth data
      */
-    protected $_data;
+    protected $data;
 
     /**
      * Returns true if and only if storage is empty
      *
-     * @throws Zend\Authentication\Storage\Exception If it is impossible to determine whether storage is empty
      * @return boolean
      */
     public function isEmpty()
     {
-        return empty($this->_data);
+        return empty($this->data);
     }
 
     /**
@@ -66,7 +46,7 @@ class NonPersistent implements AuthenticationStorage
      */
     public function read()
     {
-        return $this->_data;
+        return $this->data;
     }
 
     /**
@@ -77,7 +57,7 @@ class NonPersistent implements AuthenticationStorage
      */
     public function write($contents)
     {
-        $this->_data = $contents;
+        $this->data = $contents;
     }
 
     /**
@@ -87,6 +67,6 @@ class NonPersistent implements AuthenticationStorage
      */
     public function clear()
     {
-        $this->_data = null;
+        $this->data = null;
     }
 }

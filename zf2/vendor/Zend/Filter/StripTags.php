@@ -1,34 +1,21 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Filter
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Filter
  */
 
-/**
- * @namespace
- */
 namespace Zend\Filter;
 
+use Traversable;
+use Zend\Stdlib\ArrayUtils;
+
 /**
- * @uses       Zend\Filter\AbstractFilter
  * @category   Zend
  * @package    Zend_Filter
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class StripTags extends AbstractFilter
 {
@@ -63,14 +50,14 @@ class StripTags extends AbstractFilter
      *     'allowAttribs'  => Attributes which are allowed
      *     'allowComments' => Are comments allowed ?
      *
-     * @param  string|array|\Zend\Config\Config $options
-     * @return void
+     * @param  string|array|Traversable $options
      */
     public function __construct($options = null)
     {
-        if ($options instanceof \Zend\Config\Config) {
-            $options = $options->toArray();
-        } else if ((!is_array($options)) || (is_array($options) && !array_key_exists('allowTags', $options) &&
+        if ($options instanceof Traversable) {
+            $options = ArrayUtils::iteratorToArray($options);
+        }
+        if ((!is_array($options)) || (is_array($options) && !array_key_exists('allowTags', $options) &&
             !array_key_exists('allowAttribs', $options) && !array_key_exists('allowComments', $options))) {
             $options = func_get_args();
             $temp['allowTags'] = array_shift($options);
@@ -108,7 +95,7 @@ class StripTags extends AbstractFilter
      * Sets the tagsAllowed option
      *
      * @param  array|string $tagsAllowed
-     * @return \Zend\Filter\StripTags Provides a fluent interface
+     * @return StripTags Provides a fluent interface
      */
     public function setTagsAllowed($tagsAllowed)
     {
@@ -125,7 +112,7 @@ class StripTags extends AbstractFilter
                 $this->tagsAllowed[$tagName] = array();
             }
             // Otherwise, if a tag was provided with attributes
-            else if (is_string($index) && (is_array($element) || is_string($element))) {
+            elseif (is_string($index) && (is_array($element) || is_string($element))) {
                 // Canonicalize the tag name
                 $tagName = strtolower($index);
                 // Canonicalize the attributes
@@ -161,7 +148,7 @@ class StripTags extends AbstractFilter
      * Sets the attributesAllowed option
      *
      * @param  array|string $attributesAllowed
-     * @return \Zend\Filter\StripTags Provides a fluent interface
+     * @return StripTags Provides a fluent interface
      */
     public function setAttributesAllowed($attributesAllowed)
     {
@@ -182,7 +169,7 @@ class StripTags extends AbstractFilter
     }
 
     /**
-     * Defined by Zend_Filter_Interface
+     * Defined by Zend\Filter\FilterInterface
      *
      * @todo improve docblock descriptions
      *

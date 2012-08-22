@@ -1,56 +1,37 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_XmlRpc
- * @subpackage Server
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_XmlRpc
  */
 
-/**
- * @namespace
- */
 namespace Zend\XmlRpc\Server;
 
 /**
  * XML-RPC system.* methods
  *
- * @uses       Zend\XmlRpc\Request
- * @uses       Zend\XmlRpc\Server\Exception
  * @category   Zend
  * @package    Zend_XmlRpc
  * @subpackage Server
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class System
 {
     /**
      * @var \Zend\XmlRpc\Server
      */
-    protected $_server;
+    protected $server;
 
     /**
      * Constructor
      *
-     * @param  \Zend\XmlRpc\Server\Server $server
-     * @return void
+     * @param \Zend\XmlRpc\Server $server
      */
     public function __construct(\Zend\XmlRpc\Server $server)
     {
-        $this->_server = $server;
+        $this->server = $server;
     }
 
     /**
@@ -62,7 +43,7 @@ class System
      */
     public function listMethods()
     {
-        $table = $this->_server->getDispatchTable()->getMethods();
+        $table = $this->server->getDispatchTable()->getMethods();
         return array_keys($table);
     }
 
@@ -74,7 +55,7 @@ class System
      */
     public function methodHelp($method)
     {
-        $table = $this->_server->getDispatchTable();
+        $table = $this->server->getDispatchTable();
         if (!$table->hasMethod($method)) {
             throw new Exception\InvalidArgumentException('Method "' . $method . '" does not exist', 640);
         }
@@ -90,7 +71,7 @@ class System
      */
     public function methodSignature($method)
     {
-        $table = $this->_server->getDispatchTable();
+        $table = $this->server->getDispatchTable();
         if (!$table->hasMethod($method)) {
             throw new Exception\InvalidArgumentException('Method "' . $method . '" does not exist', 640);
         }
@@ -121,17 +102,17 @@ class System
         foreach ($methods as $method) {
             $fault = false;
             if (!is_array($method)) {
-                $fault = $this->_server->fault('system.multicall expects each method to be a struct', 601);
+                $fault = $this->server->fault('system.multicall expects each method to be a struct', 601);
             } elseif (!isset($method['methodName'])) {
-                $fault = $this->_server->fault('Missing methodName: ' . var_export($methods, 1), 602);
+                $fault = $this->server->fault('Missing methodName: ' . var_export($methods, 1), 602);
             } elseif (!isset($method['params'])) {
-                $fault = $this->_server->fault('Missing params', 603);
+                $fault = $this->server->fault('Missing params', 603);
             } elseif (!is_array($method['params'])) {
-                $fault = $this->_server->fault('Params must be an array', 604);
+                $fault = $this->server->fault('Params must be an array', 604);
             } else {
                 if ('system.multicall' == $method['methodName']) {
                     // don't allow recursive calls to multicall
-                    $fault = $this->_server->fault('Recursive system.multicall forbidden', 605);
+                    $fault = $this->server->fault('Recursive system.multicall forbidden', 605);
                 }
             }
 
@@ -140,7 +121,7 @@ class System
                     $request = new \Zend\XmlRpc\Request();
                     $request->setMethod($method['methodName']);
                     $request->setParams($method['params']);
-                    $response = $this->_server->handle($request);
+                    $response = $this->server->handle($request);
                     if ($response instanceof \Zend\XmlRpc\Fault
                         || $response->isFault()
                     ) {
@@ -149,7 +130,7 @@ class System
                         $responses[] = $response->getReturnValue();
                     }
                 } catch (\Exception $e) {
-                    $fault = $this->_server->fault($e);
+                    $fault = $this->server->fault($e);
                 }
             }
 

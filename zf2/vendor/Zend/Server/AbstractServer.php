@@ -1,86 +1,45 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Server
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Server
  */
 
-/**
- * @namespace
- */
 namespace Zend\Server;
+
+use ReflectionClass;
 
 /**
  * Abstract Server implementation
  *
- * @uses       ReflectionClass
- * @uses       \Zend\Server\Definition
- * @uses       \Zend\Server\Exception
- * @uses       \Zend\Server\Server
- * @uses       \Zend\Server\Method\Callback
- * @uses       \Zend\Server\Method\Definition
- * @uses       \Zend\Server\Method\Parameter
- * @uses       \Zend\Server\Method\Prototype
  * @category   Zend
  * @package    Zend_Server
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 abstract class AbstractServer implements Server
 {
     /**
-     * @deprecated
-     * @var array List of PHP magic methods (lowercased)
-     */
-    protected static $magic_methods = array(
-        '__call',
-        '__clone',
-        '__construct',
-        '__destruct',
-        '__get',
-        '__isset',
-        '__set',
-        '__set_state',
-        '__sleep',
-        '__tostring',
-        '__unset',
-        '__wakeup',
-    );
-
-    /**
      * @var bool Flag; whether or not overwriting existing methods is allowed
      */
-    protected $_overwriteExistingMethods = false;
+    protected $overwriteExistingMethods = false;
 
     /**
-     * @var \Zend\Server\Definition
+     * @var Definition
      */
-    protected $_table;
+    protected $table;
 
     /**
      * Constructor
      *
      * Setup server description
      *
-     * @return void
      */
     public function __construct()
     {
-        $this->_table = new Definition();
-        $this->_table->setOverwriteExistingMethods($this->_overwriteExistingMethods);
+        $this->table = new Definition();
+        $this->table->setOverwriteExistingMethods($this->overwriteExistingMethods);
     }
 
     /**
@@ -88,34 +47,18 @@ abstract class AbstractServer implements Server
      *
      * Returns an array of method definitions.
      *
-     * @return \Zend\Server\Definition
+     * @return Definition
      */
     public function getFunctions()
     {
-        return $this->_table;
-    }
-
-    /**
-     * Lowercase a string
-     *
-     * Lowercase's a string by reference
-     *
-     * @deprecated
-     * @param  string $string value
-     * @param  string $key
-     * @return string Lower cased string
-     */
-    public static function lowerCase(&$value, &$key)
-    {
-        trigger_error(__CLASS__ . '::' . __METHOD__ . '() is deprecated and will be removed in a future version', E_USER_NOTICE);
-        return $value = strtolower($value);
+        return $this->table;
     }
 
     /**
      * Build callback for method signature
      *
-     * @param  \Zend\Server\Reflection\AbstractFunction $reflection
-     * @return \Zend\Server\Method\Callback
+     * @param  Reflection\AbstractFunction $reflection
+     * @return Method\Callback
      */
     protected function _buildCallback(Reflection\AbstractFunction $reflection)
     {
@@ -134,10 +77,10 @@ abstract class AbstractServer implements Server
     /**
      * Build a method signature
      *
-     * @param  \Zend\Server\Reflection\AbstractFunction $reflection
+     * @param  Reflection\AbstractFunction $reflection
      * @param  null|string|object $class
-     * @return \Zend\Server\Method\Definition
-     * @throws \Zend\Server\Exception on duplicate entry
+     * @return Method\Definition
+     * @throws Exception on duplicate entry
      */
     protected function _buildSignature(Reflection\AbstractFunction $reflection, $class = null)
     {
@@ -145,7 +88,7 @@ abstract class AbstractServer implements Server
         $name       = $reflection->getName();
         $method     = empty($ns) ? $name : $ns . '.' . $name;
 
-        if (!$this->_overwriteExistingMethods && $this->_table->hasMethod($method)) {
+        if (!$this->overwriteExistingMethods && $this->table->hasMethod($method)) {
             throw new Exception\RuntimeException('Duplicate method registered: ' . $method);
         }
 
@@ -174,14 +117,14 @@ abstract class AbstractServer implements Server
         if (is_object($class)) {
             $definition->setObject($class);
         }
-        $this->_table->addMethod($definition);
+        $this->table->addMethod($definition);
         return $definition;
     }
 
     /**
      * Dispatch method
      *
-     * @param  \Zend\Server\Method\Definition $invocable
+     * @param  Method\Definition $invocable
      * @param  array $params
      * @return mixed
      */
@@ -206,7 +149,7 @@ abstract class AbstractServer implements Server
         if (!is_object($object)) {
             $invokeArgs = $invocable->getInvokeArguments();
             if (!empty($invokeArgs)) {
-                $reflection = new \ReflectionClass($class);
+                $reflection = new ReflectionClass($class);
                 $object     = $reflection->newInstanceArgs($invokeArgs);
             } else {
                 $object = new $class;

@@ -1,145 +1,106 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Config
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Config
  */
 
-/**
- * @namespace
- */
 namespace Zend\Config;
 
+use ArrayAccess;
+use Countable;
+use Iterator;
+use Zend\Stdlib\ArrayUtils;
+
 /**
- * @uses       \Zend\Config\Exception
+ * Provides a property based interface to an array.
+ * The data are read-only unless $allowModifications is set to true
+ * on construction.
+ *
+ * Implements Countable, Iterator and ArrayAccess
+ * to facilitate easy access to the data.
+ *
  * @category   Zend
  * @package    Zend_Config
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
-class Config implements \Countable, \Iterator, \ArrayAccess
+class Config implements Countable, Iterator, ArrayAccess
 {
     /**
-     * Whether in-memory modifications to configuration data are allowed
+     * Whether modifications to configuration data are allowed.
      *
      * @var boolean
      */
-    protected $_allowModifications;
+    protected $allowModifications;
 
     /**
-     * Iteration index
+     * Number of elements in configuration data.
      *
      * @var integer
      */
-    protected $_index;
+    protected $count;
 
     /**
-     * Number of elements in configuration data
-     *
-     * @var integer
-     */
-    protected $_count;
-
-    /**
-     * Contains array of configuration data
+     * Data withing the configuration.
      *
      * @var array
      */
-    protected $_data;
+    protected $data = array();
 
     /**
      * Used when unsetting values during iteration to ensure we do not skip
-     * the next element
+     * the next element.
      *
      * @var boolean
      */
-    protected $_skipNextIteration;
+    protected $skipNextIteration;
 
     /**
-     * Contains which config file sections were loaded. This is null
-     * if all sections were loaded, a string name if one section is loaded
-     * and an array of string names if multiple sections were loaded.
+     * Constructor.
      *
-     * @var mixed
-     */
-    protected $_loadedSection;
-
-    /**
-     * This is used to track section inheritance. The keys are names of sections that
-     * extend other sections, and the values are the extended sections.
-     *
-     * @var array
-     */
-    protected $_extends = array();
-
-    /**
-     * Internal error messages
-     *
-     * @var null|array
-     */
-    protected $_errorMessages = array();
-
-    /**
-     * Zend_Config provides a property based interface to
-     * an array. The data are read-only unless $allowModifications
-     * is set to true on construction.
-     *
-     * Zend_Config also implements Countable and Iterator to
-     * facilitate easy access to the data.
+     * Data is read-only unless $allowModifications is set to true
+     * on construction.
      *
      * @param  array   $array
      * @param  boolean $allowModifications
-     * @return void
      */
     public function __construct(array $array, $allowModifications = false)
     {
-        $this->_allowModifications = (boolean) $allowModifications;
-        $this->_loadedSection = null;
-        $this->_index = 0;
-        $this->_data = array();
+        $this->allowModifications = (boolean) $allowModifications;
+
         foreach ($array as $key => $value) {
             if (is_array($value)) {
-                $this->_data[$key] = new self($value, $this->_allowModifications);
+                $this->data[$key] = new self($value, $this->allowModifications);
             } else {
-                $this->_data[$key] = $value;
+                $this->data[$key] = $value;
             }
+
+            $this->count++;
         }
-        $this->_count = count($this->_data);
     }
 
     /**
      * Retrieve a value and return $default if there is no element set.
      *
-     * @param string $name
-     * @param mixed $default
+     * @param  string $name
+     * @param  mixed  $default
      * @return mixed
      */
     public function get($name, $default = null)
     {
-        $result = $default;
-        if (array_key_exists($name, $this->_data)) {
-            $result = $this->_data[$name];
+        if (array_key_exists($name, $this->data)) {
+            return $this->data[$name];
         }
-        return $result;
+
+        return $default;
     }
 
     /**
      * Magic function so that $obj->value will work.
      *
-     * @param string $name
+     * @param  string $name
      * @return mixed
      */
     public function __get($name)
@@ -148,45 +109,55 @@ class Config implements \Countable, \Iterator, \ArrayAccess
     }
 
     /**
-     * Only allow setting of a property if $allowModifications
-     * was set to true on construction. Otherwise, throw an exception.
+     * Set a value in the config.
+     *
+     * Only allow setting of a property if $allowModifications  was set to true
+     * on construction. Otherwise, throw an exception.
      *
      * @param  string $name
      * @param  mixed  $value
-     * @throws \Zend\Config\Exception
      * @return void
+     * @throws Exception\RuntimeException
      */
     public function __set($name, $value)
     {
-        if ($this->_allowModifications) {
+        if ($this->allowModifications) {
+
             if (is_array($value)) {
-                $this->_data[$name] = new self($value, true);
-            } else {
-                $this->_data[$name] = $value;
+                $value = new self($value, true);
             }
-            $this->_count = count($this->_data);
+
+            if (null === $name) {
+                $this->data[] = $value;
+            } else {
+                $this->data[$name] = $value;
+            }
+
+            $this->count++;
         } else {
-            throw new Exception\InvalidArgumentException('Zend_Config is read only');
+            throw new Exception\RuntimeException('Config is read only');
         }
     }
 
     /**
-     * Deep clone of this instance to ensure that nested Zend_Configs
-     * are also cloned.
+     * Deep clone of this instance to ensure that nested Zend\Configs are also
+     * cloned.
      *
      * @return void
      */
     public function __clone()
     {
-      $array = array();
-      foreach ($this->_data as $key => $value) {
-          if ($value instanceof Config) {
-              $array[$key] = clone $value;
-          } else {
-              $array[$key] = $value;
-          }
-      }
-      $this->_data = $array;
+        $array = array();
+
+        foreach ($this->data as $key => $value) {
+            if ($value instanceof self) {
+                $array[$key] = clone $value;
+            } else {
+                $array[$key] = $value;
+            }
+        }
+
+        $this->data = $array;
     }
 
     /**
@@ -197,116 +168,125 @@ class Config implements \Countable, \Iterator, \ArrayAccess
     public function toArray()
     {
         $array = array();
-        $data = $this->_data;
+        $data  = $this->data;
+
+        /** @var self $value */
         foreach ($data as $key => $value) {
-            if ($value instanceof Config) {
+            if ($value instanceof self) {
                 $array[$key] = $value->toArray();
             } else {
                 $array[$key] = $value;
             }
         }
+
         return $array;
     }
 
     /**
-     * Support isset() overloading on PHP 5.1
+     * isset() overloading
      *
-     * @param string $name
+     * @param  string $name
      * @return boolean
      */
     public function __isset($name)
     {
-        return isset($this->_data[$name]);
+        return isset($this->data[$name]);
     }
 
     /**
-     * Support unset() overloading on PHP 5.1
+     * unset() overloading
      *
      * @param  string $name
-     * @throws \Zend\Config\Exception
      * @return void
+     * @throws Exception\InvalidArgumentException
      */
     public function __unset($name)
     {
-        if ($this->_allowModifications) {
-            unset($this->_data[$name]);
-            $this->_count = count($this->_data);
-            $this->_skipNextIteration = true;
-        } else {
-            throw new Exception\InvalidArgumentException('Zend_Config is read only');
+        if (!$this->allowModifications) {
+            throw new Exception\InvalidArgumentException('Config is read only');
+        } elseif (isset($this->data[$name])) {
+            unset($this->data[$name]);
+            $this->count--;
+            $this->skipNextIteration = true;
         }
-
     }
 
     /**
-     * Defined by Countable interface
+     * count(): defined by Countable interface.
      *
-     * @return int
+     * @see    Countable::count()
+     * @return integer
      */
     public function count()
     {
-        return $this->_count;
+        return $this->count;
     }
 
     /**
-     * Defined by Iterator interface
+     * current(): defined by Iterator interface.
      *
+     * @see    Iterator::current()
      * @return mixed
      */
     public function current()
     {
-        $this->_skipNextIteration = false;
-        return current($this->_data);
+        $this->skipNextIteration = false;
+        return current($this->data);
     }
 
     /**
-     * Defined by Iterator interface
+     * key(): defined by Iterator interface.
      *
+     * @see    Iterator::key()
      * @return mixed
      */
     public function key()
     {
-        return key($this->_data);
+        return key($this->data);
     }
 
     /**
-     * Defined by Iterator interface
+     * next(): defined by Iterator interface.
      *
+     * @see    Iterator::next()
+     * @return void
      */
     public function next()
     {
-        if ($this->_skipNextIteration) {
-            $this->_skipNextIteration = false;
+        if ($this->skipNextIteration) {
+            $this->skipNextIteration = false;
             return;
         }
-        next($this->_data);
-        $this->_index++;
+
+        next($this->data);
     }
 
     /**
-     * Defined by Iterator interface
+     * rewind(): defined by Iterator interface.
      *
+     * @see    Iterator::rewind()
+     * @return void
      */
     public function rewind()
     {
-        $this->_skipNextIteration = false;
-        reset($this->_data);
-        $this->_index = 0;
+        $this->skipNextIteration = false;
+        reset($this->data);
     }
 
     /**
-     * Defined by Iterator interface
+     * valid(): defined by Iterator interface.
      *
+     * @see    Iterator::valid()
      * @return boolean
      */
     public function valid()
     {
-        return $this->_index < $this->_count;
+        return ($this->key() !== null);
     }
 
     /**
      * offsetExists(): defined by ArrayAccess interface.
-     * 
+     *
      * @see    ArrayAccess::offsetExists()
      * @param  mixed $offset
      * @return boolean
@@ -315,10 +295,10 @@ class Config implements \Countable, \Iterator, \ArrayAccess
     {
         return $this->__isset($offset);
     }
-    
+
     /**
      * offsetGet(): defined by ArrayAccess interface.
-     * 
+     *
      * @see    ArrayAccess::offsetGet()
      * @param  mixed $offset
      * @return mixed
@@ -327,10 +307,10 @@ class Config implements \Countable, \Iterator, \ArrayAccess
     {
         return $this->__get($offset);
     }
-    
+
     /**
      * offsetSet(): defined by ArrayAccess interface.
-     * 
+     *
      * @see    ArrayAccess::offsetSet()
      * @param  mixed $offset
      * @param  mixed $value
@@ -340,10 +320,10 @@ class Config implements \Countable, \Iterator, \ArrayAccess
     {
         $this->__set($offset, $value);
     }
-    
+
     /**
      * offsetUnset(): defined by ArrayAccess interface.
-     * 
+     *
      * @see    ArrayAccess::offsetUnset()
      * @param  mixed $offset
      * @return void
@@ -352,52 +332,39 @@ class Config implements \Countable, \Iterator, \ArrayAccess
     {
         $this->__unset($offset);
     }
-    
-    /**
-     * Returns the section name(s) loaded.
-     *
-     * @return mixed
-     */
-    public function getSectionName()
-    {
-        if(is_array($this->_loadedSection) && count($this->_loadedSection) == 1) {
-            $this->_loadedSection = $this->_loadedSection[0];
-        }
-        return $this->_loadedSection;
-    }
 
     /**
-     * Returns true if all sections were loaded
+     * Merge another Config with this one.
      *
-     * @return boolean
-     */
-    public function areAllSectionsLoaded()
-    {
-        return $this->_loadedSection === null;
-    }
-
-    /**
-     * Merge another Zend_Config with this one. The items
-     * in $merge will override the same named items in
-     * the current config.
+     * For duplicate keys, the following will be performed:
+     * - Nested Configs will be recursively merged.
+     * - Items in $merge with INTEGER keys will be appended.
+     * - Items in $merge with STRING keys will overwrite current values.
      *
-     * @param \Zend\Config\Config $merge
-     * @return \Zend\Config\Config
+     * @param  Config $merge
+     * @return Config
      */
-    public function merge(Config $merge)
+    public function merge(self $merge)
     {
-        foreach($merge as $key => $item) {
-            if(array_key_exists($key, $this->_data)) {
-                if($item instanceof Config && $this->$key instanceof Config) {
-                    $this->$key = $this->$key->merge(new Config($item->toArray(), !$this->readOnly()));
+        /** @var Config $value */
+        foreach ($merge as $key => $value) {
+            if (array_key_exists($key, $this->data)) {
+                if (is_int($key)) {
+                    $this->data[] = $value;
+                } elseif ($value instanceof self && $this->data[$key] instanceof self) {
+                    $this->data[$key]->merge($value);
                 } else {
-                    $this->$key = $item;
+                    if ($value instanceof self) {
+                        $this->data[$key] = new self($value->toArray(), $this->allowModifications);
+                    } else {
+                        $this->data[$key] = $value;
+                    }
                 }
             } else {
-                if($item instanceof Config) {
-                    $this->$key = new Config($item->toArray(), !$this->readOnly());
+                if ($value instanceof self) {
+                    $this->data[$key] = new self($value->toArray(), $this->allowModifications);
                 } else {
-                    $this->$key = $item;
+                    $this->data[$key] = $value;
                 }
             }
         }
@@ -406,131 +373,32 @@ class Config implements \Countable, \Iterator, \ArrayAccess
     }
 
     /**
-     * Prevent any more modifications being made to this instance. Useful
-     * after merge() has been used to merge multiple Zend_Config objects
+     * Prevent any more modifications being made to this instance.
+     *
+     * Useful after merge() has been used to merge multiple Config objects
      * into one object which should then not be modified again.
      *
+     * @return void
      */
     public function setReadOnly()
     {
-        $this->_allowModifications = false;
-        foreach ($this->_data as $key => $value) {
-            if ($value instanceof Config) {
+        $this->allowModifications = false;
+
+        /** @var Config $value */
+        foreach ($this->data as $value) {
+            if ($value instanceof self) {
                 $value->setReadOnly();
             }
         }
     }
 
     /**
-     * Returns if this Zend_Config object is read only or not.
+     * Returns whether this Config object is read only or not.
      *
      * @return boolean
      */
-    public function readOnly()
+    public function isReadOnly()
     {
-        return !$this->_allowModifications;
+        return !$this->allowModifications;
     }
-
-    /**
-     * Get the current extends
-     *
-     * @return array
-     */
-    public function getExtends()
-    {
-        return $this->_extends;
-    }
-
-    /**
-     * Set an extend for Zend_Config_Writer
-     *
-     * @param  string $extendingSection
-     * @param  string $extendedSection
-     * @return void
-     */
-    public function setExtend($extendingSection, $extendedSection = null)
-    {
-        if ($extendedSection === null && isset($this->_extends[$extendingSection])) {
-            unset($this->_extends[$extendingSection]);
-        } else if ($extendedSection !== null) {
-            $this->_extends[$extendingSection] = $extendedSection;
-        }
-    }
-
-    /**
-     * Throws an exception if $extendingSection may not extend $extendedSection,
-     * and tracks the section extension if it is valid.
-     *
-     * @param  string $extendingSection
-     * @param  string $extendedSection
-     * @throws \Zend\Config\Exception
-     * @return void
-     */
-    protected function _assertValidExtend($extendingSection, $extendedSection)
-    {
-        // detect circular section inheritance
-        $extendedSectionCurrent = $extendedSection;
-        while (array_key_exists($extendedSectionCurrent, $this->_extends)) {
-            if ($this->_extends[$extendedSectionCurrent] == $extendingSection) {
-                throw new Exception\RuntimeException('Illegal circular inheritance detected');
-            }
-            $extendedSectionCurrent = $this->_extends[$extendedSectionCurrent];
-        }
-        // remember that this section extends another section
-        $this->_extends[$extendingSection] = $extendedSection;
-    }
-
-    /**
-     * Merge two arrays recursively, overwriting keys of the same name
-     * in $firstArray with the value in $secondArray.
-     *
-     * @param  mixed $firstArray  First array
-     * @param  mixed $secondArray Second array to merge into first array
-     * @return array
-     */
-    protected function _arrayMergeRecursive($firstArray, $secondArray)
-    {
-        if (is_array($firstArray) && is_array($secondArray)) {
-            return array_replace_recursive($firstArray, $secondArray);
-        }
-        return $secondArray;
-    }
-
-    /**
-     * Set internal error handler
-     *
-     * @return void
-     */
-    protected function _setErrorHandler()
-    {
-        set_error_handler(array($this, '_handleError'));
-    }
-
-    /**
-     * Restore internal error handler
-     *
-     * @return array Handled error messages
-     */
-    protected function _restoreErrorHandler()
-    {
-        restore_error_handler();
-        $errorMessages = $this->_errorMessages;
-        $this->_errorMessages = array();
-        return $errorMessages;
-    }
-
-    /**
-     * Handle internal errors
-     *
-     * @param integer $errno
-     * @param string $errstr
-     * @param string $errfile
-     * @param integer $errline
-     * @return void
-     */
-    protected function _handleError($errno, $errstr, $errfile, $errline)
-    {
-        $this->_errorMessages[] = trim($errstr);
-    }
-
 }

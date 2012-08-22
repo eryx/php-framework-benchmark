@@ -1,44 +1,30 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Feed_Reader
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Feed
  */
 
-/**
-* @namespace
-*/
 namespace Zend\Feed\Reader\Extension\Syndication;
+
+use DateTime;
 use Zend\Feed\Reader;
 use Zend\Feed\Reader\Extension;
-use Zend\Date;
 
 /**
- * @uses       \Zend\Date\Date
- * @uses       \Zend\Feed\Reader\Extension\AbstractFeed
  * @category   Zend
  * @package    Zend_Feed_Reader
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Feed extends \Zend\Feed\Reader\Extension\AbstractFeed
 {
     /**
      * Get update period
+     *
      * @return string
+     * @throws Reader\Exception\InvalidArgumentException
      */
     public function getUpdatePeriod()
     {
@@ -50,15 +36,14 @@ class Feed extends \Zend\Feed\Reader\Extension\AbstractFeed
             return 'daily'; //Default specified by spec
         }
 
-        switch ($period)
-        {
+        switch ($period) {
             case 'hourly':
             case 'daily':
             case 'weekly':
             case 'yearly':
                 return $period;
             default:
-                throw new Reader\Exception("Feed specified invalid update period: '$period'."
+                throw new Reader\Exception\InvalidArgumentException("Feed specified invalid update period: '$period'."
                     .  " Must be one of hourly, daily, weekly or yearly"
                 );
         }
@@ -98,8 +83,7 @@ class Feed extends \Zend\Feed\Reader\Extension\AbstractFeed
         $period = $this->getUpdatePeriod();
         $ticks = 1;
 
-        switch ($period)
-        {
+        switch ($period) {
             //intentional fall through
             case 'yearly':
                 $ticks *= 52; //TODO: fix generalisation, how?
@@ -120,15 +104,14 @@ class Feed extends \Zend\Feed\Reader\Extension\AbstractFeed
     /**
      * Get update base
      *
-     * @return Date\Date|null
+     * @return DateTime|null
      */
     public function getUpdateBase()
     {
         $updateBase = $this->_getData('updateBase');
         $date = null;
         if ($updateBase) {
-            $date = new Date\Date;
-            $date->set($updateBase, Date\Date::W3C);
+            $date = DateTime::createFromFormat(DateTime::W3C, $updateBase);
         }
         return $date;
     }

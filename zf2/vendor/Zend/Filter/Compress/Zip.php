@@ -1,39 +1,23 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Filter
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Filter
  */
 
-/**
- * @namespace
- */
 namespace Zend\Filter\Compress;
+
 use Zend\Filter\Exception;
+use ZipArchive;
 
 /**
  * Compression adapter for zip
  *
- * @uses       \Zend\Filter\Compress\AbstractCompressionAlgorithm
- * @uses       \Zend\Filter\Exception
- * @uses       ZipArchive
  * @category   Zend
  * @package    Zend_Filter
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Zip extends AbstractCompressionAlgorithm
 {
@@ -47,7 +31,7 @@ class Zip extends AbstractCompressionAlgorithm
      *
      * @var array
      */
-    protected $_options = array(
+    protected $options = array(
         'archive' => null,
         'target'  => null,
     );
@@ -55,7 +39,7 @@ class Zip extends AbstractCompressionAlgorithm
     /**
      * Class constructor
      *
-     * @param string|array $options (Optional) Options to set
+     * @param  null|array|\Traversable $options (Optional) Options to set
      */
     public function __construct($options = null)
     {
@@ -72,19 +56,19 @@ class Zip extends AbstractCompressionAlgorithm
      */
     public function getArchive()
     {
-        return $this->_options['archive'];
+        return $this->options['archive'];
     }
 
     /**
      * Sets the archive to use for de-/compression
      *
-     * @param string $archive Archive to use
-     * @return \Zend\Filter\Compress\Rar
+     * @param  string $archive Archive to use
+     * @return Zip
      */
     public function setArchive($archive)
     {
-        $archive = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $archive);
-        $this->_options['archive'] = (string) $archive;
+        $archive = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, (string) $archive);
+        $this->options['archive'] = $archive;
 
         return $this;
     }
@@ -96,14 +80,14 @@ class Zip extends AbstractCompressionAlgorithm
      */
     public function getTarget()
     {
-        return $this->_options['target'];
+        return $this->options['target'];
     }
 
     /**
      * Sets the target to use
      *
-     * @param string $target
-     * @return \Zend\Filter\Compress\Rar
+     * @param  string $target
+     * @return Zip
      */
     public function setTarget($target)
     {
@@ -111,8 +95,8 @@ class Zip extends AbstractCompressionAlgorithm
             throw new Exception\InvalidArgumentException("The directory '$target' does not exist");
         }
 
-        $target = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $target);
-        $this->_options['target'] = (string) $target;
+        $target = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, (string) $target);
+        $this->options['target'] = $target;
         return $this;
     }
 
@@ -121,14 +105,15 @@ class Zip extends AbstractCompressionAlgorithm
      *
      * @param  string $content
      * @return string Compressed archive
+     * @throws Exception\RuntimeException if unable to open zip archive, or error during compression
      */
     public function compress($content)
     {
-        $zip = new \ZipArchive();
-        $res = $zip->open($this->getArchive(), \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        $zip = new ZipArchive();
+        $res = $zip->open($this->getArchive(), ZipArchive::CREATE | ZipArchive::OVERWRITE);
 
         if ($res !== true) {
-            throw new Exception\RuntimeException($this->_errorString($res));
+            throw new Exception\RuntimeException($this->errorString($res));
         }
 
         if (file_exists($content)) {
@@ -163,14 +148,14 @@ class Zip extends AbstractCompressionAlgorithm
                     foreach ($files as $file) {
                         $zip->addFile($current . $file, $local . $file);
                         if ($res !== true) {
-                            throw new Exception\RuntimeException($this->_errorString($res));
+                            throw new Exception\RuntimeException($this->errorString($res));
                         }
                     }
                 }
             } else {
                 $res = $zip->addFile($content, $basename);
                 if ($res !== true) {
-                    throw new Exception\RuntimeException($this->_errorString($res));
+                    throw new Exception\RuntimeException($this->errorString($res));
                 }
             }
         } else {
@@ -183,12 +168,12 @@ class Zip extends AbstractCompressionAlgorithm
 
             $res = $zip->addFromString($file, $content);
             if ($res !== true) {
-                throw new Exception\RuntimeException($this->_errorString($res));
+                throw new Exception\RuntimeException($this->errorString($res));
             }
         }
 
         $zip->close();
-        return $this->_options['archive'];
+        return $this->options['archive'];
     }
 
     /**
@@ -196,21 +181,22 @@ class Zip extends AbstractCompressionAlgorithm
      *
      * @param  string $content
      * @return string
+     * @throws Exception\RuntimeException If archive file not found, target directory not found,
+     *                                    or error during decompression
      */
     public function decompress($content)
     {
         $archive = $this->getArchive();
-        if (file_exists($content)) {
-            $archive = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, realpath($content));
-        } elseif (empty($archive) || !file_exists($archive)) {
+
+        if (empty($archive) || !file_exists($archive)) {
             throw new Exception\RuntimeException('ZIP Archive not found');
         }
 
-        $zip = new \ZipArchive();
-        $res = $zip->open($archive);
+        $archive = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, realpath($content));
+        $zip     = new ZipArchive();
+        $res     = $zip->open($archive);
 
         $target = $this->getTarget();
-
         if (!empty($target) && !is_dir($target)) {
             $target = dirname($target);
         }
@@ -224,12 +210,12 @@ class Zip extends AbstractCompressionAlgorithm
         }
 
         if ($res !== true) {
-            throw new Exception\RuntimeException($this->_errorString($res));
+            throw new Exception\RuntimeException($this->errorString($res));
         }
 
-        $res = @$zip->extractTo($target);
+        $res = $zip->extractTo($target);
         if ($res !== true) {
-            throw new Exception\RuntimeException($this->_errorString($res));
+            throw new Exception\RuntimeException($this->errorString($res));
         }
 
         $zip->close();
@@ -239,78 +225,79 @@ class Zip extends AbstractCompressionAlgorithm
     /**
      * Returns the proper string based on the given error constant
      *
-     * @param string $error
+     * @param  string $error
+     * @return string
      */
-    protected function _errorString($error)
+    public function errorString($error)
     {
-        switch($error) {
-            case \ZipArchive::ER_MULTIDISK :
+        switch ($error) {
+            case ZipArchive::ER_MULTIDISK :
                 return 'Multidisk ZIP Archives not supported';
 
-            case \ZipArchive::ER_RENAME :
+            case ZipArchive::ER_RENAME :
                 return 'Failed to rename the temporary file for ZIP';
 
-            case \ZipArchive::ER_CLOSE :
+            case ZipArchive::ER_CLOSE :
                 return 'Failed to close the ZIP Archive';
 
-            case \ZipArchive::ER_SEEK :
+            case ZipArchive::ER_SEEK :
                 return 'Failure while seeking the ZIP Archive';
 
-            case \ZipArchive::ER_READ :
+            case ZipArchive::ER_READ :
                 return 'Failure while reading the ZIP Archive';
 
-            case \ZipArchive::ER_WRITE :
+            case ZipArchive::ER_WRITE :
                 return 'Failure while writing the ZIP Archive';
 
-            case \ZipArchive::ER_CRC :
+            case ZipArchive::ER_CRC :
                 return 'CRC failure within the ZIP Archive';
 
-            case \ZipArchive::ER_ZIPCLOSED :
+            case ZipArchive::ER_ZIPCLOSED :
                 return 'ZIP Archive already closed';
 
-            case \ZipArchive::ER_NOENT :
+            case ZipArchive::ER_NOENT :
                 return 'No such file within the ZIP Archive';
 
-            case \ZipArchive::ER_EXISTS :
+            case ZipArchive::ER_EXISTS :
                 return 'ZIP Archive already exists';
 
-            case \ZipArchive::ER_OPEN :
+            case ZipArchive::ER_OPEN :
                 return 'Can not open ZIP Archive';
 
-            case \ZipArchive::ER_TMPOPEN :
+            case ZipArchive::ER_TMPOPEN :
                 return 'Failure creating temporary ZIP Archive';
 
-            case \ZipArchive::ER_ZLIB :
+            case ZipArchive::ER_ZLIB :
                 return 'ZLib Problem';
 
-            case \ZipArchive::ER_MEMORY :
+            case ZipArchive::ER_MEMORY :
                 return 'Memory allocation problem while working on a ZIP Archive';
 
-            case \ZipArchive::ER_CHANGED :
+            case ZipArchive::ER_CHANGED :
                 return 'ZIP Entry has been changed';
 
-            case \ZipArchive::ER_COMPNOTSUPP :
+            case ZipArchive::ER_COMPNOTSUPP :
                 return 'Compression method not supported within ZLib';
 
-            case \ZipArchive::ER_EOF :
+            case ZipArchive::ER_EOF :
                 return 'Premature EOF within ZIP Archive';
 
-            case \ZipArchive::ER_INVAL :
+            case ZipArchive::ER_INVAL :
                 return 'Invalid argument for ZLIB';
 
-            case \ZipArchive::ER_NOZIP :
+            case ZipArchive::ER_NOZIP :
                 return 'Given file is no zip archive';
 
-            case \ZipArchive::ER_INTERNAL :
+            case ZipArchive::ER_INTERNAL :
                 return 'Internal error while working on a ZIP Archive';
 
-            case \ZipArchive::ER_INCONS :
+            case ZipArchive::ER_INCONS :
                 return 'Inconsistent ZIP archive';
 
-            case \ZipArchive::ER_REMOVE :
+            case ZipArchive::ER_REMOVE :
                 return 'Can not remove ZIP Archive';
 
-            case \ZipArchive::ER_DELETED :
+            case ZipArchive::ER_DELETED :
                 return 'ZIP Entry has been deleted';
 
             default :

@@ -1,13 +1,26 @@
 <?php
+/**
+ * Zend Framework (http://framework.zend.com/)
+ *
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Di
+ */
 
 namespace Zend\Di\Definition;
 
-use Zend\Di\Definition\Annotation,
-    Zend\Code\Annotation\AnnotationManager,
-    Zend\Code\Annotation\AnnotationCollection,
-    Zend\Code\Reflection;
+use Zend\Code\Annotation\AnnotationCollection;
+use Zend\Code\Reflection;
+use Zend\Di\Definition\Annotation;
 
-class RuntimeDefinition implements Definition
+/**
+ * Class definitions based on runtime reflection
+ *
+ * @category   Zend
+ * @package    Zend_Di
+ */
+class RuntimeDefinition implements DefinitionInterface
 {
 
     /**
@@ -31,7 +44,10 @@ class RuntimeDefinition implements Definition
     protected $injectionMethods = array();
 
     /**
+     * Constructor
      *
+     * @param null|IntrospectionStrategy $introspectionStrategy
+     * @param array|null                 $explicitClasses
      */
     public function __construct(IntrospectionStrategy $introspectionStrategy = null, array $explicitClasses = null)
     {
@@ -42,14 +58,14 @@ class RuntimeDefinition implements Definition
     }
 
     /**
-     * @param IntrospectionStrategy $introspectionStrategy
+     * @param  IntrospectionStrategy $introspectionStrategy
      * @return void
      */
     public function setIntrospectionStrategy(IntrospectionStrategy $introspectionStrategy)
     {
         $this->introspectionStrategy = $introspectionStrategy;
     }
-    
+
     /**
      * @return IntrospectionStrategy
      */
@@ -58,6 +74,11 @@ class RuntimeDefinition implements Definition
         return $this->introspectionStrategy;
     }
 
+    /**
+     * Set explicit classes
+     *
+     * @param array $explicitClasses
+     */
     public function setExplicitClasses(array $explicitClasses)
     {
         $this->explicitLookups = true;
@@ -67,15 +88,16 @@ class RuntimeDefinition implements Definition
         $this->classes = $explicitClasses;
     }
 
+    /**
+     * @param string $class
+     */
     public function forceLoadClass($class)
     {
         $this->processClass($class);
     }
 
     /**
-     * Return nothing
-     * 
-     * @return array
+     * {@inheritDoc}
      */
     public function getClasses()
     {
@@ -83,119 +105,104 @@ class RuntimeDefinition implements Definition
     }
 
     /**
-     * Return whether the class exists
-     *
-     * @param string $class
-     * @return bool
+     * {@inheritDoc}
      */
     public function hasClass($class)
     {
         if ($this->explicitLookups === true) {
             return (array_key_exists($class, $this->classes));
         }
-        
-        return class_exists($class, true);
+
+        return class_exists($class) || interface_exists($class);
     }
 
     /**
-     * Return the supertypes for this class
-     *
-     * @param string $class
-     * @return array of types
+     * {@inheritDoc}
      */
     public function getClassSupertypes($class)
     {
-        if (!array_key_exists($class, $this->classes[$class])) {
+        if (!array_key_exists($class, $this->classes)) {
             $this->processClass($class);
         }
+
         return $this->classes[$class]['supertypes'];
     }
 
     /**
-     * Get the instantiator
-     *
-     * @param string $class
-     * @return string|callable
+     * {@inheritDoc}
      */
     public function getInstantiator($class)
     {
         if (!array_key_exists($class, $this->classes)) {
             $this->processClass($class);
         }
+
         return $this->classes[$class]['instantiator'];
     }
 
     /**
-     * Return if there are injection methods
-     *
-     * @param string $class
-     * @return bool
+     * {@inheritDoc}
      */
     public function hasMethods($class)
     {
         if (!array_key_exists($class, $this->classes)) {
             $this->processClass($class);
         }
+
         return (count($this->classes[$class]['methods']) > 0);
     }
 
     /**
-     * Return injection methods
-     *
-     * @param string $class
-     * @param string $method
-     * @return bool
+     * {@inheritDoc}
      */
     public function hasMethod($class, $method)
     {
         if (!array_key_exists($class, $this->classes)) {
             $this->processClass($class);
         }
+
         return isset($this->classes[$class]['methods'][$method]);
     }
 
     /**
-     * Return an array of the injection methods
-     *
-     * @param string $class
-     * @return array
+     * {@inheritDoc}
      */
     public function getMethods($class)
     {
         if (!array_key_exists($class, $this->classes)) {
             $this->processClass($class);
         }
+
         return $this->classes[$class]['methods'];
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function hasMethodParameters($class, $method)
     {
         if (!isset($this->classes[$class])) {
             return false;
         }
+
         return (array_key_exists($method, $this->classes[$class]['parameters']));
     }
 
     /**
-     * Return the parameters for a method
-     *
-     * 3 item array:
-     *     #1 - Class name, string if it exists, else null
-     *     #2 - Optional?, boolean
-     *     #3 - Instantiable, boolean if class exists, otherwise null
-     *
-     * @param string $class
-     * @param string $method
-     * @return array
+     * {@inheritDoc}
      */
     public function getMethodParameters($class, $method)
     {
         if (!is_array($this->classes[$class])) {
             $this->processClass($class);
         }
+
         return $this->classes[$class]['parameters'][$method];
     }
 
+    /**
+     * @param string $class
+     */
     protected function processClass($class)
     {
         $strategy = $this->introspectionStrategy; // localize for readability
@@ -221,9 +228,22 @@ class RuntimeDefinition implements Definition
 
             if (($annotations instanceof AnnotationCollection)
                 && $annotations->hasAnnotation('Zend\Di\Definition\Annotation\Instantiator')) {
-                // @todo Instnatiator support in annotations
+                // @todo Instantiator support in annotations
             }
         }
+
+        $rTarget = $rClass;
+        $supertypes = array();
+        do {
+            $supertypes = array_merge($supertypes, $rTarget->getInterfaceNames());
+            if (!($rTargetParent = $rTarget->getParentClass())) {
+                break;
+            }
+            $supertypes[] = $rTargetParent->getName();
+            $rTarget = $rTargetParent;
+        } while (true);
+
+        $def['supertypes'] = $supertypes;
 
         if ($def['instantiator'] == null) {
             if ($rClass->isInstantiable()) {
@@ -235,7 +255,6 @@ class RuntimeDefinition implements Definition
             $def['methods']['__construct'] = true; // required
             $this->processParams($def, $rClass, $rClass->getMethod('__construct'));
         }
-
 
         foreach ($rClass->getMethods(Reflection\MethodReflection::IS_PUBLIC) as $rMethod) {
 
@@ -269,7 +288,6 @@ class RuntimeDefinition implements Definition
                 }
             }
 
-
             // method
             // by annotation
             // by setter pattern,
@@ -286,7 +304,8 @@ class RuntimeDefinition implements Definition
                 preg_match($interfaceInjectorPattern, $rIface->getName(), $matches);
                 if ($matches) {
                     foreach ($rIface->getMethods() as $rMethod) {
-                        if ($rMethod->getName() === '__construct') { // ctor not allowed in ifaces
+                        if ($rMethod->getName() === '__construct') {
+                            // constructor not allowed in interfaces
                             continue;
                         }
                         $def['methods'][$rMethod->getName()] = true;
@@ -296,11 +315,13 @@ class RuntimeDefinition implements Definition
                 }
             }
         }
-
-
-        //var_dump($this->classes);
     }
 
+    /**
+     * @param array                                  $def
+     * @param \Zend\Code\Reflection\ClassReflection  $rClass
+     * @param \Zend\Code\Reflection\MethodReflection $rMethod
+     */
     protected function processParams(&$def, Reflection\ClassReflection $rClass, Reflection\MethodReflection $rMethod)
     {
         if (count($rMethod->getParameters()) === 0) {
@@ -318,8 +339,6 @@ class RuntimeDefinition implements Definition
             /** @var $p \ReflectionParameter  */
             $actualParamName = $p->getName();
 
-            $paramName = $this->createDistinctParameterName($actualParamName, $rClass->getName());
-
             $fqName = $rClass->getName() . '::' . $rMethod->getName() . ':' . $p->getPosition();
 
             $def['parameters'][$methodName][$fqName] = array();
@@ -331,29 +350,4 @@ class RuntimeDefinition implements Definition
         }
 
     }
-
-    protected function createDistinctParameterName($paramName, $class)
-    {
-        $currentParams = array();
-        if ($this->classes[$class]['parameters'] === array()) {
-            return $paramName;
-        }
-        foreach ($this->classes as $cdata) {
-            foreach ($cdata['parameters'] as $mdata) {
-                $currentParams = array_merge($currentParams, array_keys($mdata));
-            }
-        }
-
-        if (!in_array($paramName, $currentParams)) {
-            return $paramName;
-        }
-
-        $alt = 2;
-        while (in_array($paramName . (string) $alt, $currentParams)) {
-            $alt++;
-        }
-
-        return $paramName . (string) $alt;
-    }
-    
 }

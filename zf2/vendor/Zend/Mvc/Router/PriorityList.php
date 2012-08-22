@@ -1,38 +1,22 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Mvc_Router
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @version    $Id$
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Mvc
  */
 
-/**
- * @namespace
- */
 namespace Zend\Mvc\Router;
 
-use Countable,
-    Iterator;
+use Countable;
+use Iterator;
 
 /**
  * Priority list
  *
  * @package    Zend_Mvc_Router
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
   */
 class PriorityList implements Iterator, Countable
 {
@@ -45,7 +29,7 @@ class PriorityList implements Iterator, Countable
 
     /**
      * Serial assigned to routes to preserve LIFO.
-     * 
+     *
      * @var integer
      */
     protected $serial = 0;
@@ -68,18 +52,18 @@ class PriorityList implements Iterator, Countable
      * Insert a new route.
      *
      * @param  string  $name
-     * @param  Route   $route
+     * @param  RouteInterface   $route
      * @param  integer $priority
      * @return void
      */
-    public function insert($name, Route $route, $priority)
+    public function insert($name, RouteInterface $route, $priority)
     {
         $this->sorted = false;
         $this->count++;
 
         $this->routes[$name] = array(
             'route'    => $route,
-            'priority' => $priority,
+            'priority' => (int) $priority,
             'serial'   => $this->serial++,
         );
     }
@@ -95,24 +79,37 @@ class PriorityList implements Iterator, Countable
         if (!isset($this->routes[$name])) {
             return;
         }
-        
+
         $this->count--;
 
         unset($this->routes[$name]);
     }
-    
+
+    /**
+     * Remove all routes.
+     *
+     * @return void
+     */
+    public function clear()
+    {
+        $this->routes = array();
+        $this->serial = 0;
+        $this->count  = 0;
+        $this->sorted = false;
+    }
+
     /**
      * Get a route.
-     * 
-     * @param  string $name 
-     * @return Route
+     *
+     * @param  string $name
+     * @return RouteInterface
      */
     public function get($name)
     {
         if (!isset($this->routes[$name])) {
             return null;
         }
-        
+
         return $this->routes[$name]['route'];
     }
 
@@ -149,7 +146,7 @@ class PriorityList implements Iterator, Countable
      * @see    Iterator::rewind()
      * @return void
      */
-    public function rewind() 
+    public function rewind()
     {
         if (!$this->sorted) {
             $this->sort();
@@ -162,9 +159,9 @@ class PriorityList implements Iterator, Countable
      * current(): defined by Iterator interface.
      *
      * @see    Iterator::current()
-     * @return Route
+     * @return RouteInterface
      */
-    public function current() 
+    public function current()
     {
         $node = current($this->routes);
         return ($node !== false ? $node['route'] : false);
@@ -176,7 +173,7 @@ class PriorityList implements Iterator, Countable
      * @see    Iterator::key()
      * @return string
      */
-    public function key() 
+    public function key()
     {
         return key($this->routes);
     }
@@ -185,9 +182,9 @@ class PriorityList implements Iterator, Countable
      * next(): defined by Iterator interface.
      *
      * @see    Iterator::next()
-     * @return Route
+     * @return RouteInterface
      */
-    public function next() 
+    public function next()
     {
         $node = next($this->routes);
         return ($node !== false ? $node['route'] : false);
@@ -199,7 +196,7 @@ class PriorityList implements Iterator, Countable
      * @see    Iterator::valid()
      * @return boolean
      */
-    public function valid() 
+    public function valid()
     {
         return ($this->current() !== false);
     }
@@ -210,7 +207,7 @@ class PriorityList implements Iterator, Countable
      * @see    Countable::count()
      * @return integer
      */
-    public function count() 
+    public function count()
     {
         return $this->count;
     }

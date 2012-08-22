@@ -1,79 +1,62 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Mail
- * @subpackage Storage
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Mail
  */
 
-/**
- * @namespace
- */
 namespace Zend\Mail\Storage;
-use Zend\Mail\Storage\Exception;
+
+use RecursiveIterator;
 
 /**
- * @uses       RecursiveIterator
- * @uses       \Zend\Mail\Storage\Exception
  * @category   Zend
  * @package    Zend_Mail
  * @subpackage Storage
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
-class Folder implements \RecursiveIterator
+class Folder implements RecursiveIterator
 {
     /**
      * subfolders of folder array(localName => \Zend\Mail\Storage\Folder folder)
      * @var array
      */
-    protected $_folders;
+    protected $folders;
 
     /**
      * local name (name of folder in parent folder)
      * @var string
      */
-    protected $_localName;
+    protected $localName;
 
     /**
      * global name (absolute name of folder)
      * @var string
      */
-    protected $_globalName;
+    protected $globalName;
 
     /**
      * folder is selectable if folder is able to hold messages, else it's just a parent folder
      * @var bool
      */
-    protected $_selectable = true;
+    protected $selectable = true;
 
     /**
      * create a new mail folder instance
      *
      * @param string $localName  name of folder in current subdirectory
      * @param string $globalName absolute name of folder
-     * @param bool   $selectable if true folder holds messages, if false it's just a parent for subfolders
+     * @param bool   $selectable if true folder holds messages, if false it's just a parent for subfolders (Default: true)
      * @param array  $folders    init with given instances of \Zend\Mail\Storage\Folder as subfolders
      */
     public function __construct($localName, $globalName = '', $selectable = true, array $folders = array())
     {
-        $this->_localName  = $localName;
-        $this->_globalName = $globalName ? $globalName : $localName;
-        $this->_selectable = $selectable;
-        $this->_folders    = $folders;
+        $this->localName  = $localName;
+        $this->globalName = $globalName ? $globalName : $localName;
+        $this->selectable = $selectable;
+        $this->folders    = $folders;
     }
 
     /**
@@ -104,17 +87,15 @@ class Folder implements \RecursiveIterator
      */
     public function valid()
     {
-        return key($this->_folders) !== null;
+        return key($this->folders) !== null;
     }
 
     /**
      * implements Iterator::next()
-     *
-     * @return null
      */
     public function next()
     {
-        next($this->_folders);
+        next($this->folders);
     }
 
     /**
@@ -124,7 +105,7 @@ class Folder implements \RecursiveIterator
      */
     public function key()
     {
-        return key($this->_folders);
+        return key($this->folders);
     }
 
     /**
@@ -134,33 +115,31 @@ class Folder implements \RecursiveIterator
      */
     public function current()
     {
-        return current($this->_folders);
+        return current($this->folders);
     }
 
     /**
      * implements Iterator::rewind()
-     *
-     * @return null
      */
     public function rewind()
     {
-        reset($this->_folders);
+        reset($this->folders);
     }
 
     /**
      * get subfolder named $name
      *
      * @param  string $name wanted subfolder
+     * @throws Exception\InvalidArgumentException
      * @return \Zend\Mail\Storage\Folder folder named $folder
-     * @throws \Zend\Mail\Storage\Exception
      */
     public function __get($name)
     {
-        if (!isset($this->_folders[$name])) {
+        if (!isset($this->folders[$name])) {
             throw new Exception\InvalidArgumentException("no subfolder named $name");
         }
 
-        return $this->_folders[$name];
+        return $this->folders[$name];
     }
 
     /**
@@ -168,22 +147,20 @@ class Folder implements \RecursiveIterator
      *
      * @param string $name local name of subfolder
      * @param \Zend\Mail\Storage\Folder $folder instance for new subfolder
-     * @return null
      */
     public function __set($name, Folder $folder)
     {
-        $this->_folders[$name] = $folder;
+        $this->folders[$name] = $folder;
     }
 
     /**
      * remove subfolder named $name
      *
      * @param string $name local name of subfolder
-     * @return null
      */
     public function __unset($name)
     {
-        unset($this->_folders[$name]);
+        unset($this->folders[$name]);
     }
 
     /**
@@ -203,7 +180,7 @@ class Folder implements \RecursiveIterator
      */
     public function getLocalName()
     {
-        return $this->_localName;
+        return $this->localName;
     }
 
     /**
@@ -213,7 +190,7 @@ class Folder implements \RecursiveIterator
      */
     public function getGlobalName()
     {
-        return $this->_globalName;
+        return $this->globalName;
     }
 
     /**
@@ -223,7 +200,7 @@ class Folder implements \RecursiveIterator
      */
     public function isSelectable()
     {
-        return $this->_selectable;
+        return $this->selectable;
     }
 
     /**
@@ -233,6 +210,6 @@ class Folder implements \RecursiveIterator
      */
     public function isLeaf()
     {
-        return empty($this->_folders);
+        return empty($this->folders);
     }
 }

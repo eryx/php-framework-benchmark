@@ -1,43 +1,27 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category  Zend
- * @package   Zend_Text_Table
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license   http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Text
  */
 
-/**
- * @namespace
- */
 namespace Zend\Text\Table\Decorator;
 
-use Zend\Text\Table\Decorator;
+use Zend\Text\Table\Decorator\DecoratorInterface as Decorator;
 
 /**
- * Unicode Decorator for Zend_Text_Table
+ * Unicode Decorator for Zend\Text\Table
  *
- * @uses      \Zend\Text\Table\Decorator
  * @category  Zend
  * @package   Zend_Text_Table
- * @copyright Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license   http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Unicode implements Decorator
 {
     /**
-     * Defined by Zend_Text_Table_Decorator_Interface
+     * Defined by Zend\Text\Table\Decorator\DecoratorInterface
      *
      * @return string
      */
@@ -47,7 +31,7 @@ class Unicode implements Decorator
     }
 
     /**
-     * Defined by Zend_Text_Table_Decorator_Interface
+     * Defined by Zend\Text\Table\Decorator\DecoratorInterface
      *
      * @return string
      */
@@ -57,7 +41,7 @@ class Unicode implements Decorator
     }
 
     /**
-     * Defined by Zend_Text_Table_Decorator_Interface
+     * Defined by Zend\Text\Table\Decorator\DecoratorInterface
      *
      * @return string
      */
@@ -67,7 +51,7 @@ class Unicode implements Decorator
     }
 
     /**
-     * Defined by Zend_Text_Table_Decorator_Interface
+     * Defined by Zend\Text\Table\Decorator\DecoratorInterface
      *
      * @return string
      */
@@ -77,7 +61,7 @@ class Unicode implements Decorator
     }
 
     /**
-     * Defined by Zend_Text_Table_Decorator_Interface
+     * Defined by Zend\Text\Table\Decorator\DecoratorInterface
      *
      * @return string
      */
@@ -87,7 +71,7 @@ class Unicode implements Decorator
     }
 
     /**
-     * Defined by Zend_Text_Table_Decorator_Interface
+     * Defined by Zend\Text\Table\Decorator\DecoratorInterface
      *
      * @return string
      */
@@ -97,7 +81,7 @@ class Unicode implements Decorator
     }
 
     /**
-     * Defined by Zend_Text_Table_Decorator_Interface
+     * Defined by Zend\Text\Table\Decorator\DecoratorInterface
      *
      * @return string
      */
@@ -107,7 +91,7 @@ class Unicode implements Decorator
     }
 
     /**
-     * Defined by Zend_Text_Table_Decorator_Interface
+     * Defined by Zend\Text\Table\Decorator\DecoratorInterface
      *
      * @return string
      */
@@ -117,7 +101,7 @@ class Unicode implements Decorator
     }
 
     /**
-     * Defined by Zend_Text_Table_Decorator_Interface
+     * Defined by Zend\Text\Table\Decorator\DecoratorInterface
      *
      * @return string
      */
@@ -127,7 +111,7 @@ class Unicode implements Decorator
     }
 
     /**
-     * Defined by Zend_Text_Table_Decorator_Interface
+     * Defined by Zend\Text\Table\Decorator\DecoratorInterface
      *
      * @return string
      */
@@ -137,7 +121,7 @@ class Unicode implements Decorator
     }
 
     /**
-     * Defined by Zend_Text_Table_Decorator_Interface
+     * Defined by Zend\Text\Table\Decorator\DecoratorInterface
      *
      * @return string
      */
@@ -156,14 +140,14 @@ class Unicode implements Decorator
     {
         if ($code <= 0x7F) {
             $char = chr($code);
-        } else if ($code <= 0x7FF) {
+        } elseif ($code <= 0x7FF) {
             $char = chr(0xC0 | $code >> 6)
                   . chr(0x80 | $code & 0x3F);
-        } else if ($code <= 0xFFFF) {
+        } elseif ($code <= 0xFFFF) {
             $char =  chr(0xE0 | $code >> 12)
                   . chr(0x80 | $code >> 6 & 0x3F)
                   . chr(0x80 | $code & 0x3F);
-        } else if ($code <= 0x10FFFF) {
+        } elseif ($code <= 0x10FFFF) {
             $char =  chr(0xF0 | $code >> 18)
                   . chr(0x80 | $code >> 12 & 0x3F)
                   . chr(0x80 | $code >> 6 & 0x3F)

@@ -1,36 +1,23 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category  Zend
- * @package   Zend_Validate
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license   http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Validator
  */
 
-/**
- * @namespace
- */
 namespace Zend\Validator\File;
+
+use Traversable;
+use Zend\Stdlib\ArrayUtils;
 
 /**
  * Validator which checks if the file already exists in the directory
  *
- * @uses      \Zend\Validator\File\MimeType
  * @category  Zend
  * @package   Zend_Validate
- * @copyright Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license   http://framework.zend.com/license/new-bsd     New BSD License
  */
 class IsImage extends MimeType
 {
@@ -44,7 +31,7 @@ class IsImage extends MimeType
     /**
      * @var array Error message templates
      */
-    protected $_messageTemplates = array(
+    protected $messageTemplates = array(
         self::FALSE_TYPE   => "File '%value%' is no image, '%type%' detected",
         self::NOT_DETECTED => "The mimetype of file '%value%' could not be detected",
         self::NOT_READABLE => "File '%value%' is not readable or does not exist",
@@ -53,8 +40,7 @@ class IsImage extends MimeType
     /**
      * Sets validator options
      *
-     * @param  string|array|\Zend\Config\Config $mimetype
-     * @return void
+     * @param array|Traversable|string $options
      */
     public function __construct($options = array())
     {
@@ -118,26 +104,12 @@ class IsImage extends MimeType
             'image/x-xpmi',
         );
 
-        if (is_array($options) && array_key_exists('magicFile', $options)) {
-            $this->setMagicFile($options['magicFile']);
-            unset($options['magicFile']);
-        }
-
-        if (is_array($options) && array_key_exists('enableHeaderCheck', $options)) {
-            $this->enableHeaderCheck($options['enableHeaderCheck']);
-            unset($options['enableHeaderCheck']);
-        }
-
-        if (is_array($options) && !array_key_exists('mimeType', $options)) {
-            $options['mimeType'] = $options;
+        if ($options instanceof Traversable) {
+            $options = ArrayUtils::iteratorToArray($options);
         }
 
         if (empty($options)) {
             $options = array('mimeType' => $default);
-        }
-
-        if (!is_array($options)) {
-            $options = array('mimeType' => $options);
         }
 
         parent::__construct($options);
@@ -151,19 +123,21 @@ class IsImage extends MimeType
      * @param  string $errorType
      * @return false
      */
-    protected function _throw($file, $errorType)
+    protected function createError($file, $errorType)
     {
         if ($file !== null) {
             if (is_array($file)) {
-                if(array_key_exists('name', $file)) {
-                    $this->value = basename($file['name']);
+                if (array_key_exists('name', $file)) {
+                    $file = $file['name'];
                 }
-            } else if (is_string($file)) {
+            }
+
+            if (is_string($file)) {
                 $this->value = basename($file);
             }
         }
 
-        switch($errorType) {
+        switch ($errorType) {
             case MimeType::FALSE_TYPE :
                 $errorType = self::FALSE_TYPE;
                 break;

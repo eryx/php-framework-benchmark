@@ -1,87 +1,81 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Soap
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Soap
  */
 
-/**
- * @namespace
- */
 namespace Zend\Soap;
 
-use DOMDocument,
-    Zend\Uri\Uri;
+use DOMDocument;
+use DOMElement;
+use Zend\Soap\Wsdl\ComplexTypeStrategy\ComplexTypeStrategyInterface as ComplexTypeStrategy;
+use Zend\Uri\Uri;
 
 /**
  * \Zend\Soap\Wsdl
  *
  * @category   Zend
  * @package    Zend_Soap
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Wsdl
 {
     /**
      * @var object DomDocument Instance
      */
-    private $_dom;
+    private $dom;
 
     /**
      * @var object WSDL Root XML_Tree_Node
      */
-    private $_wsdl;
+    private $wsdl;
 
     /**
      * @var string URI where the WSDL will be available
      */
-    private $_uri;
+    private $uri;
 
     /**
      * @var DOMElement
      */
-    private $_schema = null;
+    private $schema = null;
 
     /**
      * Types defined on schema
      *
      * @var array
      */
-    private $_includedTypes = array();
+    private $includedTypes = array();
 
     /**
      * Strategy for detection of complex types
      */
-    protected $_strategy = null;
+    protected $strategy = null;
 
+    /**
+     * Map of PHP Class names to WSDL QNames.
+     *
+     * @var array
+     */
+    protected $classMap = array();
 
     /**
      * Constructor
      *
      * @param string  $name Name of the Web Service being Described
      * @param string|Uri $uri URI where the WSDL will be available
-     * @param boolean|string|\Zend\Soap\Wsdl\Strategy $strategy
+     * @param ComplexTypeStrategy $strategy
      */
-    public function __construct($name, $uri, $strategy = true)
+    public function __construct($name, $uri, ComplexTypeStrategy $strategy = null, array $classMap = array())
     {
         if ($uri instanceof Uri) {
             $uri = $uri->toString();
         }
-        $this->_uri = $uri;
+        $this->uri = $uri;
+        $this->classMap = $classMap;
 
         /**
          * @todo change DomDocument object creation from cparsing to constructing using API
@@ -95,36 +89,64 @@ class Wsdl
                     xmlns:xsd='http://www.w3.org/2001/XMLSchema'
                     xmlns:soap-enc='http://schemas.xmlsoap.org/soap/encoding/'
                     xmlns:wsdl='http://schemas.xmlsoap.org/wsdl/'></definitions>";
-        $this->_dom = new DOMDocument();
-        if (!$this->_dom->loadXML($wsdl)) {
+        libxml_disable_entity_loader(true);
+        $this->dom = new DOMDocument();
+        if (!$this->dom->loadXML($wsdl)) {
             throw new Exception\RuntimeException('Unable to create DomDocument');
         } else {
-            $this->_wsdl = $this->_dom->documentElement;
+            foreach ($this->dom->childNodes as $child) {
+                if ($child->nodeType === XML_DOCUMENT_TYPE_NODE) {
+                    throw new Exception\RuntimeException(
+                        'Invalid XML: Detected use of illegal DOCTYPE'
+                    );
+                }
+            }
+            $this->wsdl = $this->dom->documentElement;
         }
+        libxml_disable_entity_loader(false);
+        $this->setComplexTypeStrategy($strategy ?: new Wsdl\ComplexTypeStrategy\DefaultComplexType);
+    }
 
-        $this->setComplexTypeStrategy($strategy);
+    /**
+     * Get the class map of php to wsdl qname types.
+     *
+     * @return array
+     */
+    public function getClassMap()
+    {
+        return $this->classMap;
+    }
+
+    /**
+     * Set the class map of php to wsdl qname types.
+     */
+    public function setClassMap($classMap)
+    {
+        $this->classMap = $classMap;
     }
 
     /**
      * Set a new uri for this WSDL
      *
      * @param  string|Uri $uri
-     * @return \Zend\Server\Wsdl
+     * @return \Zend\Soap\Wsdl
      */
     public function setUri($uri)
     {
         if ($uri instanceof Uri) {
             $uri = $uri->toString();
         }
-        $oldUri = $this->_uri;
-        $this->_uri = $uri;
+        $oldUri = $this->uri;
+        $this->uri = $uri;
 
-        if($this->_dom !== null) {
+        if ($this->dom !== null) {
             // @todo: This is the worst hack ever, but its needed due to design and non BC issues of WSDL generation
-            $xml = $this->_dom->saveXML();
+            $xml = $this->dom->saveXML();
             $xml = str_replace($oldUri, $uri, $xml);
-            $this->_dom = new DOMDocument();
-            $this->_dom->loadXML($xml);
+            libxml_disable_entity_loader(true);
+            $this->dom = new DOMDocument();
+            $this->dom->loadXML($xml);
+            libxml_disable_entity_loader(false);
         }
 
         return $this;
@@ -133,41 +155,23 @@ class Wsdl
     /**
      * Set a strategy for complex type detection and handling
      *
-     * @todo Boolean is for backwards compability with extractComplexType object var. Remove it in later versions.
-     * @param boolean|string|\Zend\Soap\Wsdl\Strategy $strategy
+     * @param ComplexTypeStrategy $strategy
      * @return \Zend\Soap\Wsdl
      */
-    public function setComplexTypeStrategy($strategy)
+    public function setComplexTypeStrategy(ComplexTypeStrategy $strategy)
     {
-        if($strategy === true) {
-            $strategy = new Wsdl\Strategy\DefaultComplexType();
-        } else if($strategy === false) {
-            $strategy = new Wsdl\Strategy\AnyType();
-        } else if(is_string($strategy)) {
-            if(class_exists($strategy)) {
-                $strategy = new $strategy();
-            } else {
-                throw new Exception\InvalidArgumentException(
-                    sprintf("Strategy with name '%s does not exist.", $strategy
-                ));
-            }
-        }
-
-        if(!($strategy instanceof Wsdl\Strategy)) {
-            throw new Exception\InvalidArgumentException('Set a strategy that is not of type \'Zend\Soap\Wsdl\Strategy\'');
-        }
-        $this->_strategy = $strategy;
+        $this->strategy = $strategy;
         return $this;
     }
 
     /**
      * Get the current complex type strategy
      *
-     * @return \Zend\Soap\Wsdl\Strategy
+     * @return ComplexTypeStrategy
      */
     public function getComplexTypeStrategy()
     {
-        return $this->_strategy;
+        return $this->strategy;
     }
 
     /**
@@ -182,13 +186,13 @@ class Wsdl
      */
     public function addMessage($name, $parts)
     {
-        $message = $this->_dom->createElement('message');
+        $message = $this->dom->createElement('message');
 
         $message->setAttribute('name', $name);
 
         if (count($parts) > 0) {
             foreach ($parts as $name => $type) {
-                $part = $this->_dom->createElement('part');
+                $part = $this->dom->createElement('part');
                 $part->setAttribute('name', $name);
                 if (is_array($type)) {
                     foreach ($type as $key => $value) {
@@ -201,7 +205,7 @@ class Wsdl
             }
         }
 
-        $this->_wsdl->appendChild($message);
+        $this->wsdl->appendChild($message);
 
         return $message;
     }
@@ -214,15 +218,15 @@ class Wsdl
      */
     public function addPortType($name)
     {
-        $portType = $this->_dom->createElement('portType');
+        $portType = $this->dom->createElement('portType');
         $portType->setAttribute('name', $name);
-        $this->_wsdl->appendChild($portType);
+        $this->wsdl->appendChild($portType);
 
         return $portType;
     }
 
     /**
-     * Add an {@link http://www.w3.org/TR/wsdl#_request-response operation} element to a portType element
+     * Add an {@link http://www.w3.org/TR/wsdl#request-response operation} element to a portType element
      *
      * @param object $portType a portType XML_Tree_Node, from {@link function addPortType}
      * @param string $name Operation name
@@ -233,21 +237,21 @@ class Wsdl
      */
     public function addPortOperation($portType, $name, $input = false, $output = false, $fault = false)
     {
-        $operation = $this->_dom->createElement('operation');
+        $operation = $this->dom->createElement('operation');
         $operation->setAttribute('name', $name);
 
         if (is_string($input) && (strlen(trim($input)) >= 1)) {
-            $node = $this->_dom->createElement('input');
+            $node = $this->dom->createElement('input');
             $node->setAttribute('message', $input);
             $operation->appendChild($node);
         }
         if (is_string($output) && (strlen(trim($output)) >= 1)) {
-            $node= $this->_dom->createElement('output');
+            $node= $this->dom->createElement('output');
             $node->setAttribute('message', $output);
             $operation->appendChild($node);
         }
         if (is_string($fault) && (strlen(trim($fault)) >= 1)) {
-            $node = $this->_dom->createElement('fault');
+            $node = $this->dom->createElement('fault');
             $node->setAttribute('message', $fault);
             $operation->appendChild($node);
         }
@@ -266,11 +270,11 @@ class Wsdl
      */
     public function addBinding($name, $portType)
     {
-        $binding = $this->_dom->createElement('binding');
+        $binding = $this->dom->createElement('binding');
         $binding->setAttribute('name', $name);
         $binding->setAttribute('type', $portType);
 
-        $this->_wsdl->appendChild($binding);
+        $this->wsdl->appendChild($binding);
 
         return $binding;
     }
@@ -286,12 +290,12 @@ class Wsdl
      */
     public function addBindingOperation($binding, $name, $input = false, $output = false, $fault = false)
     {
-        $operation = $this->_dom->createElement('operation');
+        $operation = $this->dom->createElement('operation');
         $operation->setAttribute('name', $name);
 
         if (is_array($input)) {
-            $node = $this->_dom->createElement('input');
-            $soap_node = $this->_dom->createElement('soap:body');
+            $node = $this->dom->createElement('input');
+            $soap_node = $this->dom->createElement('soap:body');
             foreach ($input as $name => $value) {
                 $soap_node->setAttribute($name, $value);
             }
@@ -300,8 +304,8 @@ class Wsdl
         }
 
         if (is_array($output)) {
-            $node = $this->_dom->createElement('output');
-            $soap_node = $this->_dom->createElement('soap:body');
+            $node = $this->dom->createElement('output');
+            $soap_node = $this->dom->createElement('soap:body');
             foreach ($output as $name => $value) {
                 $soap_node->setAttribute($name, $value);
             }
@@ -310,11 +314,11 @@ class Wsdl
         }
 
         if (is_array($fault)) {
-            $node = $this->_dom->createElement('fault');
+            $node = $this->dom->createElement('fault');
             if (isset($fault['name'])) {
                 $node->setAttribute('name', $fault['name']);
             }
-            $soap_node = $this->_dom->createElement('soap:fault');
+            $soap_node = $this->dom->createElement('soap:fault');
             foreach ($fault as $name => $value) {
                 $soap_node->setAttribute($name, $value);
             }
@@ -337,7 +341,7 @@ class Wsdl
      */
     public function addSoapBinding($binding, $style = 'document', $transport = 'http://schemas.xmlsoap.org/soap/http')
     {
-        $soap_binding = $this->_dom->createElement('soap:binding');
+        $soap_binding = $this->dom->createElement('soap:binding');
         $soap_binding->setAttribute('style', $style);
         $soap_binding->setAttribute('transport', $transport);
 
@@ -358,7 +362,7 @@ class Wsdl
         if ($soap_action instanceof Uri) {
             $soap_action = $soap_action->toString();
         }
-        $soap_operation = $this->_dom->createElement('soap:operation');
+        $soap_operation = $this->dom->createElement('soap:operation');
         $soap_operation->setAttribute('soapAction', $soap_action);
 
         $binding->insertBefore($soap_operation, $binding->firstChild);
@@ -380,20 +384,20 @@ class Wsdl
         if ($location instanceof Uri) {
             $location = $location->toString();
         }
-        $service = $this->_dom->createElement('service');
+        $service = $this->dom->createElement('service');
         $service->setAttribute('name', $name);
 
-        $port = $this->_dom->createElement('port');
+        $port = $this->dom->createElement('port');
         $port->setAttribute('name', $port_name);
         $port->setAttribute('binding', $binding);
 
-        $soap_address = $this->_dom->createElement('soap:address');
+        $soap_address = $this->dom->createElement('soap:address');
         $soap_address->setAttribute('location', $location);
 
         $port->appendChild($soap_address);
         $service->appendChild($port);
 
-        $this->_wsdl->appendChild($service);
+        $this->wsdl->appendChild($service);
 
         return $service;
     }
@@ -412,16 +416,16 @@ class Wsdl
     public function addDocumentation($input_node, $documentation)
     {
         if ($input_node === $this) {
-            $node = $this->_dom->documentElement;
+            $node = $this->dom->documentElement;
         } else {
             $node = $input_node;
         }
 
-        $doc = $this->_dom->createElement('documentation');
-        $doc_cdata = $this->_dom->createTextNode(str_replace(array("\r\n", "\r"), "\n", $documentation));
+        $doc = $this->dom->createElement('documentation');
+        $doc_cdata = $this->dom->createTextNode(str_replace(array("\r\n", "\r"), "\n", $documentation));
         $doc->appendChild($doc_cdata);
 
-        if($node->hasChildNodes()) {
+        if ($node->hasChildNodes()) {
             $node->insertBefore($doc, $node->firstChild);
         } else {
             $node->appendChild($doc);
@@ -438,11 +442,11 @@ class Wsdl
     public function addTypes($types)
     {
         if ($types instanceof \DomDocument) {
-            $dom = $this->_dom->importNode($types->documentElement);
-            $this->_wsdl->appendChild($types->documentElement);
+            $dom = $this->dom->importNode($types->documentElement);
+            $this->wsdl->appendChild($types->documentElement);
         } elseif ($types instanceof \DomNode || $types instanceof \DomElement || $types instanceof \DomDocumentFragment ) {
-            $dom = $this->_dom->importNode($types);
-            $this->_wsdl->appendChild($dom);
+            $dom = $this->dom->importNode($types);
+            $this->wsdl->appendChild($dom);
         }
     }
 
@@ -455,8 +459,8 @@ class Wsdl
      */
     public function addType($type, $wsdlType)
     {
-        if(!isset($this->_includedTypes[$type])) {
-            $this->_includedTypes[$type] = $wsdlType;
+        if (!isset($this->includedTypes[$type])) {
+            $this->includedTypes[$type] = $wsdlType;
         }
         return $this;
     }
@@ -468,7 +472,7 @@ class Wsdl
      */
     public function getTypes()
     {
-        return $this->_includedTypes;
+        return $this->includedTypes;
     }
 
     /**
@@ -478,11 +482,11 @@ class Wsdl
      */
     public function getSchema()
     {
-        if($this->_schema == null) {
+        if ($this->schema == null) {
             $this->addSchemaTypeSection();
         }
 
-        return $this->_schema;
+        return $this->schema;
     }
 
     /**
@@ -492,7 +496,7 @@ class Wsdl
      */
     public function toXML()
     {
-           return $this->_dom->saveXML();
+           return $this->dom->saveXML();
     }
 
     /**
@@ -502,7 +506,7 @@ class Wsdl
      */
     public function toDomDocument()
     {
-        return $this->_dom;
+        return $this->dom;
     }
 
     /**
@@ -532,28 +536,24 @@ class Wsdl
             case 'string':
             case 'str':
                 return 'xsd:string';
-                break;
+            case 'long':
+                return 'xsd:long';
             case 'int':
             case 'integer':
                 return 'xsd:int';
-                break;
             case 'float':
-            case 'double':
                 return 'xsd:float';
-                break;
+            case 'double':
+                return 'xsd:double';
             case 'boolean':
             case 'bool':
                 return 'xsd:boolean';
-                break;
             case 'array':
                 return 'soap-enc:Array';
-                break;
             case 'object':
                 return 'xsd:struct';
-                break;
             case 'mixed':
                 return 'xsd:anyType';
-                break;
             case 'void':
                 return '';
             default:
@@ -569,12 +569,12 @@ class Wsdl
      */
     public function addSchemaTypeSection()
     {
-        if ($this->_schema === null) {
-            $this->_schema = $this->_dom->createElement('xsd:schema');
-            $this->_schema->setAttribute('targetNamespace', $this->_uri);
-            $types = $this->_dom->createElement('types');
-            $types->appendChild($this->_schema);
-            $this->_wsdl->appendChild($types);
+        if ($this->schema === null) {
+            $this->schema = $this->dom->createElement('xsd:schema');
+            $this->schema->setAttribute('targetNamespace', $this->uri);
+            $types = $this->dom->createElement('types');
+            $types->appendChild($this->schema);
+            $this->wsdl->appendChild($types);
         }
         return $this;
     }
@@ -585,10 +585,19 @@ class Wsdl
      * @param string $type
      * @return string QName
      */
-    public static function translateType($type)
+    public function translateType($type)
     {
+        if (isset($this->classMap[$type])) {
+            return $this->classMap[$type];
+        }
+
         if ($type[0] == '\\') {
             $type = substr($type, 1);
+        }
+
+        $pos = strrpos($type, '\\');
+        if ($pos) {
+            $type = substr($type, $pos+1);
         }
 
         return str_replace('\\', '.', $type);
@@ -602,8 +611,8 @@ class Wsdl
      */
     public function addComplexType($type)
     {
-        if (isset($this->_includedTypes[$type])) {
-            return $this->_includedTypes[$type];
+        if (isset($this->includedTypes[$type])) {
+            return $this->includedTypes[$type];
         }
         $this->addSchemaTypeSection();
 
@@ -625,13 +634,13 @@ class Wsdl
             throw new Exception\RuntimeException("The 'element' parameter needs to be an associative array.");
         }
 
-        $elementXml = $this->_dom->createElement('xsd:element');
+        $elementXml = $this->dom->createElement('xsd:element');
         foreach ($element as $key => $value) {
             if (in_array($key, array('sequence', 'all', 'choice'))) {
                 if (is_array($value)) {
-                    $complexType = $this->_dom->createElement('xsd:complexType');
+                    $complexType = $this->dom->createElement('xsd:complexType');
                     if (count($value) > 0) {
-                        $container = $this->_dom->createElement('xsd:' . $key);
+                        $container = $this->dom->createElement('xsd:' . $key);
                         foreach ($value as $subelement) {
                             $subelementXml = $this->_parseElement($subelement);
                             $container->appendChild($subelementXml);

@@ -1,27 +1,13 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Server
- * @subpackage Zend_Server_Method
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Server
  */
 
-/**
- * @namespace
- */
 namespace Zend\Server\Method;
 
 /**
@@ -30,41 +16,38 @@ namespace Zend\Server\Method;
  * @category   Zend
  * @package    Zend_Server
  * @subpackage Zend_Server_Method
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Parameter
 {
     /**
      * @var mixed Default parameter value
      */
-    protected $_defaultValue;
+    protected $defaultValue;
 
     /**
      * @var string Parameter description
      */
-    protected $_description = '';
+    protected $description = '';
 
     /**
      * @var string Parameter variable name
      */
-    protected $_name;
+    protected $name;
 
     /**
      * @var bool Is parameter optional?
      */
-    protected $_optional = false;
+    protected $optional = false;
 
     /**
      * @var string Parameter type
      */
-    protected $_type = 'mixed';
+    protected $type = 'mixed';
 
     /**
      * Constructor
      *
      * @param  null|array $options
-     * @return void
      */
     public function __construct($options = null)
     {
@@ -98,7 +81,7 @@ class Parameter
      */
     public function setDefaultValue($defaultValue)
     {
-        $this->_defaultValue = $defaultValue;
+        $this->defaultValue = $defaultValue;
         return $this;
     }
 
@@ -109,7 +92,7 @@ class Parameter
      */
     public function getDefaultValue()
     {
-        return $this->_defaultValue;
+        return $this->defaultValue;
     }
 
     /**
@@ -120,7 +103,7 @@ class Parameter
      */
     public function setDescription($description)
     {
-        $this->_description = (string) $description;
+        $this->description = (string) $description;
         return $this;
     }
 
@@ -131,7 +114,7 @@ class Parameter
      */
     public function getDescription()
     {
-        return $this->_description;
+        return $this->description;
     }
 
     /**
@@ -142,7 +125,7 @@ class Parameter
      */
     public function setName($name)
     {
-        $this->_name = (string) $name;
+        $this->name = (string) $name;
         return $this;
     }
 
@@ -153,7 +136,7 @@ class Parameter
      */
     public function getName()
     {
-        return $this->_name;
+        return $this->name;
     }
 
     /**
@@ -164,7 +147,7 @@ class Parameter
      */
     public function setOptional($flag)
     {
-        $this->_optional = (bool) $flag;
+        $this->optional = (bool) $flag;
         return $this;
     }
 
@@ -175,7 +158,7 @@ class Parameter
      */
     public function isOptional()
     {
-        return $this->_optional;
+        return $this->optional;
     }
 
     /**
@@ -186,7 +169,7 @@ class Parameter
      */
     public function setType($type)
     {
-        $this->_type = (string) $type;
+        $this->type = (string) $type;
         return $this;
     }
 
@@ -197,7 +180,7 @@ class Parameter
      */
     public function getType()
     {
-        return $this->_type;
+        return $this->type;
     }
 
     /**

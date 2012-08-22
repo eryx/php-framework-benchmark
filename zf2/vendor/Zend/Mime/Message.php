@@ -1,43 +1,24 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Mime
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Mime
  */
 
-/**
- * @namespace
- */
 namespace Zend\Mime;
 
 /**
- * @uses       \Zend\Mime\Exception\RuntimeException
- * @uses       \Zend\Mime\Mime
- * @uses       \Zend\Mime\Decode
- * @uses       \Zend\Mime\Part
  * @category   Zend
  * @package    Zend_Mime
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Message
 {
 
-    protected $_parts = array();
-    protected $_mime = null;
+    protected $parts = array();
+    protected $mime = null;
 
     /**
      * Returns the list of all Zend_Mime_Parts in the message
@@ -46,7 +27,7 @@ class Message
      */
     public function getParts()
     {
-        return $this->_parts;
+        return $this->parts;
     }
 
     /**
@@ -56,7 +37,7 @@ class Message
      */
     public function setParts($parts)
     {
-        $this->_parts = $parts;
+        $this->parts = $parts;
     }
 
     /**
@@ -69,7 +50,7 @@ class Message
         /**
          * @todo check for duplicate object handle
          */
-        $this->_parts[] = $part;
+        $this->parts[] = $part;
     }
 
     /**
@@ -80,7 +61,7 @@ class Message
      */
     public function isMultiPart()
     {
-        return (count($this->_parts) > 1);
+        return (count($this->parts) > 1);
     }
 
     /**
@@ -93,7 +74,7 @@ class Message
      */
     public function setMime(Mime $mime)
     {
-        $this->_mime = $mime;
+        $this->mime = $mime;
     }
 
     /**
@@ -106,11 +87,11 @@ class Message
      */
     public function getMime()
     {
-        if ($this->_mime === null) {
-            $this->_mime = new Mime();
+        if ($this->mime === null) {
+            $this->mime = new Mime();
         }
 
-        return $this->_mime;
+        return $this->mime;
     }
 
     /**
@@ -120,7 +101,7 @@ class Message
      * only one part is present, the content of this part is returned. If no
      * part had been added, an empty string is returned.
      *
-     * Parts are seperated by the mime boundary as defined in Zend_Mime. If
+     * Parts are separated by the mime boundary as defined in Zend_Mime. If
      * {@link setMime()} has been called before this method, the Zend_Mime
      * object set by this call will be used. Otherwise, a new Zend_Mime object
      * is generated and used.
@@ -131,7 +112,7 @@ class Message
     public function generateMessage($EOL = Mime::LINEEND)
     {
         if (! $this->isMultiPart()) {
-            $body = array_shift($this->_parts);
+            $body = array_shift($this->parts);
             $body = $body->getContent($EOL);
         } else {
             $mime = $this->getMime();
@@ -140,7 +121,7 @@ class Message
             $body = 'This is a message in Mime Format.  If you see this, '
                   . "your mail reader does not support this format." . $EOL;
 
-            foreach (array_keys($this->_parts) as $p) {
+            foreach (array_keys($this->parts) as $p) {
                 $body .= $boundaryLine
                        . $this->getPartHeaders($p, $EOL)
                        . $EOL
@@ -161,7 +142,7 @@ class Message
      */
     public function getPartHeadersArray($partnum)
     {
-        return $this->_parts[$partnum]->getHeadersArray();
+        return $this->parts[$partnum]->getHeadersArray();
     }
 
     /**
@@ -172,7 +153,7 @@ class Message
      */
     public function getPartHeaders($partnum, $EOL = Mime::LINEEND)
     {
-        return $this->_parts[$partnum]->getHeaders($EOL);
+        return $this->parts[$partnum]->getHeaders($EOL);
     }
 
     /**
@@ -183,11 +164,11 @@ class Message
      */
     public function getPartContent($partnum, $EOL = Mime::LINEEND)
     {
-        return $this->_parts[$partnum]->getContent($EOL);
+        return $this->parts[$partnum]->getContent($EOL);
     }
 
     /**
-     * Explode MIME multipart string into seperate parts
+     * Explode MIME multipart string into separate parts
      *
      * Parts consist of the header and the body of each MIME part.
      *
@@ -244,34 +225,38 @@ class Message
         foreach ($parts as $part) {
             // now we build a new MimePart for the current Message Part:
             $newPart = new Part($part['body']);
-            foreach ($part['header'] as $key => $value) {
+            foreach ($part['header'] as $header) {
+                /** @var \Zend\Mail\Header\HeaderInterface $header */
                 /**
                  * @todo check for characterset and filename
                  */
-                switch(strtolower($key)) {
+
+                $fieldName  = $header->getFieldName();
+                $fieldValue = $header->getFieldValue();
+                switch (strtolower($fieldName)) {
                     case 'content-type':
-                        $newPart->type = $value;
+                        $newPart->type = $fieldValue;
                         break;
                     case 'content-transfer-encoding':
-                        $newPart->encoding = $value;
+                        $newPart->encoding = $fieldValue;
                         break;
                     case 'content-id':
-                        $newPart->id = trim($value,'<>');
+                        $newPart->id = trim($fieldValue,'<>');
                         break;
                     case 'content-disposition':
-                        $newPart->disposition = $value;
+                        $newPart->disposition = $fieldValue;
                         break;
                     case 'content-description':
-                        $newPart->description = $value;
+                        $newPart->description = $fieldValue;
                         break;
                     case 'content-location':
-                        $newPart->location = $value;
+                        $newPart->location = $fieldValue;
                         break;
                     case 'content-language':
-                        $newPart->language = $value;
+                        $newPart->language = $fieldValue;
                         break;
                     default:
-                        throw new Exception\RuntimeException('Unknown header ignored for MimePart:' . $key);
+                        throw new Exception\RuntimeException('Unknown header ignored for MimePart:' . $fieldName);
                 }
             }
             $res->addPart($newPart);

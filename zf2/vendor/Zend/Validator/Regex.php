@@ -1,35 +1,21 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Validate
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Validator
  */
 
-/**
- * @namespace
- */
 namespace Zend\Validator;
 
+use Traversable;
+use Zend\Stdlib\ArrayUtils;
+
 /**
- * @uses       \Zend\Validator\AbstractValidator
- * @uses       \Zend\Validator\Exception
  * @category   Zend
  * @package    Zend_Validate
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Regex extends AbstractValidator
 {
@@ -40,17 +26,17 @@ class Regex extends AbstractValidator
     /**
      * @var array
      */
-    protected $_messageTemplates = array(
+    protected $messageTemplates = array(
         self::INVALID   => "Invalid type given. String, integer or float expected",
-        self::NOT_MATCH => "'%value%' does not match against pattern '%pattern%'",
+        self::NOT_MATCH => "The input does not match against pattern '%pattern%'",
         self::ERROROUS  => "There was an internal error while using the pattern '%pattern%'",
     );
 
     /**
      * @var array
      */
-    protected $_messageVariables = array(
-        'pattern' => '_pattern'
+    protected $messageVariables = array(
+        'pattern' => 'pattern'
     );
 
     /**
@@ -58,30 +44,37 @@ class Regex extends AbstractValidator
      *
      * @var string
      */
-    protected $_pattern;
+    protected $pattern;
 
     /**
      * Sets validator options
      *
-     * @param  string|\Zend\Config\Config $pattern
-     * @throws \Zend\Validator\Exception On missing 'pattern' parameter
-     * @return void
+     * @param  string|Traversable $pattern
+     * @throws Exception\InvalidArgumentException On missing 'pattern' parameter
      */
     public function __construct($pattern)
     {
-        if ($pattern instanceof \Zend\Config\Config) {
-            $pattern = $pattern->toArray();
+        if (is_string($pattern)) {
+            $this->setPattern($pattern);
+            parent::__construct(array());
+            return;
         }
 
-        if (is_array($pattern)) {
-            if (array_key_exists('pattern', $pattern)) {
-                $pattern = $pattern['pattern'];
-            } else {
-                throw new Exception\InvalidArgumentException("Missing option 'pattern'");
-            }
+        if ($pattern instanceof Traversable) {
+            $pattern = ArrayUtils::iteratorToArray($pattern);
         }
 
-        $this->setPattern($pattern);
+        if (!is_array($pattern)) {
+            throw new Exception\InvalidArgumentException('Invalid options provided to constructor');
+        }
+
+        if (!array_key_exists('pattern', $pattern)) {
+            throw new Exception\InvalidArgumentException("Missing option 'pattern'");
+        }
+
+        $this->setPattern($pattern['pattern']);
+        unset($pattern['pattern']);
+        parent::__construct($pattern);
     }
 
     /**
@@ -91,23 +84,23 @@ class Regex extends AbstractValidator
      */
     public function getPattern()
     {
-        return $this->_pattern;
+        return $this->pattern;
     }
 
     /**
      * Sets the pattern option
      *
      * @param  string $pattern
-     * @throws \Zend\Validator\Exception if there is a fatal error in pattern matching
-     * @return \Zend\Validator\Regex Provides a fluent interface
+     * @throws Exception\InvalidArgumentException if there is a fatal error in pattern matching
+     * @return Regex Provides a fluent interface
      */
     public function setPattern($pattern)
     {
-        $this->_pattern = (string) $pattern;
-        $status         = @preg_match($this->_pattern, "Test");
+        $this->pattern = (string) $pattern;
+        $status        = @preg_match($this->pattern, "Test");
 
         if (false === $status) {
-             throw new Exception\InvalidArgumentException("Internal error while using the pattern '$this->_pattern'");
+             throw new Exception\InvalidArgumentException("Internal error parsing the pattern '{$this->pattern}'");
         }
 
         return $this;
@@ -128,7 +121,7 @@ class Regex extends AbstractValidator
 
         $this->setValue($value);
 
-        $status = @preg_match($this->_pattern, $value);
+        $status = @preg_match($this->pattern, $value);
         if (false === $status) {
             $this->error(self::ERROROUS);
             return false;

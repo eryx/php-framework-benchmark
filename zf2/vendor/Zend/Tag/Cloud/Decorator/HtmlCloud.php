@@ -1,52 +1,34 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Tag
- * @subpackage Cloud
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Tag
  */
 
-/**
- * @namespace
- */
 namespace Zend\Tag\Cloud\Decorator;
 
 /**
  * Simple HTML decorator for clouds
  *
- * @uses      \Zend\Tag\Cloud\Decorator\Cloud
  * @category  Zend
  * @package   Zend_Tag
- * @uses      \Zend\Tag\Cloud\Decorator\Cloud
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license   http://framework.zend.com/license/new-bsd     New BSD License
  */
-class HtmlCloud extends Cloud
+class HtmlCloud extends AbstractCloud
 {
     /**
      * @var string Encoding to use
      */
-    protected $_encoding = 'UTF-8';
+    protected $encoding = 'UTF-8';
 
     /**
      * List of HTML tags
      *
      * @var array
      */
-    protected $_htmlTags = array(
+    protected $htmlTags = array(
         'ul' => array('class' => 'Zend\Tag\Cloud')
     );
 
@@ -55,7 +37,7 @@ class HtmlCloud extends Cloud
      *
      * @var string
      */
-    protected $_separator = ' ';
+    protected $separator = ' ';
 
     /**
      * Get encoding
@@ -64,18 +46,18 @@ class HtmlCloud extends Cloud
      */
     public function getEncoding()
     {
-        return $this->_encoding;
+        return $this->encoding;
     }
 
     /**
      * Set encoding
      *
      * @param string
-     * @return \Zend\Tag\Cloud\Decorator\HTMLCloud
+     * @return HTMLCloud
      */
     public function setEncoding($value)
     {
-        $this->_encoding = (string) $value;
+        $this->encoding = (string) $value;
         return $this;
     }
 
@@ -83,11 +65,11 @@ class HtmlCloud extends Cloud
      * Set the HTML tags surrounding all tags
      *
      * @param  array $htmlTags
-     * @return \Zend\Tag\Cloud\Decorator\HTMLCloud
+     * @return HTMLCloud
      */
     public function setHTMLTags(array $htmlTags)
     {
-        $this->_htmlTags = $htmlTags;
+        $this->htmlTags = $htmlTags;
         return $this;
     }
 
@@ -98,18 +80,18 @@ class HtmlCloud extends Cloud
      */
     public function getHTMLTags()
     {
-        return $this->_htmlTags;
+        return $this->htmlTags;
     }
 
     /**
      * Set the separator between the single tags
      *
      * @param  string
-     * @return \Zend\Tag\Cloud\Decorator\HTMLCloud
+     * @return HTMLCloud
      */
     public function setSeparator($separator)
     {
-        $this->_separator = $separator;
+        $this->separator = $separator;
         return $this;
     }
 
@@ -120,19 +102,20 @@ class HtmlCloud extends Cloud
      */
     public function getSeparator()
     {
-        return $this->_separator;
+        return $this->separator;
     }
 
     /**
      * Defined by Zend\Tag\Cloud\Decorator\Cloud
      *
      * @param  array $tags
+     * @throws Exception\InvalidArgumentException
      * @return string
      */
     public function render($tags)
     {
         if (!is_array($tags)) {
-            throw new Exception(sprintf(
+            throw new Exception\InvalidArgumentException(sprintf(
                 'HtmlCloud::render() expects an array argument; received "%s"',
                 (is_object($tags) ? get_class($tags) : gettype($tags))
             ));

@@ -1,38 +1,22 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Filter
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Filter
  */
 
-/**
- * @namespace
- */
 namespace Zend\Filter\Compress;
+
 use Zend\Filter\Exception;
 
 /**
  * Compression adapter for Rar
  *
- * @uses       \Zend\Filter\Compress\AbstractCompressionAlgorithm
- * @uses       \Zend\Filter\Exception
  * @category   Zend
  * @package    Zend_Filter
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Rar extends AbstractCompressionAlgorithm
 {
@@ -47,7 +31,7 @@ class Rar extends AbstractCompressionAlgorithm
      *
      * @var array
      */
-    protected $_options = array(
+    protected $options = array(
         'callback' => null,
         'archive'  => null,
         'password' => null,
@@ -74,22 +58,23 @@ class Rar extends AbstractCompressionAlgorithm
      */
     public function getCallback()
     {
-        return $this->_options['callback'];
+        return $this->options['callback'];
     }
 
     /**
      * Sets the callback to use
      *
-     * @param string $callback
-     * @return \Zend\Filter\Compress\Rar
+     * @param  string $callback
+     * @return Rar
+     * @throws Exception\InvalidArgumentException if invalid callback provided
      */
     public function setCallback($callback)
     {
         if (!is_callable($callback)) {
-            throw new Exception\InvalidArgumentException('Callback can not be accessed');
+            throw new Exception\InvalidArgumentException('Invalid callback provided');
         }
 
-        $this->_options['callback'] = $callback;
+        $this->options['callback'] = $callback;
         return $this;
     }
 
@@ -100,19 +85,19 @@ class Rar extends AbstractCompressionAlgorithm
      */
     public function getArchive()
     {
-        return $this->_options['archive'];
+        return $this->options['archive'];
     }
 
     /**
      * Sets the archive to use for de-/compression
      *
-     * @param string $archive Archive to use
-     * @return \Zend\Filter\Compress\Rar
+     * @param  string $archive Archive to use
+     * @return Rar
      */
     public function setArchive($archive)
     {
         $archive = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $archive);
-        $this->_options['archive'] = (string) $archive;
+        $this->options['archive'] = (string) $archive;
 
         return $this;
     }
@@ -124,18 +109,18 @@ class Rar extends AbstractCompressionAlgorithm
      */
     public function getPassword()
     {
-        return $this->_options['password'];
+        return $this->options['password'];
     }
 
     /**
      * Sets the password to use
      *
-     * @param string $password
-     * @return \Zend\Filter\Compress\Rar
+     * @param  string $password
+     * @return Rar
      */
     public function setPassword($password)
     {
-        $this->_options['password'] = (string) $password;
+        $this->options['password'] = (string) $password;
         return $this;
     }
 
@@ -146,14 +131,15 @@ class Rar extends AbstractCompressionAlgorithm
      */
     public function getTarget()
     {
-        return $this->_options['target'];
+        return $this->options['target'];
     }
 
     /**
      * Sets the targetpath to use
      *
-     * @param string $target
-     * @return \Zend\Filter\Compress\Rar
+     * @param  string $target
+     * @return Rar
+     * @throws Exception\InvalidArgumentException if specified target directory does not exist
      */
     public function setTarget($target)
     {
@@ -161,8 +147,8 @@ class Rar extends AbstractCompressionAlgorithm
             throw new Exception\InvalidArgumentException("The directory '$target' does not exist");
         }
 
-        $target = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $target);
-        $this->_options['target'] = (string) $target;
+        $target = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, (string) $target);
+        $this->options['target'] = $target;
         return $this;
     }
 
@@ -171,6 +157,7 @@ class Rar extends AbstractCompressionAlgorithm
      *
      * @param  string|array $content
      * @return string
+     * @throws Exception\RuntimeException if no callback available, or error during compression
      */
     public function compress($content)
     {
@@ -195,16 +182,18 @@ class Rar extends AbstractCompressionAlgorithm
      *
      * @param  string $content
      * @return boolean
+     * @throws Exception\RuntimeException if archive not found, cannot be opened,
+     *                                    or error during decompression
      */
     public function decompress($content)
     {
         $archive = $this->getArchive();
-        if (file_exists($content)) {
-            $archive = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, realpath($content));
-        } elseif (empty($archive) || !file_exists($archive)) {
+
+        if (!file_exists($content)) {
             throw new Exception\RuntimeException('RAR Archive not found');
         }
 
+        $archive  = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, realpath($content));
         $password = $this->getPassword();
         if ($password !== null) {
             $archive = rar_open($archive, $password);
@@ -226,7 +215,7 @@ class Rar extends AbstractCompressionAlgorithm
             throw new Exception\RuntimeException("Error reading the RAR Archive");
         }
 
-        foreach($filelist as $file) {
+        foreach ($filelist as $file) {
             $file->extract($target);
         }
 

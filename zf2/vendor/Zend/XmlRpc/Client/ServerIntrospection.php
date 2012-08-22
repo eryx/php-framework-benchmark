@@ -1,27 +1,13 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_XmlRpc
- * @subpackage Client
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_XmlRpc
  */
 
-/**
- * @namespace
- */
 namespace Zend\XmlRpc\Client;
 
 use Zend\XmlRpc\Client as XMLRPCClient;
@@ -29,28 +15,24 @@ use Zend\XmlRpc\Client as XMLRPCClient;
 /**
  * Wraps the XML-RPC system.* introspection methods
  *
- * @uses       Zend\XmlRpc\Client\FaultException
- * @uses       Zend\XmlRpc\Client\IntrospectException
  * @category   Zend
  * @package    Zend_XmlRpc
  * @subpackage Client
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class ServerIntrospection
 {
     /**
      * @var \Zend\XmlRpc\Client\ServerProxy
      */
-    private $_system = null;
+    private $system = null;
 
 
     /**
-     * @param Zend\XmlRpc\Client $client
+     * @param \Zend\XmlRpc\Client $client
      */
     public function __construct(XMLRPCClient $client)
     {
-        $this->_system = $client->getProxy('system');
+        $this->system = $client->getProxy('system');
     }
 
     /**
@@ -97,7 +79,7 @@ class ServerIntrospection
                                        'params'     => array($method));
         }
 
-        $serverSignatures = $this->_system->multicall($multicallParams);
+        $serverSignatures = $this->system->multicall($multicallParams);
 
         if (! is_array($serverSignatures)) {
             $type = gettype($serverSignatures);
@@ -148,7 +130,7 @@ class ServerIntrospection
      */
     public function getMethodSignature($method)
     {
-        $signature = $this->_system->methodSignature($method);
+        $signature = $this->system->methodSignature($method);
         if (!is_array($signature)) {
             $error = 'Invalid signature for method "' . $method . '"';
             throw new Exception\IntrospectException($error);
@@ -164,7 +146,7 @@ class ServerIntrospection
      */
     public function listMethods()
     {
-        return $this->_system->listMethods();
+        return $this->system->listMethods();
     }
 
 }
