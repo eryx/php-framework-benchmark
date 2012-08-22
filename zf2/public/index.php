@@ -1,31 +1,20 @@
 <?php
 if (isset($_GET['debug'])) {
     xhprof_enable(XHPROF_FLAGS_CPU + XHPROF_FLAGS_MEMORY);
+    // System Start Time
+    define('START_TIME', microtime(true));
+    // System Start Memory
+    define('START_MEMORY_USAGE', memory_get_usage());
 }
-// System Start Time
-define('START_TIME', microtime(true));
-// System Start Memory
-define('START_MEMORY_USAGE', memory_get_usage());
 
-require_once dirname(__DIR__) . '/vendor/Zend/Loader/AutoloaderFactory.php';
-Zend\Loader\AutoloaderFactory::factory(array('Zend\Loader\StandardAutoloader' => array()));
+chdir(dirname(__DIR__));
 
-$appConfig = include dirname(__DIR__) . '/config/application.config.php';
+// Setup autoloading
+include 'init_autoloader.php';
 
-$moduleLoader = new Zend\Loader\ModuleAutoloader($appConfig['module_paths']);
-$moduleLoader->register();
+// Run the application!
+Zend\Mvc\Application::init(include 'config/application.config.php')->run();
 
-$moduleManager = new Zend\Module\Manager($appConfig['modules']);
-$listenerOptions = new Zend\Module\Listener\ListenerOptions($appConfig['module_listener_options']);
-$moduleManager->setDefaultListenerOptions($listenerOptions);
-$moduleManager->getConfigListener()->addConfigGlobPath(dirname(__DIR__) . '/config/autoload/*.config.php');
-$moduleManager->loadModules();
-
-// Create application, bootstrap, and run
-$bootstrap   = new Zend\Mvc\Bootstrap($moduleManager->getMergedConfig());
-$application = new Zend\Mvc\Application;
-$bootstrap->bootstrap($application);
-$application->run()->send();
 
 
 $xhprof_data = xhprof_disable();
