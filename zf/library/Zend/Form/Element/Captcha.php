@@ -15,9 +15,9 @@
  * @category   Zend
  * @package    Zend_Form
  * @subpackage Element
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: Captcha.php 24294 2011-07-28 21:34:50Z matthew $
+ * @version    $Id: Captcha.php 24774 2012-05-07 22:13:37Z adamlundrigan $
  */
 
 /** @see Zend_Form_Element_Xhtml */
@@ -38,7 +38,7 @@ require_once 'Zend/Captcha/Adapter.php';
  * @category   Zend
  * @package    Zend_Form
  * @subpackage Element
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Zend_Form_Element_Captcha extends Zend_Form_Element_Xhtml
@@ -154,16 +154,22 @@ class Zend_Form_Element_Captcha extends Zend_Form_Element_Xhtml
      */
     public function setOptions(array $options)
     {
+        $captcha        = null;
+        $captchaOptions = array();
+
         if (array_key_exists('captcha', $options)) {
+            $captcha = $options['captcha'];
             if (array_key_exists('captchaOptions', $options)) {
-                $this->setCaptcha($options['captcha'], $options['captchaOptions']);
+                $captchaOptions = $options['captchaOptions'];
                 unset($options['captchaOptions']);
-            } else {
-                $this->setCaptcha($options['captcha']);
             }
             unset($options['captcha']);
         }
         parent::setOptions($options);
+
+        if(null !== $captcha) {
+            $this->setCaptcha($captcha, $captchaOptions);
+        }
         return $this;
     }
 
