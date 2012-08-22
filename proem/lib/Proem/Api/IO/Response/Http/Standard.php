@@ -252,7 +252,7 @@ class Standard implements Template
         $string = (string) $string;
         $this->length += strlen($string);
         $this->body .= $string;
-        //$this->headers->set('Content-Length', $this->length);
+        $this->headers->set('Content-Length', $this->length);
         return $this;
     }
 
