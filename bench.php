@@ -16,28 +16,32 @@ if (!class_exists("Locale"))
 $opt = getopt("c:n:");
 $gc = isset($opt['c']) ? $opt['c'] : 100;
 $gn = isset($opt['n']) ? $opt['n'] : 30000;
+$gt = isset($opt['t']) ? $opt['t'] : 10;
 
 $al = array(
-    'symfony2' => 'Symfony 2.0.6',
-    'zf' => 'Zend Framework 1.11.11',
-    'zf2' => 'Zend Framework 2.0.0-beta1',
+    'symfony2' => 'Symfony 2.0.16',
+    'zf' => 'Zend Framework 1.11.13',
+    'zf2' => 'Zend Framework 2.0.0-rc4',
     'cakephp' => 'CakePHP 2.0.4',
     'fuelphp' => 'FuelPHP 1.1',
+    'kohana' => 'Kohana 3.2.0',
     'ci' => 'CodeIgniter 2.1.0',
     'yii' => 'Yii Framework 1.1.8',
     'slim' => 'Slim 1.5',
     'laravel' => 'Laravel 2.0.2',
+    'doophp' => 'DooPHP 1.4.1',
     'colaphp' => 'ColaPHP 1.2-ga',
     'micromvc4' => 'MicroMVC 4.0.0',
-    'yaf' => 'Yaf 2.1.3-beta',
-    'proem' => 'Proem 0.5.1',
+    'phalcon' => 'Phalcon 0.4.4',
+    'yaf' => 'Yaf 2.1.18',
+    //'proem' => 'Proem 0.5.1',
 );
 $a = array_keys($al);
 
 //
 $rs = array();
 $output = '';
-$count = 3;
+$count = 1;
 for ($i = 0; $i < $count; $i++) {
     
     foreach ($a as $v) {

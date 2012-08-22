@@ -13,7 +13,8 @@
 127.0.0.1   colaphp.pfb.example.com
 127.0.0.1   fuelphp.pfb.example.com
 127.0.0.1   proem.pfb.example.com
-
+127.0.0.1   kohana.pfb.example.com
+127.0.0.1   phalcon.pfb.example.com
 127.0.0.1   noframework.pfb.example.com
 127.0.0.1   xhprof.pfb.example.com
 
