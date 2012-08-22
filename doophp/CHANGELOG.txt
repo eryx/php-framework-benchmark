@@ -1,0 +1,8 @@
+DooPHP Framework Change Log
+===========================
+
+Version 1.4.1 February 22, 2011
+---------------------------
+- Chg: Improved DooMailer to support alternative content types ie. Plain Text + HTML in the same Email support for file attachments along with your emails content http://code.google.com/p/doophp/source/detail?r=606
+- New: Added option for routes: autoroute_force_dash http://code.google.com/p/doophp/source/detail?r=605
+- Bug: fixed loading wrong file when using internal reroute: return 404 or return array('/xxx', 'internal') in a module http://code.google.com/p/doophp/source/detail?r=603
