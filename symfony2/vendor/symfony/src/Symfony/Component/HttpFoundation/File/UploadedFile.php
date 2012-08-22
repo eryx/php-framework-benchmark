@@ -94,7 +94,9 @@ class UploadedFile extends File
             throw new FileException(sprintf('Unable to create UploadedFile because "file_uploads" is disabled in your php.ini file (%s)', get_cfg_var('cfg_file_path')));
         }
 
-        $this->originalName = basename($originalName);
+        $originalName = str_replace('\\', '/', $originalName);
+        $pos = strrpos($originalName, '/');
+        $this->originalName = false === $pos ? $originalName : substr($originalName, $pos + 1);
         $this->mimeType = $mimeType ?: 'application/octet-stream';
         $this->size = $size;
         $this->error = $error ?: UPLOAD_ERR_OK;
@@ -201,7 +203,7 @@ class UploadedFile extends File
      *
      * @return type The maximum size of an uploaded file in bytes
      */
-    static public function getMaxFilesize()
+    public static function getMaxFilesize()
     {
         $max = trim(ini_get('upload_max_filesize'));
 

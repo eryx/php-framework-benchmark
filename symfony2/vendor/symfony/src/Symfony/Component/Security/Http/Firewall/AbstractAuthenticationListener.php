@@ -72,10 +72,10 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
      * @param string                                 $providerKey
      * @param array                                  $options               An array of options for the processing of a
      *                                                                      successful, or failed authentication attempt
-     * @param AuthenticationSuccessHandlerInterface  $successHandler
-     * @param AuthenticationFailureHandlerInterface  $failureHandler
-     * @param LoggerInterface                        $logger                A LoggerInterface instance
-     * @param EventDispatcherInterface               $dispatcher            An EventDispatcherInterface instance
+     * @param AuthenticationSuccessHandlerInterface $successHandler
+     * @param AuthenticationFailureHandlerInterface $failureHandler
+     * @param LoggerInterface                       $logger         A LoggerInterface instance
+     * @param EventDispatcherInterface              $dispatcher     An EventDispatcherInterface instance
      */
     public function __construct(SecurityContextInterface $securityContext, AuthenticationManagerInterface $authenticationManager, SessionAuthenticationStrategyInterface $sessionStrategy, HttpUtils $httpUtils, $providerKey, array $options = array(), AuthenticationSuccessHandlerInterface $successHandler = null, AuthenticationFailureHandlerInterface $failureHandler = null, LoggerInterface $logger = null, EventDispatcherInterface $dispatcher = null)
     {
@@ -119,7 +119,7 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
      *
      * @param GetResponseEvent $event A GetResponseEvent instance
      */
-    public final function handle(GetResponseEvent $event)
+    final public function handle(GetResponseEvent $event)
     {
         $request = $event->getRequest();
 
@@ -144,7 +144,7 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
                 $this->sessionStrategy->onAuthentication($request, $returnValue);
 
                 $response = $this->onSuccess($event, $request, $returnValue);
-            } else if ($returnValue instanceof Response) {
+            } elseif ($returnValue instanceof Response) {
                 $response = $returnValue;
             } else {
                 throw new \RuntimeException('attemptAuthentication() must either return a Response, an implementation of TokenInterface, or null.');
@@ -175,7 +175,7 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
     /**
      * Performs authentication.
      *
-     * @param  Request $request A Request instance
+     * @param Request $request A Request instance
      *
      * @return TokenInterface The authenticated token, or null if full authentication is not possible
      *

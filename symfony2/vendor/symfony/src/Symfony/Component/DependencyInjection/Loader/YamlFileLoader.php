@@ -16,6 +16,7 @@ use Symfony\Component\DependencyInjection\Alias;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\Config\Resource\FileResource;
 use Symfony\Component\Yaml\Yaml;
 
@@ -80,8 +81,9 @@ class YamlFileLoader extends FileLoader
     /**
      * Parses all imports
      *
-     * @param array $content
+     * @param array  $content
      * @param string $file
+     *
      * @return void
      */
     private function parseImports($content, $file)
@@ -99,8 +101,9 @@ class YamlFileLoader extends FileLoader
     /**
      * Parses definitions
      *
-     * @param array $content
+     * @param array  $content
      * @param string $file
+     *
      * @return void
      */
     private function parseDefinitions($content, $file)
@@ -118,8 +121,9 @@ class YamlFileLoader extends FileLoader
      * Parses a definition.
      *
      * @param string $id
-     * @param array $service
+     * @param array  $service
      * @param string $file
+     *
      * @return void
      */
     private function parseDefinition($id, $service, $file)
@@ -128,7 +132,7 @@ class YamlFileLoader extends FileLoader
             $this->container->setAlias($id, substr($service, 1));
 
             return;
-        } else if (isset($service['alias'])) {
+        } elseif (isset($service['alias'])) {
             $public = !array_key_exists('public', $service) || (Boolean) $service['public'];
             $this->container->setAlias($id, new Alias($service['alias'], $public));
 
@@ -195,22 +199,29 @@ class YamlFileLoader extends FileLoader
 
         if (isset($service['calls'])) {
             foreach ($service['calls'] as $call) {
-                $definition->addMethodCall($call[0], $this->resolveServices($call[1]));
+                $args = isset($call[1]) ? $this->resolveServices($call[1]) : array();
+                $definition->addMethodCall($call[0], $args);
             }
         }
 
         if (isset($service['tags'])) {
             if (!is_array($service['tags'])) {
-                throw new \InvalidArgumentException(sprintf('Parameter "tags" must be an array for service "%s" in %s.', $id, $file));
+                throw new InvalidArgumentException(sprintf('Parameter "tags" must be an array for service "%s" in %s.', $id, $file));
             }
 
             foreach ($service['tags'] as $tag) {
                 if (!isset($tag['name'])) {
-                    throw new \InvalidArgumentException(sprintf('A "tags" entry is missing a "name" key for service "%s" in %s.', $id, $file));
+                    throw new InvalidArgumentException(sprintf('A "tags" entry is missing a "name" key for service "%s" in %s.', $id, $file));
                 }
 
                 $name = $tag['name'];
                 unset($tag['name']);
+
+                foreach ($tag as $attribute => $value) {
+                    if (!is_scalar($value)) {
+                        throw new InvalidArgumentException(sprintf('A "tags" attribute must be of a scalar-type for service "%s", tag "%s" in %s.', $id, $name, $file));
+                    }
+                }
 
                 $definition->addTag($name, $tag);
             }
@@ -223,6 +234,7 @@ class YamlFileLoader extends FileLoader
      * Loads a YAML file.
      *
      * @param string $file
+     *
      * @return array The file content
      */
     private function loadFile($file)
@@ -233,8 +245,9 @@ class YamlFileLoader extends FileLoader
     /**
      * Validates a YAML file.
      *
-     * @param mixed $content
+     * @param mixed  $content
      * @param string $file
+     *
      * @return array
      *
      * @throws \InvalidArgumentException When service file is not valid
@@ -273,13 +286,14 @@ class YamlFileLoader extends FileLoader
      * Resolves services.
      *
      * @param string $value
+     *
      * @return Reference
      */
     private function resolveServices($value)
     {
         if (is_array($value)) {
             $value = array_map(array($this, 'resolveServices'), $value);
-        } else if (is_string($value) &&  0 === strpos($value, '@')) {
+        } elseif (is_string($value) &&  0 === strpos($value, '@')) {
             if (0 === strpos($value, '@?')) {
                 $value = substr($value, 2);
                 $invalidBehavior = ContainerInterface::IGNORE_ON_INVALID_REFERENCE;
@@ -305,6 +319,7 @@ class YamlFileLoader extends FileLoader
      * Loads from Extensions
      *
      * @param array $content
+     *
      * @return void
      */
     private function loadFromExtensions($content)

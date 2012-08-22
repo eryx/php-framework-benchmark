@@ -33,8 +33,9 @@ abstract class BaseNode implements NodeInterface
     /**
      * Constructor.
      *
-     * @param string $name The name of the node
+     * @param string        $name   The name of the node
      * @param NodeInterface $parent The parent of this node
+     *
      * @throws \InvalidArgumentException if the name contains a period.
      */
     public function __construct($name, NodeInterface $parent = null)
@@ -144,10 +145,12 @@ abstract class BaseNode implements NodeInterface
      *
      * @param mixed $leftSide
      * @param mixed $rightSide
+     *
      * @return mixed The merged value
+     *
      * @throws ForbiddenOverwriteException
      */
-    public final function merge($leftSide, $rightSide)
+    final public function merge($leftSide, $rightSide)
     {
         if (!$this->allowOverwrite) {
             throw new ForbiddenOverwriteException(sprintf(
@@ -171,7 +174,7 @@ abstract class BaseNode implements NodeInterface
      *
      * @return mixed The normalized value.
      */
-    public final function normalize($value)
+    final public function normalize($value)
     {
         // run custom normalization closures
         foreach ($this->normalizationClosures as $closure) {
@@ -196,9 +199,10 @@ abstract class BaseNode implements NodeInterface
      * Finalizes a value, applying all finalization closures.
      *
      * @param mixed $value The value to finalize
+     *
      * @return mixed The finalized value
      */
-    public final function finalize($value)
+    final public function finalize($value)
     {
         $this->validateType($value);
 
@@ -227,6 +231,7 @@ abstract class BaseNode implements NodeInterface
      * Validates the type of a Node.
      *
      * @param mixed $value The value to validate
+     *
      * @throws InvalidTypeException when the value is invalid
      */
     abstract protected function validateType($value);
@@ -235,23 +240,26 @@ abstract class BaseNode implements NodeInterface
      * Normalizes the value.
      *
      * @param mixed $value The value to normalize.
+     *
      * @return mixed The normalized value
      */
     abstract protected function normalizeValue($value);
 
     /**
-     * Merges two values together
+     * Merges two values together.
      *
      * @param mixed $leftSide
      * @param mixed $rightSide
+     *
      * @return mixed The merged value
      */
     abstract protected function mergeValues($leftSide, $rightSide);
 
     /**
-     * Finalizes a value
+     * Finalizes a value.
      *
      * @param mixed $value The value to finalize
+     *
      * @return mixed The finalized value
      */
     abstract protected function finalizeValue($value);

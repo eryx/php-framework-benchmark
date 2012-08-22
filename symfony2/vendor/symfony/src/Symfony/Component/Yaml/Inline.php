@@ -29,7 +29,7 @@ class Inline
      *
      * @return array A PHP array representing the YAML string
      */
-    static public function parse($value)
+    public static function parse($value)
     {
         $value = trim($value);
 
@@ -69,7 +69,7 @@ class Inline
      *
      * @throws DumpException When trying to dump PHP resource
      */
-    static public function dump($value)
+    public static function dump($value)
     {
         switch (true) {
             case is_resource($value):
@@ -119,7 +119,7 @@ class Inline
      *
      * @return string The YAML string representing the PHP array
      */
-    static private function dumpArray($value)
+    private static function dumpArray($value)
     {
         // array
         $keys = array_keys($value);
@@ -146,9 +146,9 @@ class Inline
     /**
      * Parses a scalar to a YAML string.
      *
-     * @param scalar  $scalar
-     * @param string  $delimiters
-     * @param array   $stringDelimiters
+     * @param scalar $scalar
+     * @param string $delimiters
+     * @param array  $stringDelimiters
      * @param integer &$i
      * @param Boolean $evaluate
      *
@@ -156,7 +156,7 @@ class Inline
      *
      * @throws ParseException When malformed inline YAML string is parsed
      */
-    static public function parseScalar($scalar, $delimiters = null, $stringDelimiters = array('"', "'"), &$i = 0, $evaluate = true)
+    public static function parseScalar($scalar, $delimiters = null, $stringDelimiters = array('"', "'"), &$i = 0, $evaluate = true)
     {
         if (in_array($scalar[$i], $stringDelimiters)) {
             // quoted scalar
@@ -171,7 +171,7 @@ class Inline
                 if (false !== $strpos = strpos($output, ' #')) {
                     $output = rtrim(substr($output, 0, $strpos));
                 }
-            } else if (preg_match('/^(.+?)('.implode('|', $delimiters).')/', substr($scalar, $i), $match)) {
+            } elseif (preg_match('/^(.+?)('.implode('|', $delimiters).')/', substr($scalar, $i), $match)) {
                 $output = $match[1];
                 $i += strlen($output);
             } else {
@@ -187,14 +187,14 @@ class Inline
     /**
      * Parses a quoted scalar to YAML.
      *
-     * @param string  $scalar
-     * @param integer $i
+     * @param string $scalar
+     * @param integer &$i
      *
      * @return string A YAML string
      *
      * @throws ParseException When malformed inline YAML string is parsed
      */
-    static private function parseQuotedScalar($scalar, &$i)
+    private static function parseQuotedScalar($scalar, &$i)
     {
         if (!preg_match('/'.self::REGEX_QUOTED_STRING.'/Au', substr($scalar, $i), $match)) {
             throw new ParseException(sprintf('Malformed inline YAML string (%s).', substr($scalar, $i)));
@@ -217,14 +217,14 @@ class Inline
     /**
      * Parses a sequence to a YAML string.
      *
-     * @param string  $sequence
-     * @param integer $i
+     * @param string $sequence
+     * @param integer &$i
      *
      * @return string A YAML string
      *
      * @throws ParseException When malformed inline YAML string is parsed
      */
-    static private function parseSequence($sequence, &$i = 0)
+    private static function parseSequence($sequence, &$i = 0)
     {
         $output = array();
         $len = strlen($sequence);
@@ -273,14 +273,14 @@ class Inline
     /**
      * Parses a mapping to a YAML string.
      *
-     * @param string  $mapping
-     * @param integer $i
+     * @param string $mapping
+     * @param integer &$i
      *
      * @return string A YAML string
      *
      * @throws ParseException When malformed inline YAML string is parsed
      */
-    static private function parseMapping($mapping, &$i = 0)
+    private static function parseMapping($mapping, &$i = 0)
     {
         $output = array();
         $len = strlen($mapping);
@@ -341,7 +341,7 @@ class Inline
      *
      * @return string A YAML string
      */
-    static private function evaluateScalar($scalar)
+    private static function evaluateScalar($scalar)
     {
         $scalar = trim($scalar);
 
@@ -386,7 +386,7 @@ class Inline
      *
      * @return string The regular expression
      */
-    static private function getTimestampRegex()
+    private static function getTimestampRegex()
     {
         return <<<EOF
         ~^

@@ -17,7 +17,7 @@ use Symfony\Component\Config\Resource\ResourceInterface;
  * A RouteCollection represents a set of Route instances.
  *
  * When adding a route, it overrides existing routes with the
- * same name defined in theinstance or its children and parents.
+ * same name defined in the instance or its children and parents.
  *
  * @author Fabien Potencier <fabien@symfony.com>
  *
@@ -95,7 +95,7 @@ class RouteCollection implements \IteratorAggregate
     public function add($name, Route $route)
     {
         if (!preg_match('/^[a-z0-9A-Z_.]+$/', $name)) {
-            throw new \InvalidArgumentException(sprintf('Name "%s" contains non valid characters for a route name.', $name));
+            throw new \InvalidArgumentException(sprintf('The provided route name "%s" contains non valid characters. A route name must only contain digits (0-9), letters (a-z and A-Z), underscores (_) and dots (.).', $name));
         }
 
         $parent = $this;
@@ -132,7 +132,7 @@ class RouteCollection implements \IteratorAggregate
     /**
      * Gets a route by name.
      *
-     * @param  string $name  The route name
+     * @param string $name The route name
      *
      * @return Route  $route A Route instance
      */
@@ -196,7 +196,7 @@ class RouteCollection implements \IteratorAggregate
     /**
      * Adds a prefix to all routes in the current set.
      *
-     * @param string          $prefix     An optional prefix to add before each pattern of the route collection
+     * @param string $prefix An optional prefix to add before each pattern of the route collection
      *
      * @api
      */

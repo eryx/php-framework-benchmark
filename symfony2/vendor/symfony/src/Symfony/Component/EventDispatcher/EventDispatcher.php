@@ -117,7 +117,7 @@ class EventDispatcher implements EventDispatcherInterface
             if (is_string($params)) {
                 $this->addListener($eventName, array($subscriber, $params));
             } else {
-                $this->addListener($eventName, array($subscriber, $params[0]), $params[1]);
+                $this->addListener($eventName, array($subscriber, $params[0]), isset($params[1]) ? $params[1] : 0);
             }
         }
     }
@@ -139,8 +139,8 @@ class EventDispatcher implements EventDispatcherInterface
      * for each listener.
      *
      * @param array[callback] $listeners The event listeners.
-     * @param string $eventName The name of the event to dispatch.
-     * @param Event $event The event object to pass to the event handlers/listeners.
+     * @param string          $eventName The name of the event to dispatch.
+     * @param Event           $event     The event object to pass to the event handlers/listeners.
      */
     protected function doDispatch($listeners, $eventName, Event $event)
     {

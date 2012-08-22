@@ -189,6 +189,8 @@ public function <methodName>()
 
         if ( ! $this->_isNew) {
             $this->_parseTokensInEntityFile(file_get_contents($path));
+        } else {
+            $this->_staticReflection[$metadata->name] = array('properties' => array(), 'methods' => array());
         }
 
         if ($this->_backupExisting && file_exists($path)) {
@@ -749,7 +751,7 @@ public function <methodName>()
         $this->_staticReflection[$metadata->name]['methods'][] = $methodName;
 
         $replacements = array(
-            '<name>'        => $this->_annotationsPrefix . $name,
+            '<name>'        => $this->_annotationsPrefix . ucfirst($name),
             '<methodName>'  => $methodName,
         );
 
@@ -783,7 +785,7 @@ public function <methodName>()
         }
 
         if (isset($joinColumn['onDelete'])) {
-            $joinColumnAnnot[] = 'onDelete=' . ($joinColumn['onDelete'] ? 'true' : 'false');
+            $joinColumnAnnot[] = 'onDelete="' . ($joinColumn['onDelete'] . '"');
         }
 
         if (isset($joinColumn['onUpdate'])) {
@@ -805,6 +807,14 @@ public function <methodName>()
 
         if ($this->_generateAnnotations) {
             $lines[] = $this->_spaces . ' *';
+            
+            if (isset($associationMapping['id']) && $associationMapping['id']) {
+                $lines[] = $this->_spaces . ' * @' . $this->_annotationsPrefix . 'Id';
+            
+                if ($generatorType = $this->_getIdGeneratorTypeString($metadata->generatorType)) {
+                    $lines[] = $this->_spaces . ' * @' . $this->_annotationsPrefix . 'GeneratedValue(strategy="' . $generatorType . '")';
+                }
+            }
 
             $type = null;
             switch ($associationMapping['type']) {

@@ -11,7 +11,6 @@
 
 namespace Symfony\Component\Locale\Stub;
 
-use Symfony\Component\Locale\Exception\NotImplementedException;
 use Symfony\Component\Locale\Exception\MethodNotImplementedException;
 use Symfony\Component\Locale\Exception\MethodArgumentValueNotImplementedException;
 
@@ -22,16 +21,6 @@ use Symfony\Component\Locale\Exception\MethodArgumentValueNotImplementedExceptio
  */
 class StubCollator
 {
-    /**
-     * Constants defined by the intl extension, not class constants in IntlDateFormatter
-     * TODO: remove if the Form component drop the call to the intl_is_failure() function
-     *
-     * @see StubIntlDateFormatter::getErrorCode()
-     * @see StubIntlDateFormatter::getErrorMessage()
-     */
-    const U_ZERO_ERROR = 0;
-    const U_ZERO_ERROR_MESSAGE = 'U_ZERO_ERROR';
-
     /** Attribute constants */
     const FRENCH_COLLATION = 0;
     const ALTERNATE_HANDLING = 1;
@@ -69,7 +58,8 @@ class StubCollator
     /**
      * Constructor
      *
-     * @param  string  $locale   The locale code
+     * @param string $locale The locale code
+     *
      * @throws MethodArgumentValueNotImplementedException  When $locale different than 'en' is passed
      */
     public function __construct($locale)
@@ -82,10 +72,11 @@ class StubCollator
     /**
      * Static constructor
      *
-     * @param  string  $locale   The locale code
+     * @param string $locale The locale code
+     *
      * @throws MethodArgumentValueNotImplementedException  When $locale different than 'en' is passed
      */
-    static public function create($locale)
+    public static function create($locale)
     {
         return new self($locale);
     }
@@ -94,10 +85,11 @@ class StubCollator
      * Sort array maintaining index association
      *
      * @param  array  &$array    Input array
-     * @param  array  $sortFlag  Flags for sorting, can be one of the following:
+     * @param array $sortFlag Flags for sorting, can be one of the following:
      *                           StubCollator::SORT_REGULAR - compare items normally (don't change types)
      *                           StubCollator::SORT_NUMERIC - compare items numerically
      *                           StubCollator::SORT_STRING - compare items as strings
+     *
      * @return Boolean           True on success or false on failure
      */
     public function asort(&$array, $sortFlag = self::SORT_REGULAR)
@@ -116,13 +108,16 @@ class StubCollator
     /**
      * Compare two Unicode strings
      *
-     * @param  string  $str1   The first string to compare
-     * @param  string  $str2   The second string to compare
+     * @param string $str1 The first string to compare
+     * @param string $str2 The second string to compare
+     *
      * @return Boolean|int     Return the comparison result or false on failure:
      *                         1 if $str1 is greater than $str2
      *                         0 if $str1 is equal than $str2
      *                         -1 if $str1 is less than $str2
+     *
      * @see    http://www.php.net/manual/en/collator.compare.php
+     *
      * @throws MethodNotImplementedException
      */
     public function compare($str1, $str2)
@@ -133,9 +128,12 @@ class StubCollator
     /**
      * Get a value of an integer collator attribute
      *
-     * @param  int   $attr   An attribute specifier, one of the attribute constants
+     * @param int $attr An attribute specifier, one of the attribute constants
+     *
      * @return Boolean|int   The attribute value on success or false on error
+     *
      * @see    http://www.php.net/manual/en/collator.getattribute.php
+     *
      * @throws MethodNotImplementedException
      */
     public function getAttribute($attr)
@@ -150,7 +148,7 @@ class StubCollator
      */
     public function getErrorCode()
     {
-        return self::U_ZERO_ERROR;
+        return StubIntl::U_ZERO_ERROR;
     }
 
     /**
@@ -160,13 +158,14 @@ class StubCollator
      */
     public function getErrorMessage()
     {
-        return self::U_ZERO_ERROR_MESSAGE;
+        return 'U_ZERO_ERROR';
     }
 
     /**
      * Returns the collator's locale
      *
-     * @param  int      $type     The locale name type to return between valid or actual (StubLocale::VALID_LOCALE or StubLocale::ACTUAL_LOCALE, respectively)
+     * @param int $type The locale name type to return between valid or actual (StubLocale::VALID_LOCALE or StubLocale::ACTUAL_LOCALE, respectively)
+     *
      * @return string             The locale name used to create the collator
      */
     public function getLocale($type = StubLocale::ACTUAL_LOCALE)
@@ -177,9 +176,12 @@ class StubCollator
     /**
      * Get sorting key for a string
      *
-     * @param  string   $string   The string to produce the key from
+     * @param string $string The string to produce the key from
+     *
      * @return string             The collation key for $string
+     *
      * @see    http://www.php.net/manual/en/collator.getsortkey.php
+     *
      * @throws MethodNotImplementedException
      */
     public function getSortKey($string)
@@ -191,7 +193,9 @@ class StubCollator
      * Get current collator's strength
      *
      * @return Boolean|int   The current collator's strength or false on failure
+     *
      * @see    http://www.php.net/manual/en/collator.getstrength.php
+     *
      * @throws MethodNotImplementedException
      */
     public function getStrength()
@@ -202,10 +206,13 @@ class StubCollator
     /**
      * Set a collator's attribute
      *
-     * @param  int   $attr   An attribute specifier, one of the attribute constants
-     * @param  int   $val    The attribute value, one of the attribute value constants
+     * @param int $attr An attribute specifier, one of the attribute constants
+     * @param int $val  The attribute value, one of the attribute value constants
+     *
      * @return Boolean       True on success or false on failure
+     *
      * @see    http://www.php.net/manual/en/collator.setattribute.php
+     *
      * @throws MethodNotImplementedException
      */
     public function setAttribute($attr, $val)
@@ -216,15 +223,18 @@ class StubCollator
     /**
      * Set the collator's strength
      *
-     * @param  int    $strength  Strength to set, possible values:
+     * @param int $strength Strength to set, possible values:
      *                           StubCollator::PRIMARY
      *                           StubCollator::SECONDARY
      *                           StubCollator::TERTIARY
      *                           StubCollator::QUATERNARY
      *                           StubCollator::IDENTICAL
      *                           StubCollator::DEFAULT
+     *
      * @return Boolean           True on success or false on failure
+     *
      * @see    http://www.php.net/manual/en/collator.setstrength.php
+     *
      * @throws MethodNotImplementedException
      */
     public function setStrength($strength)
@@ -236,8 +246,11 @@ class StubCollator
      * Sort array using specified collator and sort keys
      *
      * @param  array   &$arr   Array of strings to sort
+     *
      * @return Boolean         True on success or false on failure
+     *
      * @see    http://www.php.net/manual/en/collator.sortwithsortkeys.php
+     *
      * @throws MethodNotImplementedException
      */
     public function sortWithSortKeys(&$arr)
@@ -249,12 +262,15 @@ class StubCollator
      * Sort array using specified collator
      *
      * @param  array   &$arr       Array of string to sort
-     * @param  int     $sortFlag   Optional sorting type, one of the following:
+     * @param int $sortFlag Optional sorting type, one of the following:
      *                             StubCollator::SORT_REGULAR
      *                             StubCollator::SORT_NUMERIC
      *                             StubCollator::SORT_STRING
+     *
      * @return Boolean             True on success or false on failure
+     *
      * @see    http://www.php.net/manual/en/collator.sort.php
+     *
      * @throws MethodNotImplementedException
      */
     public function sort(&$arr, $sortFlag = self::SORT_REGULAR)

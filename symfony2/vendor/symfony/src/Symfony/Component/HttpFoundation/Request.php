@@ -20,7 +20,7 @@ namespace Symfony\Component\HttpFoundation;
  */
 class Request
 {
-    static protected $trustProxy = false;
+    protected static $trustProxy = false;
 
     /**
      * @var \Symfony\Component\HttpFoundation\ParameterBag
@@ -83,7 +83,7 @@ class Request
     protected $format;
     protected $session;
 
-    static protected $formats;
+    protected static $formats;
 
     /**
      * Constructor.
@@ -147,7 +147,7 @@ class Request
      *
      * @api
      */
-    static public function createFromGlobals()
+    public static function createFromGlobals()
     {
         $request = new static($_GET, $_POST, array(), $_COOKIE, $_FILES, $_SERVER);
 
@@ -176,7 +176,7 @@ class Request
      *
      * @api
      */
-    static public function create($uri, $method = 'GET', $parameters = array(), $cookies = array(), $files = array(), $server = array(), $content = null)
+    public static function create($uri, $method = 'GET', $parameters = array(), $cookies = array(), $files = array(), $server = array(), $content = null)
     {
         $defaults = array(
             'SERVER_NAME'          => 'localhost',
@@ -362,7 +362,7 @@ class Request
      *
      * @api
      */
-    static public function trustProxyData()
+    public static function trustProxyData()
     {
         self::$trustProxy = true;
     }
@@ -377,9 +377,9 @@ class Request
      *  * slow
      *  * prefer to get from a "named" source
      *
-     * @param string    $key        the key
-     * @param mixed     $default    the default value
-     * @param type      $deep       is parameter deep in multidimensional array
+     * @param string $key     the key
+     * @param mixed  $default the default value
+     * @param type   $deep    is parameter deep in multidimensional array
      *
      * @return mixed
      */
@@ -441,7 +441,7 @@ class Request
     /**
      * Returns the client IP address.
      *
-     * @param  Boolean $proxy Whether the current request has been made behind a proxy or not
+     * @param Boolean $proxy Whether the current request has been made behind a proxy or not
      *
      * @return string The client IP address
      *
@@ -453,7 +453,9 @@ class Request
             if ($this->server->has('HTTP_CLIENT_IP')) {
                 return $this->server->get('HTTP_CLIENT_IP');
             } elseif (self::$trustProxy && $this->server->has('HTTP_X_FORWARDED_FOR')) {
-                return $this->server->get('HTTP_X_FORWARDED_FOR');
+                $clientIp = explode(',', $this->server->get('HTTP_X_FORWARDED_FOR'), 2);
+
+                return isset($clientIp[0]) ? trim($clientIp[0]) : '';
             }
         }
 
@@ -560,7 +562,11 @@ class Request
      */
     public function getPort()
     {
-        return $this->headers->get('X-Forwarded-Port') ?: $this->server->get('SERVER_PORT');
+        if (self::$trustProxy && $this->headers->has('X-Forwarded-Port')) {
+            return $this->headers->get('X-Forwarded-Port');
+        }
+
+        return $this->server->get('SERVER_PORT');
     }
 
     /**
@@ -639,7 +645,7 @@ class Request
      * It builds a normalized query string, where keys/value pairs are alphabetized
      * and have consistent escaping.
      *
-     * @return string A normalized query string for the Request
+     * @return string|null A normalized query string for the Request
      *
      * @api
      */
@@ -749,7 +755,7 @@ class Request
     /**
      * Gets the mime type associated with the format.
      *
-     * @param  string $format  The format
+     * @param string $format The format
      *
      * @return string The associated mime type (null if not found)
      *
@@ -767,7 +773,7 @@ class Request
     /**
      * Gets the format associated with the mime type.
      *
-     * @param  string $mimeType  The associated mime type
+     * @param string $mimeType The associated mime type
      *
      * @return string The format (null if not found)
      *
@@ -795,8 +801,8 @@ class Request
     /**
      * Associates a format with mime types.
      *
-     * @param string       $format     The format
-     * @param string|array $mimeTypes  The associated mime types (the preferred one must be the first as it will be used as the content type)
+     * @param string       $format    The format
+     * @param string|array $mimeTypes The associated mime types (the preferred one must be the first as it will be used as the content type)
      *
      * @api
      */
@@ -818,7 +824,7 @@ class Request
      *  * _format request parameter
      *  * $default
      *
-     * @param string  $default     The default format
+     * @param string $default The default format
      *
      * @return string The request format
      *
@@ -845,6 +851,24 @@ class Request
         $this->format = $format;
     }
 
+    public function setLocale($locale)
+    {
+        if (!$this->hasSession()) {
+            throw new \LogicException('Forward compatibility for Request::setLocale() requires the session to be set.');
+        }
+
+        $this->session->setLocale($locale);
+    }
+
+    public function getLocale()
+    {
+        if (!$this->hasSession()) {
+            throw new \LogicException('Forward compatibility for Request::getLocale() requires the session to be set.');
+        }
+
+        return $this->session->getLocale();
+    }
+
     /**
      * Checks whether the method is safe or not.
      *
@@ -860,7 +884,7 @@ class Request
     /**
      * Returns the request body content.
      *
-     * @param  Boolean $asResource If true, a resource will be returned
+     * @param Boolean $asResource If true, a resource will be returned
      *
      * @return string|resource The request body content or a resource to read the body stream.
      */
@@ -901,9 +925,9 @@ class Request
     /**
      * Returns the preferred language.
      *
-     * @param  array  $locales  An array of ordered available locales
+     * @param array $locales An array of ordered available locales
      *
-     * @return string The preferred locale
+     * @return string|null The preferred locale
      *
      * @api
      */
@@ -911,7 +935,7 @@ class Request
     {
         $preferredLanguages = $this->getLanguages();
 
-        if (null === $locales) {
+        if (empty($locales)) {
             return isset($preferredLanguages[0]) ? $preferredLanguages[0] : null;
         }
 
@@ -1016,7 +1040,9 @@ class Request
     /**
      * Splits an Accept-* HTTP header.
      *
-     * @param string $header  Header to split
+     * @param string $header Header to split
+     *
+     * @return array Array indexed by the values of the Accept-* header in preferred order
      */
     public function splitHttpAcceptHeader($header)
     {
@@ -1201,7 +1227,7 @@ class Request
     /**
      * Initializes HTTP request formats.
      */
-    static protected function initializeFormats()
+    protected static function initializeFormats()
     {
         static::$formats = array(
             'html' => array('text/html', 'application/xhtml+xml'),

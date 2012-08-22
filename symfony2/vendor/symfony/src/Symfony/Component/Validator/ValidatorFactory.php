@@ -85,19 +85,20 @@ class ValidatorFactory implements ValidatorContextInterface
     /**
      * Builds a validator factory with the default mapping loaders
      *
-     * @param  array $mappingFiles          A list of XML or YAML file names
+     * @param array $mappingFiles A list of XML or YAML file names
      *                                      where mapping information can be
      *                                      found. Can be empty.
-     * @param  Boolean $annotations         Whether to use annotations for
+     * @param Boolean $annotations Whether to use annotations for
      *                                      retrieving mapping information
-     * @param  string $staticMethod         The name of the static method to
+     * @param string $staticMethod The name of the static method to
      *                                      use, if static method loading should
      *                                      be enabled
+     *
      * @throws MappingException             If any of the files in $mappingFiles
      *                                      has neither the extension ".xml" nor
      *                                      ".yml" nor ".yaml"
      */
-    static public function buildDefault(array $mappingFiles = array(), $annotations = true, $staticMethod = null)
+    public static function buildDefault(array $mappingFiles = array(), $annotations = true, $staticMethod = null)
     {
         $xmlMappingFiles = array();
         $yamlMappingFiles = array();
@@ -109,7 +110,7 @@ class ValidatorFactory implements ValidatorContextInterface
 
             if ($extension === 'xml') {
                 $xmlMappingFiles[] = $file;
-            } else if ($extension === 'yaml' || $extension === 'yml') {
+            } elseif ($extension === 'yaml' || $extension === 'yml') {
                 $yamlMappingFiles[] = $file;
             } else {
                 throw new MappingException('The only supported mapping file formats are XML and YAML');
@@ -134,7 +135,7 @@ class ValidatorFactory implements ValidatorContextInterface
 
         if (count($loaders) > 1) {
             $loader = new LoaderChain($loaders);
-        } else if (count($loaders) === 1) {
+        } elseif (count($loaders) === 1) {
             $loader = $loaders[0];
         } else {
             throw new MappingException('No mapping loader was found for the given parameters');
@@ -149,7 +150,7 @@ class ValidatorFactory implements ValidatorContextInterface
     /**
      * Sets the given context as default context
      *
-     * @param ValidatorContextInterface $defaultContext  A preconfigured context
+     * @param ValidatorContextInterface $defaultContext A preconfigured context
      */
     public function __construct(ValidatorContextInterface $defaultContext = null)
     {
@@ -160,7 +161,8 @@ class ValidatorFactory implements ValidatorContextInterface
      * Overrides the class metadata factory of the default context and returns
      * the new context
      *
-     * @param  ClassMetadataFactoryInterface $metadataFactory  The new factory instance
+     * @param ClassMetadataFactoryInterface $metadataFactory The new factory instance
+     *
      * @return ValidatorContextInterface                       The preconfigured form context
      */
     public function setClassMetadataFactory(ClassMetadataFactoryInterface $metadataFactory)
@@ -174,7 +176,8 @@ class ValidatorFactory implements ValidatorContextInterface
      * Overrides the constraint validator factory of the default context and
      * returns the new context
      *
-     * @param  ClassMetadataFactoryInterface $validatorFactory  The new factory instance
+     * @param ClassMetadataFactoryInterface $validatorFactory The new factory instance
+     *
      * @return ValidatorContextInterface                        The preconfigured form context
      */
     public function setConstraintValidatorFactory(ConstraintValidatorFactoryInterface $validatorFactory)

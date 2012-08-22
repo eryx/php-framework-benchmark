@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
- *
+ * Redirects a request to another URL.
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
@@ -70,6 +70,13 @@ class RedirectController extends ContainerAware
             return new Response(null, 410);
         }
 
+        $statusCode = $permanent ? 301 : 302;
+
+        // redirect if the path is a full URL
+        if (parse_url($path, PHP_URL_SCHEME)) {
+            return new RedirectResponse($path, $statusCode);
+        }
+
         $request = $this->container->get('request');
         if (null === $scheme) {
             $scheme = $request->getScheme();
@@ -89,6 +96,6 @@ class RedirectController extends ContainerAware
 
         $url = $scheme.'://'.$request->getHost().$port.$request->getBaseUrl().$path.$qs;
 
-        return new RedirectResponse($url, $permanent ? 301 : 302);
+        return new RedirectResponse($url, $statusCode);
     }
 }

@@ -13,6 +13,10 @@ namespace Symfony\Bundle\FrameworkBundle\Templating\Helper;
 
 use Symfony\Component\Templating\Helper\Helper;
 
+if (!defined('ENT_SUBSTITUTE')) {
+    define('ENT_SUBSTITUTE', 8);
+}
+
 /**
  * CodeHelper.
  *
@@ -22,17 +26,20 @@ class CodeHelper extends Helper
 {
     protected $fileLinkFormat;
     protected $rootDir;
+    protected $charset;
 
     /**
      * Constructor.
      *
      * @param string $fileLinkFormat The format for links to source files
      * @param string $rootDir        The project root directory
+     * @param string $charset        The charset
      */
-    public function __construct($fileLinkFormat, $rootDir)
+    public function __construct($fileLinkFormat, $rootDir, $charset)
     {
         $this->fileLinkFormat = empty($fileLinkFormat) ? ini_get('xdebug.file_link_format') : $fileLinkFormat;
         $this->rootDir = str_replace('\\', '/', $rootDir).'/';
+        $this->charset = $charset;
     }
 
     /**
@@ -79,9 +86,9 @@ class CodeHelper extends Helper
     public function abbrMethod($method)
     {
         if (false !== strpos($method, '::')) {
-            list($class, $method) = explode('::', $method);
+            list($class, $method) = explode('::', $method, 2);
             $result = sprintf("%s::%s()", $this->abbrClass($class), $method);
-        } else if ('Closure' === $method) {
+        } elseif ('Closure' === $method) {
             $result = sprintf("<abbr title=\"%s\">%s</abbr>", $method, $method);
         } else {
             $result = sprintf("<abbr title=\"%s\">%s</abbr>()", $method, $method);
@@ -128,8 +135,8 @@ class CodeHelper extends Helper
     /**
      * Returns an excerpt of a code file around the given line number.
      *
-     * @param string $file  A file path
-     * @param int    $line  The selected line number
+     * @param string $file A file path
+     * @param int    $line The selected line number
      *
      * @return string An HTML string
      */
@@ -153,9 +160,9 @@ class CodeHelper extends Helper
     /**
      * Formats a file path.
      *
-     * @param  string  $file An absolute file path
-     * @param  integer $line The line number
-     * @param  string  $text Use this text for the link rather than the file path
+     * @param string  $file An absolute file path
+     * @param integer $line The line number
+     * @param string  $text Use this text for the link rather than the file path
      *
      * @return string
      */
@@ -173,7 +180,7 @@ class CodeHelper extends Helper
         }
 
         if (false !== $link = $this->getFileLink($file, $line)) {
-            return sprintf('<a href="%s" title="Click to open this file" class="file_link">%s</a>', $link, $text);
+            return sprintf('<a href="%s" title="Click to open this file" class="file_link">%s</a>', htmlspecialchars($link, ENT_QUOTES | ENT_SUBSTITUTE, $this->charset), $text);
         }
 
         return $text;
@@ -182,8 +189,8 @@ class CodeHelper extends Helper
     /**
      * Returns the link for a given file/line pair.
      *
-     * @param  string  $file An absolute file path
-     * @param  integer $line The line number
+     * @param string  $file An absolute file path
+     * @param integer $line The line number
      *
      * @return string A link of false
      */
@@ -215,7 +222,7 @@ class CodeHelper extends Helper
         return 'code';
     }
 
-    static protected function fixCodeMarkup($line)
+    protected static function fixCodeMarkup($line)
     {
         // </span> ending tag from previous line
         $opening = strpos($line, '<span');

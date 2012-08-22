@@ -116,10 +116,10 @@ class FormBuilder
     /**
      * Constructor.
      *
-     * @param string                    $name
-     * @param FormFactoryInterface      $factory
-     * @param EventDispatcherInterface  $dispatcher
-     * @param string                    $dataClass
+     * @param string                   $name
+     * @param FormFactoryInterface     $factory
+     * @param EventDispatcherInterface $dispatcher
+     * @param string                   $dataClass
      */
     public function __construct($name, FormFactoryInterface $factory, EventDispatcherInterface $dispatcher, $dataClass = null)
     {
@@ -300,7 +300,7 @@ class FormBuilder
     /**
      * Appends a transformer to the normalization transformer chain
      *
-     * @param DataTransformerInterface $clientTransformer
+     * @param DataTransformerInterface $normTransformer
      *
      * @return FormBuilder The current builder
      */
@@ -556,9 +556,9 @@ class FormBuilder
     /**
      * Creates a form builder.
      *
-     * @param string                    $name    The name of the form or the name of the property
-     * @param string|FormTypeInterface  $type    The type of the form or null if name is a property
-     * @param array                     $options The options
+     * @param string                   $name    The name of the form or the name of the property
+     * @param string|FormTypeInterface $type    The type of the form or null if name is a property
+     * @param array                    $options The options
      *
      * @return FormBuilder The builder
      */
@@ -620,7 +620,7 @@ class FormBuilder
     /**
      * Returns whether a field with the given name exists.
      *
-     * @param  string $name
+     * @param string $name
      *
      * @return Boolean
      */

@@ -197,8 +197,8 @@ class DoctrineExtension extends AbstractDoctrineExtension
     /**
      * Loads a configured ORM entity manager.
      *
-     * @param array $entityManager A configured ORM entity manager.
-     * @param ContainerBuilder $container A ContainerBuilder instance
+     * @param array            $entityManager A configured ORM entity manager.
+     * @param ContainerBuilder $container     A ContainerBuilder instance
      */
     protected function loadOrmEntityManager(array $entityManager, ContainerBuilder $container)
     {
@@ -288,8 +288,9 @@ class DoctrineExtension extends AbstractDoctrineExtension
      * In the case of bundles everything is really optional (which leads to autodetection for this bundle) but
      * in the mappings key everything except alias is a required argument.
      *
-     * @param array $entityManager A configured ORM entity manager.
-     * @param ContainerBuilder $container A ContainerBuilder instance
+     * @param array            $entityManager A configured ORM entity manager
+     * @param Definition       $ormConfigDef  A Definition instance
+     * @param ContainerBuilder $container     A ContainerBuilder instance
      */
     protected function loadOrmEntityManagerMappingInformation(array $entityManager, Definition $ormConfigDef, ContainerBuilder $container)
     {
@@ -340,7 +341,7 @@ class DoctrineExtension extends AbstractDoctrineExtension
      * Loads a configured entity managers metadata, query or result cache driver.
      *
      * @param array            $entityManager A configured ORM entity manager.
-     * @param ContainerBuilder $container A ContainerBuilder instance
+     * @param ContainerBuilder $container     A ContainerBuilder instance
      * @param string           $cacheName
      */
     protected function loadOrmEntityManagerCacheDriver(array $entityManager, ContainerBuilder $container, $cacheName)
@@ -356,7 +357,7 @@ class DoctrineExtension extends AbstractDoctrineExtension
      * Gets an entity manager cache driver definition for metadata, query and result caches.
      *
      * @param array            $entityManager The array configuring an entity manager.
-     * @param array            $cacheDriver The cache driver configuration.
+     * @param array            $cacheDriver   The cache driver configuration.
      * @param ContainerBuilder $container
      * @return Definition $cacheDef
      */

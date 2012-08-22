@@ -163,7 +163,7 @@ class ExceptionListener
         if ($authException instanceof AccountStatusException && ($token = $this->context->getToken()) instanceof UsernamePasswordToken) {
             // remove the security token to prevent infinite redirect loops
             $this->context->setToken(null);
-            $request->getSession()->remove('_security_' . $token->getProviderKey());
+            $request->getSession()->remove('_security_'.$token->getProviderKey());
         }
 
         return $this->authenticationEntryPoint->start($request, $authException);
@@ -172,7 +172,7 @@ class ExceptionListener
     protected function setTargetPath(Request $request)
     {
         // session isn't required when using http basic authentication mechanism for example
-        if ($request->hasSession()) {
+        if ($request->hasSession() && $request->isMethodSafe()) {
             $request->getSession()->set('_security.target_path', $request->getUri());
         }
     }

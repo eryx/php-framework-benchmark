@@ -18,13 +18,18 @@ namespace Assetic\Util;
  */
 class ProcessBuilder
 {
-    private $arguments = array();
+    private $arguments;
     private $cwd;
     private $env;
     private $stdin;
     private $timeout = 60;
     private $options = array();
     private $inheritEnv = false;
+
+    public function __construct(array $arguments = array())
+    {
+        $this->arguments = $arguments;
+    }
 
     /**
      * Adds an unescaped argument to the command string.
@@ -105,7 +110,7 @@ class ProcessBuilder
         } else {
             $script = implode(' ', array_map('escapeshellarg', $this->arguments));
         }
-        $env = $this->inheritEnv ? ($this->env ?: array()) + $_ENV : $this->env;
+        $env = $this->inheritEnv && $_ENV ? ($this->env ?: array()) + $_ENV : $this->env;
 
         return new Process($script, $this->cwd, $env, $this->stdin, $this->timeout, $options);
     }

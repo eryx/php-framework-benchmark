@@ -86,7 +86,13 @@ class Twig_TokenParserBroker implements Twig_TokenParserBrokerInterface
             }
             $broker = prev($this->brokers);
         }
+
         return null;
+    }
+
+    public function getParsers()
+    {
+        return $this->parsers;
     }
 
     public function getParser()

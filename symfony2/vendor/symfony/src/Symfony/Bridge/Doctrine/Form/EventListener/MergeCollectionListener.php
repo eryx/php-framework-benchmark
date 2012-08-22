@@ -20,12 +20,13 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *
  * This works with ORM, MongoDB and CouchDB instances of the collection interface.
  *
- * @see Doctrine\Common\Collections\Collection
  * @author Bernhard Schussek <bernhard.schussek@symfony-project.com>
+ *
+ * @see    Doctrine\Common\Collections\Collection
  */
 class MergeCollectionListener implements EventSubscriberInterface
 {
-    static public function getSubscribedEvents()
+    public static function getSubscribedEvents()
     {
         return array(FormEvents::BIND_NORM_DATA => 'onBindNormData');
     }
@@ -37,7 +38,7 @@ class MergeCollectionListener implements EventSubscriberInterface
 
         if (!$collection) {
             $collection = $data;
-        } else if (count($data) === 0) {
+        } elseif (count($data) === 0) {
             $collection->clear();
         } else {
             // merge $data into $collection

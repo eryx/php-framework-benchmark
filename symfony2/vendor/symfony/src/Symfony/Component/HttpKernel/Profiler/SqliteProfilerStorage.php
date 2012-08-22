@@ -11,7 +11,6 @@
 
 namespace Symfony\Component\HttpKernel\Profiler;
 
-
 /**
  * SqliteProfilerStorage stores profiling information in a SQLite database.
  *
@@ -25,7 +24,7 @@ class SqliteProfilerStorage extends PdoProfilerStorage
     protected function initDb()
     {
         if (null === $this->db || $this->db instanceof \SQLite3) {
-            if ('sqlite' !== substr($this->dsn, 0, 6 )) {
+            if (0 !== strpos($this->dsn, 'sqlite')) {
                 throw new \RuntimeException('You are trying to use Sqlite with a wrong dsn. "'.$this->dsn.'"');
             }
             if (class_exists('SQLite3')) {

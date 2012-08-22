@@ -27,9 +27,9 @@ namespace Symfony\Component\Translation;
  * The right delimiter can be [ (exclusive) or ] (inclusive).
  * Beside numbers, you can use -Inf and +Inf for the infinite.
  *
- * @see http://en.wikipedia.org/wiki/Interval_%28mathematics%29#The_ISO_notation
- *
  * @author Fabien Potencier <fabien@symfony.com>
+ *
+ * @see    http://en.wikipedia.org/wiki/Interval_%28mathematics%29#The_ISO_notation
  */
 class Interval
 {
@@ -39,7 +39,7 @@ class Interval
      * @param integer $number   A number
      * @param string  $interval An interval
      */
-    static public function test($number, $interval)
+    public static function test($number, $interval)
     {
         $interval = trim($interval);
 
@@ -71,7 +71,7 @@ class Interval
      *
      * @return string A Regexp (without the delimiters)
      */
-    static public function getIntervalRegexp()
+    public static function getIntervalRegexp()
     {
         return <<<EOF
         ({\s*
@@ -90,7 +90,7 @@ class Interval
 EOF;
     }
 
-    static private function convertNumber($number)
+    private static function convertNumber($number)
     {
         if ('-Inf' === $number) {
             return log(0);

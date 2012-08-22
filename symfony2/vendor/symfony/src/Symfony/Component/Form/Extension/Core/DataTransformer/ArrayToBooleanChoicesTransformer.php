@@ -13,6 +13,7 @@ namespace Symfony\Component\Form\Extension\Core\DataTransformer;
 
 use Symfony\Component\Form\Extension\Core\ChoiceList\ChoiceListInterface;
 use Symfony\Component\Form\DataTransformerInterface;
+use Symfony\Component\Form\Exception\TransformationFailedException;
 use Symfony\Component\Form\Exception\UnexpectedTypeException;
 
 class ArrayToBooleanChoicesTransformer implements DataTransformerInterface
@@ -32,7 +33,7 @@ class ArrayToBooleanChoicesTransformer implements DataTransformerInterface
      * depending on whether a given option is selected. If this field is rendered
      * as select tag, the value is not modified.
      *
-     * @param  mixed $array  An array
+     * @param mixed $array An array
      *
      * @return mixed         An array
      *
@@ -69,7 +70,7 @@ class ArrayToBooleanChoicesTransformer implements DataTransformerInterface
      * values, depending on whether a given choice is selected. The output
      * is an array with the selected choices.
      *
-     * @param  mixed $value  An array
+     * @param mixed $value An array
      *
      * @return mixed $value  An array
      *

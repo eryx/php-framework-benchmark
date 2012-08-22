@@ -2,7 +2,6 @@
 
 namespace Symfony\Component\Serializer\Encoder;
 
-
 /*
  * This file is part of the Symfony framework.
  *
@@ -22,9 +21,10 @@ interface DecoderInterface
     /**
      * Decodes a string into PHP data
      *
-     * @param string $data data to decode
-     * @param string $format format to decode from
+     * @param string $data   Data to decode
+     * @param string $format Format to decode from
+     *
      * @return mixed
      */
-    function decode($data, $format);
+    public function decode($data, $format);
 }

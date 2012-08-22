@@ -42,12 +42,16 @@ class Yaml
      *
      * @api
      */
-    static public function parse($input)
+    public static function parse($input)
     {
         $file = '';
 
         // if input is a file, process it
-        if (strpos($input, "\n") === false && is_file($input) && is_readable($input)) {
+        if (strpos($input, "\n") === false && is_file($input)) {
+            if (false === is_readable($input)) {
+                throw new ParseException(sprintf('Unable to parse "%s" as the file is not readable.', $input));
+            }
+
             $file = $input;
 
             ob_start();
@@ -82,14 +86,14 @@ class Yaml
      * The dump method, when supplied with an array, will do its best
      * to convert the array into friendly YAML.
      *
-     * @param array   $array PHP array
+     * @param array   $array  PHP array
      * @param integer $inline The level where you switch to inline YAML
      *
      * @return string A YAML string representing the original PHP array
      *
      * @api
      */
-    static public function dump($array, $inline = 2)
+    public static function dump($array, $inline = 2)
     {
         $yaml = new Dumper();
 

@@ -17,9 +17,7 @@ use Symfony\Bundle\WebProfilerBundle\DependencyInjection\WebProfilerExtension;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
-use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\DependencyInjection\Scope;
 
 class WebProfilerExtensionTest extends TestCase
@@ -30,7 +28,7 @@ class WebProfilerExtensionTest extends TestCase
      */
     private $container;
 
-    static public function assertSaneContainer(Container $container, $message = '')
+    public static function assertSaneContainer(Container $container, $message = '')
     {
         $errors = array();
         foreach ($container->getServiceIds() as $id) {

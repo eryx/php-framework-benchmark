@@ -68,6 +68,16 @@ class Command
     }
 
     /**
+     * Ignores validation errors.
+     *
+     * This is mainly useful for the help command.
+     */
+    public function ignoreValidationErrors()
+    {
+        $this->ignoreValidationErrors = true;
+    }
+
+    /**
      * Sets the application instance for this command.
      *
      * @param Application $application An Application instance
@@ -155,7 +165,7 @@ class Command
     }
 
     /**
-     * Initializes the command just after the input has been validated.
+     * Initializes the command just before the input is validated.
      *
      * This is mainly useful when a lot of commands extends one main command
      * where some things need to be initialized based on the input arguments and options.
@@ -176,6 +186,8 @@ class Command
      *
      * @param InputInterface  $input  An InputInterface instance
      * @param OutputInterface $output An OutputInterface instance
+     *
+     * @return integer The command exit code
      *
      * @see setCode()
      * @see execute()
@@ -289,6 +301,19 @@ class Command
     }
 
     /**
+     * Gets the InputDefinition to be used to create XML and Text representations of this Command.
+     *
+     * Can be overridden to provide the original command representation when it would otherwise
+     * be changed by merging with the application InputDefinition.
+     *
+     * @return InputDefinition An InputDefinition instance
+     */
+    protected function getNativeDefinition()
+    {
+        return $this->getDefinition();
+    }
+
+    /**
      * Adds an argument.
      *
      * @param string  $name        The argument name
@@ -314,7 +339,7 @@ class Command
      * @param string  $shortcut    The shortcut (can be null)
      * @param integer $mode        The option mode: One of the InputOption::VALUE_* constants
      * @param string  $description A description text
-     * @param mixed   $default     The default value (must be null for InputOption::VALUE_REQUIRED or self::VALUE_NONE)
+     * @param mixed   $default     The default value (must be null for InputOption::VALUE_REQUIRED or InputOption::VALUE_NONE)
      *
      * @return Command The current instance
      *
@@ -521,7 +546,7 @@ class Command
             $messages[] = '<comment>Aliases:</comment> <info>'.implode(', ', $this->getAliases()).'</info>';
         }
 
-        $messages[] = $this->definition->asText();
+        $messages[] = $this->getNativeDefinition()->asText();
 
         if ($help = $this->getProcessedHelp()) {
             $messages[] = '<comment>Help:</comment>';
@@ -562,7 +587,7 @@ class Command
             $aliasXML->appendChild($dom->createTextNode($alias));
         }
 
-        $definition = $this->definition->asXml(true);
+        $definition = $this->getNativeDefinition()->asXml(true);
         $commandXML->appendChild($dom->importNode($definition->getElementsByTagName('arguments')->item(0), true));
         $commandXML->appendChild($dom->importNode($definition->getElementsByTagName('options')->item(0), true));
 

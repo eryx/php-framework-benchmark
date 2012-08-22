@@ -22,7 +22,7 @@ class TimezoneChoiceList implements ChoiceListInterface
      * Stores the available timezone choices
      * @var array
      */
-    static protected $timezones;
+    protected static $timezones;
 
     /**
      * Returns the timezone choices.
@@ -47,7 +47,7 @@ class TimezoneChoiceList implements ChoiceListInterface
             if (count($parts) > 2) {
                 $region = $parts[0];
                 $name = $parts[1].' - '.$parts[2];
-            } else if (count($parts) > 1) {
+            } elseif (count($parts) > 1) {
                 $region = $parts[0];
                 $name = $parts[1];
             } else {

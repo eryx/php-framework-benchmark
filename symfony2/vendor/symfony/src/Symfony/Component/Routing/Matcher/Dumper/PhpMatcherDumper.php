@@ -29,7 +29,7 @@ class PhpMatcherDumper extends MatcherDumper
      *  * class:      The class name
      *  * base_class: The base class name
      *
-     * @param  array  $options An array of options
+     * @param array $options An array of options
      *
      * @return string A PHP class representing the matcher class
      */
@@ -148,7 +148,7 @@ EOF;
         $conditions = array();
         $hasTrailingSlash = false;
         $matches = false;
-        if (!count($compiledRoute->getVariables()) && false !== preg_match('#^(.)\^(?P<url>.*?)\$\1#', str_replace(array("\n", ' '), '', $compiledRoute->getRegex()), $m)) {
+        if (!count($compiledRoute->getVariables()) && false !== preg_match('#^(.)\^(?P<url>.*?)\$\1#', $compiledRoute->getRegex(), $m)) {
             if ($supportsRedirections && substr($m['url'], -1) === '/') {
                 $conditions[] = sprintf("rtrim(\$pathinfo, '/') === %s", var_export(rtrim(str_replace('\\', '', $m['url']), '/'), true));
                 $hasTrailingSlash = true;
@@ -160,7 +160,7 @@ EOF;
                 $conditions[] = sprintf("0 === strpos(\$pathinfo, %s)", var_export($compiledRoute->getStaticPrefix(), true));
             }
 
-            $regex = str_replace(array("\n", ' '), '', $compiledRoute->getRegex());
+            $regex = $compiledRoute->getRegex();
             if ($supportsRedirections && $pos = strpos($regex, '/$')) {
                 $regex = substr($regex, 0, $pos).'/?$'.substr($regex, $pos + 2);
                 $hasTrailingSlash = true;

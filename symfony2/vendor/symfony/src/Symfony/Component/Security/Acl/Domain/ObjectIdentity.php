@@ -52,7 +52,7 @@ final class ObjectIdentity implements ObjectIdentityInterface
      * @throws \InvalidArgumentException
      * @return ObjectIdentity
      */
-    static public function fromDomainObject($domainObject)
+    public static function fromDomainObject($domainObject)
     {
         if (!is_object($domainObject)) {
             throw new InvalidDomainObjectException('$domainObject must be an object.');
@@ -61,7 +61,7 @@ final class ObjectIdentity implements ObjectIdentityInterface
         try {
             if ($domainObject instanceof DomainObjectInterface) {
                 return new self($domainObject->getObjectIdentifier(), get_class($domainObject));
-            } else if (method_exists($domainObject, 'getId')) {
+            } elseif (method_exists($domainObject, 'getId')) {
                 return new self($domainObject->getId(), get_class($domainObject));
             }
         } catch (\InvalidArgumentException $invalid) {

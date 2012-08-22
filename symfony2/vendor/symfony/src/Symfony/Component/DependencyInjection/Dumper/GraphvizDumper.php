@@ -50,7 +50,7 @@ class GraphvizDumper extends Dumper
      *  * node.definition: The default options for services that are defined via service definition instances
      *  * node.missing: The default options for missing services
      *
-     * @param  array  $options An array of options
+     * @param array $options An array of options
      *
      * @return string The dot representation of the service container
      */
@@ -119,10 +119,11 @@ class GraphvizDumper extends Dumper
     /**
      * Finds all edges belonging to a specific service id.
      *
-     * @param string $id The service id used to find edges
-     * @param array $arguments An array of arguments
+     * @param string  $id        The service id used to find edges
+     * @param array   $arguments An array of arguments
      * @param Boolean $required
-     * @param string $name
+     * @param string  $name
+     *
      * @return array An array of edges
      */
     private function findEdges($id, $arguments, $required, $name)
@@ -209,6 +210,7 @@ class GraphvizDumper extends Dumper
      * Adds attributes
      *
      * @param array $attributes An array of attributes
+     *
      * @return string A comma separated list of attributes
      */
     private function addAttributes($attributes)
@@ -242,6 +244,7 @@ class GraphvizDumper extends Dumper
      * Dotizes an identifier.
      *
      * @param string $id The identifier to dotize
+     *
      * @return string A dotized string
      */
     private function dotize($id)
@@ -253,6 +256,7 @@ class GraphvizDumper extends Dumper
      * Compiles an array of aliases for a specified service id.
      *
      * @param string $id A service id
+     *
      * @return array An array of aliases
      */
     private function getAliases($id)

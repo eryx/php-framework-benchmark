@@ -33,6 +33,11 @@ class PhpExecutableFinder
      */
     public function find()
     {
+        // PHP_BINARY return the current sapi executable
+        if (defined('PHP_BINARY') && PHP_BINARY && ('cli' === PHP_SAPI)) {
+            return PHP_BINARY;
+        }
+
         if ($php = getenv('PHP_PATH')) {
             if (!is_executable($php)) {
                 return false;

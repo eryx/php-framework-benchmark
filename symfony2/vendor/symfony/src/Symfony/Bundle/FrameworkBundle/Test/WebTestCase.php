@@ -22,18 +22,18 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  */
 abstract class WebTestCase extends \PHPUnit_Framework_TestCase
 {
-    static protected $class;
-    static protected $kernel;
+    protected static $class;
+    protected static $kernel;
 
     /**
      * Creates a Client.
      *
-     * @param array   $options An array of options to pass to the createKernel class
-     * @param array   $server  An array of server parameters
+     * @param array $options An array of options to pass to the createKernel class
+     * @param array $server  An array of server parameters
      *
      * @return Client A Client instance
      */
-    static protected function createClient(array $options = array(), array $server = array())
+    protected static function createClient(array $options = array(), array $server = array())
     {
         static::$kernel = static::createKernel($options);
         static::$kernel->boot();
@@ -52,7 +52,7 @@ abstract class WebTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return string The directory where phpunit.xml(.dist) is stored
      */
-    static protected function getPhpUnitXmlDir()
+    protected static function getPhpUnitXmlDir()
     {
         if (!isset($_SERVER['argv']) || false === strpos($_SERVER['argv'][0], 'phpunit')) {
             throw new \RuntimeException('You must override the WebTestCase::createKernel() method.');
@@ -85,11 +85,11 @@ abstract class WebTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return string The value of the phpunit cli configuration option
      */
-    static private function getPhpUnitCliConfigArgument()
+    private static function getPhpUnitCliConfigArgument()
     {
         $dir = null;
         $reversedArgs = array_reverse($_SERVER['argv']);
-        foreach ($reversedArgs as $argIndex=>$testArg) {
+        foreach ($reversedArgs as $argIndex => $testArg) {
             if ($testArg === '-c' || $testArg === '--configuration') {
                 $dir = realpath($reversedArgs[$argIndex - 1]);
                 break;
@@ -110,7 +110,7 @@ abstract class WebTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return string The Kernel class name
      */
-    static protected function getKernelClass()
+    protected static function getKernelClass()
     {
         $dir = isset($_SERVER['KERNEL_DIR']) ? $_SERVER['KERNEL_DIR'] : static::getPhpUnitXmlDir();
 
@@ -141,7 +141,7 @@ abstract class WebTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return HttpKernelInterface A HttpKernelInterface instance
      */
-    static protected function createKernel(array $options = array())
+    protected static function createKernel(array $options = array())
     {
         if (null === static::$class) {
             static::$class = static::getKernelClass();

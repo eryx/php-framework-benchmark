@@ -11,7 +11,6 @@
 
 namespace Symfony\Component\Config\Definition;
 
-
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Definition\Exception\InvalidTypeException;
 use Symfony\Component\Config\Definition\Exception\UnsetKeyException;
@@ -34,7 +33,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
     /**
      * Constructor.
      *
-     * @param string $name The Node's name
+     * @param string        $name   The Node's name
      * @param NodeInterface $parent The node parent
      */
     public function __construct($name, NodeInterface $parent = null)
@@ -72,8 +71,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
     }
 
     /**
-     * Sets whether false is allowed as value indicating that the array should
-     * be unset.
+     * Sets whether false is allowed as value indicating that the array should be unset.
      *
      * @param Boolean $allow
      */
@@ -136,6 +134,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      * Retrieves the default value.
      *
      * @return array The default value
+     *
      * @throws \RuntimeException if the node has no default value
      */
     public function getDefaultValue()
@@ -158,6 +157,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      * Adds a child node.
      *
      * @param NodeInterface $node The child node to add
+     *
      * @throws \InvalidArgumentException when the child node has no name
      * @throws \InvalidArgumentException when the child node's name is not unique
      */
@@ -178,7 +178,9 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      * Finalizes the value of this node.
      *
      * @param mixed $value
+     *
      * @return mixed The finalised value
+     *
      * @throws UnsetKeyException
      * @throws InvalidConfigurationException if the node doesn't have enough children
      */
@@ -220,6 +222,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      * Validates the type of the value.
      *
      * @param mixed $value
+     *
      * @throws InvalidTypeException
      */
     protected function validateType($value)
@@ -240,6 +243,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      * Normalizes the value.
      *
      * @param mixed $value The value to normalize
+     *
      * @return mixed The normalized value
      */
     protected function normalizeValue($value)
@@ -262,7 +266,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
         if (count($value) && !$this->ignoreExtraKeys) {
             $msg = sprintf('Unrecognized options "%s" under "%s"', implode(', ', array_keys($value)), $this->getPath());
             $ex = new InvalidConfigurationException($msg);
-            $ex->setPath($this->getPath().'.'.reset($value));
+            $ex->setPath($this->getPath());
 
             throw $ex;
         }
@@ -271,9 +275,10 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
     }
 
     /**
-     * Remap multiple singular values to a single plural value
+     * Remaps multiple singular values to a single plural value.
      *
      * @param array $value The source values
+     *
      * @return array The remapped values
      */
     protected function remapXml($value)
@@ -295,9 +300,11 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
     /**
      * Merges values together.
      *
-     * @param mixed $leftSide The left side to merge.
+     * @param mixed $leftSide  The left side to merge.
      * @param mixed $rightSide The right side to merge.
+     *
      * @return mixed The merged values
+     *
      * @throws InvalidConfigurationException
      * @throws \RuntimeException
      */

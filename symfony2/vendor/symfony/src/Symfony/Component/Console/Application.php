@@ -59,8 +59,8 @@ class Application
     /**
      * Constructor.
      *
-     * @param string  $name    The name of the application
-     * @param string  $version The version of the application
+     * @param string $name    The name of the application
+     * @param string $version The version of the application
      *
      * @api
      */
@@ -85,7 +85,7 @@ class Application
             new InputOption('--help',           '-h', InputOption::VALUE_NONE, 'Display this help message.'),
             new InputOption('--quiet',          '-q', InputOption::VALUE_NONE, 'Do not output any message.'),
             new InputOption('--verbose',        '-v', InputOption::VALUE_NONE, 'Increase verbosity of messages.'),
-            new InputOption('--version',        '-V', InputOption::VALUE_NONE, 'Display this program version.'),
+            new InputOption('--version',        '-V', InputOption::VALUE_NONE, 'Display this application version.'),
             new InputOption('--ansi',           '',   InputOption::VALUE_NONE, 'Force ANSI output.'),
             new InputOption('--no-ansi',        '',   InputOption::VALUE_NONE, 'Disable ANSI output.'),
             new InputOption('--no-interaction', '-n', InputOption::VALUE_NONE, 'Do not ask any interactive question.'),
@@ -503,7 +503,7 @@ class Application
      * Contrary to get, this command tries to find the best
      * match if you give it an abbreviation of a name or alias.
      *
-     * @param  string $name A command name or a command alias
+     * @param string $name A command name or a command alias
      *
      * @return Command A Command instance
      *
@@ -567,7 +567,7 @@ class Application
      *
      * The array keys are the full names and the values the command instances.
      *
-     * @param  string  $namespace A namespace name
+     * @param string $namespace A namespace name
      *
      * @return array An array of Command instances
      *
@@ -596,7 +596,7 @@ class Application
      *
      * @return array An array of abbreviations
      */
-    static public function getAbbreviations($names)
+    public static function getAbbreviations($names)
     {
         $abbrevs = array();
         foreach ($names as $name) {
@@ -653,7 +653,7 @@ class Application
             }
         }
 
-        return implode("\n", $messages);
+        return implode(PHP_EOL, $messages);
     }
 
     /**
@@ -711,7 +711,7 @@ class Application
     }
 
     /**
-     * Renders a catched exception.
+     * Renders a caught exception.
      *
      * @param Exception       $e      An exception instance
      * @param OutputInterface $output An OutputInterface instance
@@ -733,13 +733,16 @@ class Application
         do {
             $title = sprintf('  [%s]  ', get_class($e));
             $len = $strlen($title);
+            $width = $this->getTerminalWidth() ? $this->getTerminalWidth() - 1 : PHP_INT_MAX;
             $lines = array();
-            foreach (explode("\n", $e->getMessage()) as $line) {
-                $lines[] = sprintf('  %s  ', $line);
-                $len = max($strlen($line) + 4, $len);
+            foreach (preg_split("{\r?\n}", $e->getMessage()) as $line) {
+                foreach (str_split($line, $width - 4) as $line) {
+                    $lines[] = sprintf('  %s  ', $line);
+                    $len = max($strlen($line) + 4, $len);
+                }
             }
 
-            $messages = array(str_repeat(' ', $len), $title.str_repeat(' ', $len - $strlen($title)));
+            $messages = array(str_repeat(' ', $len), $title.str_repeat(' ', max(0, $len - $strlen($title))));
 
             foreach ($lines as $line) {
                 $messages[] = $line.str_repeat(' ', $len - $strlen($line));
@@ -781,7 +784,40 @@ class Application
 
         if (null !== $this->runningCommand) {
             $output->writeln(sprintf('<info>%s</info>', sprintf($this->runningCommand->getSynopsis(), $this->getName())));
-            $output->writeln("\n");
+            $output->writeln("");
+            $output->writeln("");
+        }
+    }
+
+    /**
+     * Tries to figure out the terminal width in which this application runs
+     *
+     * @return int|null
+     */
+    protected function getTerminalWidth()
+    {
+        if (defined('PHP_WINDOWS_VERSION_BUILD') && $ansicon = getenv('ANSICON')) {
+            return preg_replace('{^(\d+)x.*$}', '$1', $ansicon);
+        }
+
+        if (preg_match("{rows.(\d+);.columns.(\d+);}i", exec('stty -a | grep columns'), $match)) {
+            return $match[2];
+        }
+    }
+
+    /**
+     * Tries to figure out the terminal height in which this application runs
+     *
+     * @return int|null
+     */
+    protected function getTerminalHeight()
+    {
+        if (defined('PHP_WINDOWS_VERSION_BUILD') && $ansicon = getenv('ANSICON')) {
+            return preg_replace('{^\d+x\d+ \(\d+x(\d+)\)$}', '$1', trim($ansicon));
+        }
+
+        if (preg_match("{rows.(\d+);.columns.(\d+);}i", exec('stty -a | grep columns'), $match)) {
+            return $match[1];
         }
     }
 
@@ -836,6 +872,14 @@ class Application
         return sprintf('%s, %s%s', $abbrevs[0], $abbrevs[1], count($abbrevs) > 2 ? sprintf(' and %d more', count($abbrevs) - 2) : '');
     }
 
+    /**
+     * Returns the namespace part of the command name.
+     *
+     * @param string $name  The full name of the command
+     * @param string $limit The maximum number of parts of the namespace
+     *
+     * @return string The namespace of the command
+     */
     private function extractNamespace($name, $limit = null)
     {
         $parts = explode(':', $name);

@@ -13,7 +13,6 @@ namespace Symfony\Bundle\DoctrineBundle\Mapping;
 
 use Symfony\Bridge\Doctrine\RegistryInterface;
 use Symfony\Component\HttpKernel\Bundle\BundleInterface;
-use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\MappingException;
 
 /**
@@ -76,14 +75,14 @@ class MetadataFactory
 
         $all = $metadata->getMetadata();
         if (class_exists($class)) {
-            $r = $all[0]->getReflectionClass();
-            $path = $this->getBasePathForClass($class, $r->getNamespacename(), dirname($r->getFilename()));
+            $r = new \ReflectionClass($all[0]->name);
+            $path = $this->getBasePathForClass($class, $r->getNamespaceName(), dirname($r->getFilename()));
+            $metadata->setNamespace($r->getNamespacename());
         } elseif (!$path) {
             throw new \RuntimeException(sprintf('Unable to determine where to save the "%s" class (use the --path option).', $class));
         }
 
         $metadata->setPath($path);
-        $metadata->setNamespace($r->getNamespacename());
 
         return $metadata;
     }
@@ -105,8 +104,8 @@ class MetadataFactory
 
         $all = $metadata->getMetadata();
         if (class_exists($all[0]->name)) {
-            $r = $all[0]->getReflectionClass();
-            $path = $this->getBasePathForClass($namespace, $r->getNamespacename(), dirname($r->getFilename()));
+            $r = new \ReflectionClass($all[0]->name);
+            $path = $this->getBasePathForClass($namespace, $r->getNamespaceName(), dirname($r->getFilename()));
         } elseif (!$path) {
             throw new \RuntimeException(sprintf('Unable to determine where to save the "%s" class (use the --path option).', $all[0]->name));
         }

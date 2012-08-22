@@ -38,7 +38,7 @@ class Parser
     /**
      * Parses a YAML string to a PHP value.
      *
-     * @param  string $value A YAML string
+     * @param string $value A YAML string
      *
      * @return mixed  A PHP value
      *
@@ -103,7 +103,7 @@ class Parser
                         $data[] = $this->parseValue($values['value']);
                     }
                 }
-            } else if (preg_match('#^(?P<key>'.Inline::REGEX_QUOTED_STRING.'|[^ \'"\[\{].*?) *\:(\s+(?P<value>.+?))?\s*$#u', $this->currentLine, $values)) {
+            } elseif (preg_match('#^(?P<key>'.Inline::REGEX_QUOTED_STRING.'|[^ \'"\[\{].*?) *\:(\s+(?P<value>.+?))?\s*$#u', $this->currentLine, $values)) {
                 try {
                     $key = Inline::parseScalar($values['key']);
                 } catch (ParseException $e) {
@@ -114,7 +114,7 @@ class Parser
                 }
 
                 if ('<<' === $key) {
-                    if (isset($values['value']) && '*' === substr($values['value'], 0, 1)) {
+                    if (isset($values['value']) && 0 === strpos($values['value'], '*')) {
                         $isInPlace = substr($values['value'], 1);
                         if (!array_key_exists($isInPlace, $this->refs)) {
                             throw new ParseException(sprintf('Reference "%s" does not exist.', $isInPlace), $this->getRealCurrentLineNb() + 1, $this->currentLine);
@@ -133,7 +133,7 @@ class Parser
                         $merged = array();
                         if (!is_array($parsed)) {
                             throw new ParseException('YAML merge keys used with a scalar value instead of an array.', $this->getRealCurrentLineNb() + 1, $this->currentLine);
-                        } else if (isset($parsed[0])) {
+                        } elseif (isset($parsed[0])) {
                             // Numeric array, merge individual elements
                             foreach (array_reverse($parsed) as $parsedItem) {
                                 if (!is_array($parsedItem)) {
@@ -148,7 +148,7 @@ class Parser
 
                         $isProcessed = $merged;
                     }
-                } else if (isset($values['value']) && preg_match('#^&(?P<ref>[^ ]+) *(?P<value>.*)#u', $values['value'], $matches)) {
+                } elseif (isset($values['value']) && preg_match('#^&(?P<ref>[^ ]+) *(?P<value>.*)#u', $values['value'], $matches)) {
                     $isRef = $matches['ref'];
                     $values['value'] = $matches['value'];
                 }
@@ -157,7 +157,7 @@ class Parser
                     // Merge keys
                     $data = $isProcessed;
                 // hash
-                } else if (!isset($values['value']) || '' == trim($values['value'], ' ') || 0 === strpos(ltrim($values['value'], ' '), '#')) {
+                } elseif (!isset($values['value']) || '' == trim($values['value'], ' ') || 0 === strpos(ltrim($values['value'], ' '), '#')) {
                     // if next line is less indented or equal, then it means that the current value is null
                     if ($this->isNextLineIndented()) {
                         $data[$key] = null;
@@ -188,7 +188,7 @@ class Parser
 
                     if (is_array($value)) {
                         $first = reset($value);
-                        if (is_string($first) && '*' === substr($first, 0, 1)) {
+                        if (is_string($first) && 0 === strpos($first, '*')) {
                             $data = array();
                             foreach ($value as $alias) {
                                 $data[] = $this->refs[substr($alias, 1)];
@@ -298,9 +298,9 @@ class Parser
             if (preg_match('#^(?P<text> *)$#', $this->currentLine, $match)) {
                 // empty line
                 $data[] = $match['text'];
-            } else if ($indent >= $newIndent) {
+            } elseif ($indent >= $newIndent) {
                 $data[] = substr($this->currentLine, $newIndent);
-            } else if (0 == $indent) {
+            } elseif (0 == $indent) {
                 $this->moveToPreviousLine();
 
                 break;
@@ -339,7 +339,7 @@ class Parser
     /**
      * Parses a YAML value.
      *
-     * @param  string $value A YAML value
+     * @param string $value A YAML value
      *
      * @return mixed  A PHP value
      *
@@ -347,7 +347,7 @@ class Parser
      */
     private function parseValue($value)
     {
-        if ('*' === substr($value, 0, 1)) {
+        if (0 === strpos($value, '*')) {
             if (false !== $pos = strpos($value, '#')) {
                 $value = substr($value, 1, $pos - 2);
             } else {
@@ -380,9 +380,9 @@ class Parser
     /**
      * Parses a folded scalar.
      *
-     * @param  string  $separator   The separator that was used to begin this folded scalar (| or >)
-     * @param  string  $indicator   The indicator that was used to begin this folded scalar (+ or -)
-     * @param  integer $indentation The indentation that was used to begin this folded scalar
+     * @param string  $separator   The separator that was used to begin this folded scalar (| or >)
+     * @param string  $indicator   The indicator that was used to begin this folded scalar (+ or -)
+     * @param integer $indentation The indentation that was used to begin this folded scalar
      *
      * @return string  The text value
      */
@@ -423,7 +423,7 @@ class Parser
                 $previousIndent = $matches['indent'];
 
                 $text .= str_repeat(' ', $diff = strlen($matches['indent']) - strlen($textIndent)).$matches['text'].($diff ? "\n" : $separator);
-            } else if (preg_match('#^(?P<text> *)$#', $this->currentLine, $matches)) {
+            } elseif (preg_match('#^(?P<text> *)$#', $this->currentLine, $matches)) {
                 $text .= preg_replace('#^ {1,'.strlen($textIndent).'}#', '', $matches['text'])."\n";
             } else {
                 $this->moveToPreviousLine();
@@ -515,7 +515,7 @@ class Parser
     /**
      * Cleanups a YAML string to be parsed.
      *
-     * @param  string $value The input YAML string
+     * @param string $value The input YAML string
      *
      * @return string A cleaned up YAML string
      */

@@ -339,7 +339,7 @@ QUERY;
      * @param ObjectIdentityInterface $oid
      * @return integer
      */
-    protected final function retrieveObjectIdentityPrimaryKey(ObjectIdentityInterface $oid)
+    final protected function retrieveObjectIdentityPrimaryKey(ObjectIdentityInterface $oid)
     {
         return $this->connection->executeQuery($this->getSelectObjectIdentityIdSql($oid))->fetchColumn();
     }
@@ -375,6 +375,7 @@ QUERY;
      * including the ids of parent ACLs.
      *
      * @param array $batch
+     *
      * @return array
      */
     private function getAncestorIds(array $batch)
@@ -395,7 +396,8 @@ QUERY;
      * Does either overwrite the passed ACE, or saves it in the global identity
      * map to ensure every ACE only gets instantiated once.
      *
-     * @param array $aces
+     * @param array &$aces
+     *
      * @return void
      */
     private function doUpdateAceIdentityMap(array &$aces)
@@ -447,7 +449,8 @@ QUERY;
      * @throws \RuntimeException
      * @return \SplObjectStorage
      */
-    private function hydrateObjectIdentities(Statement $stmt, array $oidLookup, array $sids) {
+    private function hydrateObjectIdentities(Statement $stmt, array $oidLookup, array $sids)
+    {
         $parentIdToFill = new \SplObjectStorage();
         $acls = $aces = $emptyArray = array();
         $oidCache = $oidLookup;
@@ -494,7 +497,7 @@ QUERY;
                 $acl = $acls[$aclId];
             // has the ACL been hydrated during any previous cycle, or was possibly loaded
             // from cache?
-            } else if (isset($loadedAcls[$classType][$objectIdentifier])) {
+            } elseif (isset($loadedAcls[$classType][$objectIdentifier])) {
                 $acl = $loadedAcls[$classType][$objectIdentifier];
 
                 // keep reference in local array (saves us some hash calculations)

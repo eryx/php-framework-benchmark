@@ -11,8 +11,6 @@
 
 namespace Symfony\Bundle\SwiftmailerBundle\Logger;
 
-use Symfony\Component\EventDispatcher\Event;
-
 /**
  * MessageLogger.
  *

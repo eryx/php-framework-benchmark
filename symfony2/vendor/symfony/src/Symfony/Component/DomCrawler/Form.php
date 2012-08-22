@@ -22,7 +22,13 @@ use Symfony\Component\DomCrawler\Field\FormField;
  */
 class Form extends Link implements \ArrayAccess
 {
+    /**
+     * @var \DOMNode
+     */
     private $button;
+    /**
+     * @var Field\FormField[]
+     */
     private $fields;
 
     /**
@@ -57,6 +63,8 @@ class Form extends Link implements \ArrayAccess
      * Sets the value of the fields.
      *
      * @param array $values An array of field values
+     *
+     * @return Form
      *
      * @api
      */
@@ -133,7 +141,7 @@ class Form extends Link implements \ArrayAccess
      */
     public function getPhpValues()
     {
-        $qs = http_build_query($this->getValues());
+        $qs = http_build_query($this->getValues(), '', '&');
         parse_str($qs, $values);
 
         return $values;
@@ -151,7 +159,7 @@ class Form extends Link implements \ArrayAccess
      */
     public function getPhpFiles()
     {
-        $qs = http_build_query($this->getFiles());
+        $qs = http_build_query($this->getFiles(), '', '&');
         parse_str($qs, $values);
 
         return $values;
@@ -253,8 +261,6 @@ class Form extends Link implements \ArrayAccess
      * Sets a named field.
      *
      * @param Field\FormField $field The field
-     *
-     * @return FormField The field instance
      *
      * @api
      */

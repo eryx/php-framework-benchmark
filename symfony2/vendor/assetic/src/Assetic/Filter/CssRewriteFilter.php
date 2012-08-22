@@ -39,7 +39,7 @@ class CssRewriteFilter extends BaseCssFilter
             list($scheme, $url) = explode('://', $sourceBase.'/'.$sourcePath, 2);
             list($host, $path) = explode('/', $url, 2);
 
-            $host = $scheme.'://'.$host;
+            $host = $scheme.'://'.$host.'/';
             $path = false === strpos($path, '/') ? '' : dirname($path);
             $path .= '/';
         } else {
@@ -69,8 +69,8 @@ class CssRewriteFilter extends BaseCssFilter
 
         $content = $this->filterReferences($asset->getContent(), function($matches) use($host, $path)
         {
-            if (false !== strpos($matches['url'], '://') || 0 === strpos($matches['url'], '//')) {
-                // absolute or protocol-relative
+            if (false !== strpos($matches['url'], '://') || 0 === strpos($matches['url'], '//') || 0 === strpos($matches['url'], 'data:')) {
+                // absolute or protocol-relative or data uri
                 return $matches[0];
             }
 

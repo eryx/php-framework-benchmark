@@ -24,7 +24,7 @@ use Symfony\Component\CssSelector\XPathExpr;
  */
 class FunctionNode implements NodeInterface
 {
-    static protected $unsupported = array('target', 'lang', 'enabled', 'disabled');
+    protected static $unsupported = array('target', 'lang', 'enabled', 'disabled');
 
     protected $selector;
     protected $type;
@@ -35,9 +35,9 @@ class FunctionNode implements NodeInterface
      * Constructor.
      *
      * @param NodeInterface $selector The XPath expression
-     * @param string $type
-     * @param string $name
-     * @param XPathExpr $expr
+     * @param string        $type
+     * @param string        $name
+     * @param XPathExpr     $expr
      */
     public function __construct($selector, $type, $name, $expr)
     {
@@ -80,6 +80,7 @@ class FunctionNode implements NodeInterface
      * @param mixed     $expr
      * @param Boolean   $last
      * @param Boolean   $addNameTest
+     *
      * @return XPathExpr
      */
     protected function _xpath_nth_child($xpath, $expr, $last = false, $addNameTest = true)
@@ -150,6 +151,7 @@ class FunctionNode implements NodeInterface
      *
      * @param XPathExpr $xpath
      * @param XPathExpr $expr
+     *
      * @return XPathExpr
      */
     protected function _xpath_nth_last_child($xpath, $expr)
@@ -162,6 +164,7 @@ class FunctionNode implements NodeInterface
      *
      * @param XPathExpr $xpath
      * @param XPathExpr $expr
+     *
      * @return XPathExpr
      */
     protected function _xpath_nth_of_type($xpath, $expr)
@@ -178,6 +181,7 @@ class FunctionNode implements NodeInterface
      *
      * @param XPathExpr $xpath
      * @param XPathExpr $expr
+     *
      * @return XPathExpr
      */
     protected function _xpath_nth_last_of_type($xpath, $expr)
@@ -190,6 +194,7 @@ class FunctionNode implements NodeInterface
      *
      * @param XPathExpr $xpath
      * @param XPathExpr $expr
+     *
      * @return XPathExpr
      */
     protected function _xpath_contains($xpath, $expr)
@@ -213,6 +218,7 @@ class FunctionNode implements NodeInterface
      *
      * @param XPathExpr $xpath
      * @param XPathExpr $expr
+     *
      * @return XPathExpr
      */
     protected function _xpath_not($xpath, $expr)
@@ -230,6 +236,7 @@ class FunctionNode implements NodeInterface
      * Parses things like '1n+2', or 'an+b' generally, returning (a, b)
      *
      * @param mixed $s
+     *
      * @return array
      */
     protected function parseSeries($s)
@@ -241,11 +248,6 @@ class FunctionNode implements NodeInterface
         if (!$s || '*' == $s) {
             // Happens when there's nothing, which the CSS parser thinks of as *
             return array(0, 0);
-        }
-
-        if (is_string($s)) {
-            // Happens when you just get a number
-            return array(0, $s);
         }
 
         if ('odd' == $s) {

@@ -11,7 +11,7 @@
 
 namespace Symfony\Component\Console\Output;
 
-use Symfony\Component\Console\Formatter\OutputFormatter;
+use Symfony\Component\Console\Formatter\OutputFormatterInterface;
 
 /**
  * ConsoleOutput is the default class for all CLI output. It uses STDOUT.
@@ -33,15 +33,35 @@ class ConsoleOutput extends StreamOutput
     /**
      * Constructor.
      *
-     * @param integer         $verbosity The verbosity level (self::VERBOSITY_QUIET, self::VERBOSITY_NORMAL,
+     * @param integer $verbosity The verbosity level (self::VERBOSITY_QUIET, self::VERBOSITY_NORMAL,
      *                                   self::VERBOSITY_VERBOSE)
      * @param Boolean         $decorated Whether to decorate messages or not (null for auto-guessing)
      * @param OutputFormatter $formatter Output formatter instance
      *
      * @api
      */
-    public function __construct($verbosity = self::VERBOSITY_NORMAL, $decorated = null, OutputFormatter $formatter = null)
+    public function __construct($verbosity = self::VERBOSITY_NORMAL, $decorated = null, OutputFormatterInterface $formatter = null)
     {
-        parent::__construct(fopen('php://stdout', 'w'), $verbosity, $decorated, $formatter);
+        $outputStream = 'php://stdout';
+        if (!$this->hasStdoutSupport()) {
+            $outputStream = 'php://output';
+        }
+
+        parent::__construct(fopen($outputStream, 'w'), $verbosity, $decorated, $formatter);
+    }
+
+    /**
+     * Returns true if current environment supports writing console output to
+     * STDOUT.
+     *
+     * IBM iSeries (OS400) exhibits character-encoding issues when writing to
+     * STDOUT and doesn't properly convert ASCII to EBCDIC, resulting in garbage
+     * output.
+     *
+     * @return boolean
+     */
+    protected function hasStdoutSupport()
+    {
+        return ('OS400' != php_uname('s'));
     }
 }

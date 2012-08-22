@@ -12,8 +12,6 @@
 namespace Symfony\Bridge\Twig\Node;
 
 /**
- *
- *
  * @author Fabien Potencier <fabien@symfony.com>
  */
 class TransNode extends \Twig_Node
@@ -57,15 +55,15 @@ class TransNode extends \Twig_Node
         }
 
         if (null !== $vars) {
-            $compiler->raw('array_merge(');
-            $this->compileDefaults($compiler, $defaults);
             $compiler
+                ->raw('array_merge(')
+                ->subcompile($defaults)
                 ->raw(', ')
                 ->subcompile($this->getNode('vars'))
                 ->raw(')')
             ;
         } else {
-            $this->compileDefaults($compiler, $defaults);
+            $compiler->subcompile($defaults);
         }
 
         $compiler
@@ -81,20 +79,6 @@ class TransNode extends \Twig_Node
         $compiler->raw(");\n");
     }
 
-    protected function compileDefaults(\Twig_Compiler $compiler, \Twig_Node_Expression_Array $defaults)
-    {
-        $compiler->raw('array(');
-        foreach ($defaults as $name => $default) {
-            $compiler
-                ->repr($name)
-                ->raw(' => ')
-                ->subcompile($default)
-                ->raw(', ')
-            ;
-        }
-        $compiler->raw(')');
-    }
-
     protected function compileString(\Twig_NodeInterface $body, \Twig_Node_Expression_Array $vars)
     {
         if ($body instanceof \Twig_Node_Expression_Constant) {
@@ -105,15 +89,24 @@ class TransNode extends \Twig_Node
             return array($body, $vars);
         }
 
-        $current = array();
-        foreach ($vars as $name => $var) {
-            $current[$name] = true;
-        }
-
         preg_match_all('/(?<!%)%([^%]+)%/', $msg, $matches);
-        foreach ($matches[1] as $var) {
-            if (!isset($current['%'.$var.'%'])) {
-                $vars->setNode('%'.$var.'%', new \Twig_Node_Expression_Name($var, $body->getLine()));
+
+        if (version_compare(\Twig_Environment::VERSION, '1.5', '>=')) {
+            foreach ($matches[1] as $var) {
+                $key = new \Twig_Node_Expression_Constant('%'.$var.'%', $body->getLine());
+                if (!$vars->hasElement($key)) {
+                    $vars->addElement(new \Twig_Node_Expression_Name($var, $body->getLine()), $key);
+                }
+            }
+        } else {
+            $current = array();
+            foreach ($vars as $name => $var) {
+                $current[$name] = true;
+            }
+            foreach ($matches[1] as $var) {
+                if (!isset($current['%'.$var.'%'])) {
+                    $vars->setNode('%'.$var.'%', new \Twig_Node_Expression_Name($var, $body->getLine()));
+                }
             }
         }
 

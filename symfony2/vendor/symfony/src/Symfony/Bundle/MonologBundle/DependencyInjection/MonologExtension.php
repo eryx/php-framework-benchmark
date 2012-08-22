@@ -31,7 +31,7 @@ class MonologExtension extends Extension
     /**
      * Loads the Monolog configuration.
      *
-     * @param array            $config    An array of configuration settings
+     * @param array            $configs   An array of configuration settings
      * @param ContainerBuilder $container A ContainerBuilder instance
      */
     public function load(array $configs, ContainerBuilder $container)
@@ -73,6 +73,7 @@ class MonologExtension extends Extension
                 'Monolog\\Handler\\AbstractProcessingHandler',
                 'Monolog\\Handler\\StreamHandler',
                 'Monolog\\Handler\\FingersCrossedHandler',
+                'Monolog\\Handler\\TestHandler',
                 'Monolog\\Logger',
                 'Symfony\\Bridge\\Monolog\\Logger',
                 'Symfony\\Bridge\\Monolog\\Handler\\DebugHandler',

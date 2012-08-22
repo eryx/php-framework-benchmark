@@ -26,6 +26,8 @@ class ErrorHandler
         E_USER_NOTICE       => 'User Notice',
         E_STRICT            => 'Runtime Notice',
         E_RECOVERABLE_ERROR => 'Catchable Fatal Error',
+        E_DEPRECATED        => 'Deprecated',
+        E_USER_DEPRECATED   => 'User Deprecated',
     );
 
     private $level;
@@ -37,7 +39,7 @@ class ErrorHandler
      *
      * @return The registered error handler
      */
-    static public function register($level = null)
+    public static function register($level = null)
     {
         $handler = new static();
         $handler->setLevel($level);

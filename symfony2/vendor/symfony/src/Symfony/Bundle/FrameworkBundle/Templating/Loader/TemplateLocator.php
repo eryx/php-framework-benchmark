@@ -22,7 +22,6 @@ use Symfony\Component\Templating\TemplateReferenceInterface;
 class TemplateLocator implements FileLocatorInterface
 {
     protected $locator;
-    protected $path;
     protected $cache;
 
     /**
@@ -43,9 +42,9 @@ class TemplateLocator implements FileLocatorInterface
     /**
      * Returns a full path for a given file.
      *
-     * @param TemplateReferenceInterface $template     A template
-     * @param string                     $currentPath  Unused
-     * @param Boolean                    $first        Unused
+     * @param TemplateReferenceInterface $template    A template
+     * @param string                     $currentPath Unused
+     * @param Boolean                    $first       Unused
      *
      * @return string The full path for the file
      *
@@ -67,7 +66,7 @@ class TemplateLocator implements FileLocatorInterface
         try {
             return $this->cache[$key] = $this->locator->locate($template->getPath(), $currentPath);
         } catch (\InvalidArgumentException $e) {
-            throw new \InvalidArgumentException(sprintf('Unable to find template "%s" in "%s".', $template, $this->path), 0, $e);
+            throw new \InvalidArgumentException(sprintf('Unable to find template "%s" : "%s".', $template, $e->getMessage()), 0, $e);
         }
     }
 }

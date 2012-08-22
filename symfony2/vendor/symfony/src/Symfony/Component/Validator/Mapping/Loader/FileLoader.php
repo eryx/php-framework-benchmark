@@ -47,10 +47,10 @@ abstract class FileLoader implements LoaderInterface
     /**
      * Creates a new constraint instance for the given constraint name.
      *
-     * @param string $name    The constraint name. Either a constraint relative
+     * @param string $name The constraint name. Either a constraint relative
      *                        to the default constraint namespace, or a fully
      *                        qualified class name
-     * @param array  $options The constraint options
+     * @param array $options The constraint options
      *
      * @return Constraint
      */
@@ -58,8 +58,8 @@ abstract class FileLoader implements LoaderInterface
     {
         if (strpos($name, '\\') !== false && class_exists($name)) {
             $className = (string) $name;
-        } else if (strpos($name, ':') !== false) {
-            list($prefix, $className) = explode(':', $name);
+        } elseif (strpos($name, ':') !== false) {
+            list($prefix, $className) = explode(':', $name, 2);
 
             if (!isset($this->namespaces[$prefix])) {
                 throw new MappingException(sprintf('Undefined namespace prefix "%s"', $prefix));

@@ -7,6 +7,203 @@ in 2.0 minor versions.
 To get the diff for a specific change, go to https://github.com/symfony/symfony/commit/XXX where XXX is the change hash
 To get the diff between two versions, go to https://github.com/symfony/symfony/compare/v2.0.0...v2.0.1
 
+* 2.0.16 (2012-07-11)
+
+ * 854daa8: [Form] Fixed errors not to be added onto non-synchronized forms
+ * facbcdc: [Validator] fixed error message for dates like 2012-02-31 (closes #4223)
+ * 28f002d: [Locale] fixed bug on the parsing of TYPE_INT64 integers in 32 bit and 64 bit environments, caused by PHP bug fix :) (closes #4718)
+ * c1fea1d: fixed incorrect reference to set*Service() method
+ * b89b00f: bumped minimal version of Swiftmailer to 4.2.0
+ * 997bcfc: [SwiftmailerBridge] allowed versions 4.2.*
+ * 680b83c: [Security] Allow "0" as a password
+ * a609d55: [Locale] fixed StubIntlDateFormatter to behave like the ext/intl implementation
+ * 3ce8227: [Security] Only redirect to urls called with http method GET
+ * ba16a51: changed getName() to name on all Reflection* object calls (fixes #4555, refs https://bugs.php.net/bug.php?id=61384)
+ * 5d88255: Authorization header should only be rebuild when Basic Auth scheme is used
+ * 789fc14: Accept calling setLenient(false)
+ * b631073: [Yaml] Fixed double quotes escaping in Dumper.
+
+* 2.0.15 (2012-05-30)
+
+ * 20b556d: [Form] fixed a bug that caused input date validation not to be strict when using the single_text widget with a datetime field
+ * 7e3213c: [Form] fixed a bug that caused input date validation not to be strict when using the single_text widget with a date field
+ * 35b458f: fix kernel root, linux dir separator on windows, to fix cache:clear issue
+ * 8da880c: Fixed notice in AddCacheWarmerPass if there is no cache warmer defined.
+ * 7a85b43: [TwigBundle] Fixed the path to templates when using composer
+ * 8223632: [HttpFoundation] Fix the UploadedFilename name sanitization (fix #2577)
+ * f883953: TypeGuess fixed for Date/Time constraints
+ * 41bed29: [Form] fixed invalid 'type' option in ValidatorTypeGuesser for Date/TimeFields
+ * fff7221: Fixed the proxy autoloading for Doctrine 2.2
+ * a450d00: [HttpFoundation] HTTP Basic authentication is broken with PHP as cgi/fastCGI under Apache
+
+* 2.0.14 (2012-05-17)
+
+ * d1c831d: Change must-proxy-revalidate by proxy-revalidate
+ * 445fd2f: In console terms columns are width and rows are height
+ * 926ac98: [Finder] replaced static by self on a private variable
+ * 47605f6: [Form][DataMapper] Do not update form to data when form is read only
+ * c642a5e: [CssSelector] ignored an optional whitespace after a combinator
+ * cbc3ed3: [HttpKernel] added some constant for better forward compatibility
+ * 906f6f6: [DependencyInjection] fixed private services removal when used as configurators (closes #3758)
+ * 970d0b4: [BrowserKit] Check class existence only when required.
+ * 1ed8b72: Autoloader should not throw exception because PHP will continue to call other registered autoloaders.
+ * 7fe236a: [Security] Configure ports in RetryAuthenticationEntryPoint according to router settings
+
+* 2.0.13 (2012-04-30)
+
+ * 5b92b9e: [Console] Selectively output to STDOUT or OUTPUT stream
+ * c89f3d3: [HttpKernel] Added DEPRECATED errors
+ * 689a40d: [MonologBridge] Fixed the WebProcessor
+ * 2e7d3b1: http_build_query fix
+ * de73de0: http_build_query fix
+ * 3b7ee9a: http_build_query fix
+ * 14b3b05: [TwigBundle] added missing entry in the XSD schema
+ * 7ddc8cb: [FrameworkBundle] Monitor added/removed translations files in dev (fix #3653)
+ * 686653a: [HttpKernel] Fixed wache vary write (fixes #3896).
+ * 45ada32: Add Support for boolean as to string into yaml extension
+ * cd783fb: [HttpKernel] Fixed cache vary lookup (fixes #3896).
+ * 3939c90: [FrameworkBundle] Fix TraceableEventDispatcher unable to trace static class callables
+ * e4cbbf3: [Locale] fixed StubNumberFormatter::format() to behave like the NumberFormatter::parse() regarding to error flagging
+ * f16ff89: [Locale] fixed StubNumberFormatter::parse() to behave like the NumberFormatter::parse() regarding to error flagging
+ * 0a60664: [Locale] updated StubIntlDateFormatter::format() exception message when timestamp argument is an array for PHP >= 5.3.4
+ * 6f9c05d: [Locale] Complete Stub with intl_error_name
+ * 312a5a4: [Locale] fixed StubIntlDateFormatter::format() to set the right error for PHP >= 5.3.4 and to behave like the intl when formatting successfully
+ * bb61e09: [Locale] use the correct way for Intl error
+ * 01fcb08: [HttpKernel] Fix the ProfilerListener (fix #3620)
+ * 3ae826a: Fix issue #3251: Check attribute type of service tags
+ * 57dd914: [EventDispatcher] Fixed E_NOTICES with multiple eventnames per subscriber with mixed priorities
+ * 77185e0: [Routing] Allow spaces in the script name for the apache dumper
+ * 6465a69: [Routing] Fixes to handle spaces in route pattern
+ * 31dde14: [Locale] updated StubIntlDateFormatter::format() behavior for PHP >= 5.3.4
+ * 8a2b115: [Console] Mock terminal size to prevent formatting errors on small terminals
+ * 595cc11: [Console] Wrap exception messages to the terminal width to avoid ugly output
+ * 97f7b29: [Console] Avoid outputing \r's in exception messages
+ * 04ae7cc: [Routing] fixed exception message.
+ * f7647f9: [Routing] improved exception message when giving an invalid route name.
+ * 0024ddc: Fix for using route name as check_path.
+ * fc41d4f: [Security] [HttpDigest] Fixes a configuration error caused by an invalid 'key' child node configuration
+ * 24a0d0a: [DependencyInjection] Support Yaml calls without arguments
+ * 15dd17e: Simplified CONTENT_ headers retrieval
+ * 86a3512: [FrameworkBundle] Add support for full URLs to redirect controller
+ * 068e859: [TwigBundle] Changed getAndCleanOutputBuffering() handling of systems where ob_get_level() never returns 0
+ * efa807a: [HttpKernel] fixed sub-request which should be always a GET (refs #3657)
+ * c1206c3: [FrameworkBundle] Subrequests should always use GET method
+ * 0c9b2d4: use SecurityContextInterface instead of SecurityContext
+
+* 2.0.12 (2012-03-19)
+
+ * 54b2413: Webprofiler ipv6 search fix
+ * 8642473: Changed instances of \DateTimeZone::UTC to 'UTC' as the constant is not valid a produces this error when DateTimeZone is instantiated: DateTimeZone::__construct() [<a href='datetimezone.--construct'>datetimezone.--construct</a>]: Unknown or bad timezone (1024)
+ * fbed9ff: Update src/Symfony/Component/HttpKernel/HttpCache/HttpCache.php
+ * 1b395f5: Revert "Throw exception when "date_widget" option is not equal to "time_widget""
+ * ed218bb: Fixed an "Array to string conversion" warning when using PHP 5.4. Also affects Symfony2 master.
+ * 50cb486: Fixed proxy generation in the DoctrineBundle when using Doctrine >= 2.2.0
+ * 93cc9ef: [Validator] Remove a race condition in the ClassMetaDataFactory (fix #3217)
+ * 878c239: Fixed autoloader leakage in tests
+ * 17c3482: fixed timezone bug in DateTimeToTimestampTransformer
+ * 705e460: provided unmerged definition for correct help generation
+ * 45bbb5b: added getNativeDefinition() to allow specifying an alternate InputDefinition for help generation
+ * aa53b88: Sets _format attribute only if it wasn't set previously by the user
+ * a827375: [CssSelector] fixed CssSelector::toXPath() when the CSS selector is an empty string
+ * ad07a95: [BrowserKit] Fixed Client->back/forward/reload() not keeping all request attributes
+ * eee5065: [TwigBundle] Workaround a flaw in the design of the configuration (normalization)
+ * 7aad478: [Locale] Prevent empty bundle
+ * a894431: [DependencyInjection] Allow parsing of parameters near escaped percent signs
+ * f758884: [FrameworkBundle] ContainerAwareEventDispatcher::removeListener() (closes #3115)
+ * 8fe6ee3: [Console] fixed help command when used from the shell (closes #3480)
+ * caa44ae: Only work with the cli sapi
+ * e2fc3cd: [Process] PHP_BINARY return the current process
+ * dc2d5a0: [HttpFoundation][Session] Fix bug in PDO Session Storage with SQLSRV making assumptions about parameters with length being OUTPUT not INPUT parameters.
+ * e8281cf: SqliteProfilerStorage fix
+
+* 2.0.11 (2012-02-24)
+
+ * 3e64d36: [Serializer] Fix XML decoding attack vector through external entities
+ * 66d0d3d: [FrameworkBundle] Fix a bug in the RedirectableUrlMatcher
+ * 24a3cd3: Finder - allow sorting when searching in multiple directories
+ * 6e75fd1: Resolves issue with spl_autoload_register creating new copies of the container and passing that into the closure.
+ * d02ca25: [MonologBundle] Fixed a bug when adding a processor on a service handler
+ * 2434552: [Translation] Fixed fallback location if location is longer than three characters (possibly by mistake).
+ * ec7fb0b: [Routing] added a proper exception when a route pattern references the same variable more than once (closes #3344)
+ * beb4fc0: [WIP][Locale] StubIntlDateFormatter::parse was throwing exception instead of returning Boolean false like intl implementation
+
+* 2.0.10 (2012-02-06)
+
+ * 8e13095: Fixed the unescaping of parameters to handle arrays
+ * c3f0ec7: Make DoctrineBundle fowards compatible with Doctrine 2.2
+ * e814d27: [FormType] Fixed broken MoneyType regexp for JPY
+ * 7f96c8a: [HttpKernel] Prevent php script execution in cached ESI pages using HttpCache
+ * 959614b: Use reflection to determaine the correct path for component validation.xml file
+ * cacc880: [Bugfix][Locale] Fixed incomplete Locale data loading
+ * d67d419: [HttpFoundation] added missing trustProxy condition
+ * efce640: [Yaml][Parser] throw an exception if not readable
+ * aa58330: [Form] fixed flawed condition
+ * 253eeba: [BugFix][Validator] Fix for PHP incosistent behaviour of ArrayAccess
+ * 0507840: Prevent parameters from overwriting the template filename.
+ * 9bc41d0: [HttpFoundation] Fixed #3053
+ * 9441c46: [DependencyInjection] PhpDumper, fixes #2730
+
+* 2.0.9 (2012-01-06)
+
+ * 0492290: [Console] added a missing method (closes #3043)
+ * e09b523: updated Twig to 1.5.1 to fix a regression
+ * 261325d: Cast $query['params'] to array to ensure it is a valid argument for the foreach.
+ * 85ca8e3: ParameterBag no longer resolves parameters that have spaces.
+ * aacb2de: use the forward compat version in the Filesystem service
+ * 41950a6: [WebProfilerBundle] add margin-bottom to caption
+
+* 2.0.8 (2011-12-26)
+
+ * adea589: [Twig] made code compatible with Twig 1.5
+ * 6e98730: added forwards compatibility for the Filesystem component
+ * 1b4aaa2: [HttpFoundation] fixed ApacheRequest
+ * 8235848: [HttpFoundation][File] Add flv file default extension
+ * 5a6c989: FrameworkBundle: Adding test-attribute in xsd-schema to write functional-tests if using xml-configurations
+ * 649fa52: [DoctrineBridge] Fixed the entity provider to support proxies
+ * e417153: [BugFix][Console] Fix type hint for output formatter
+ * d1fa8cc: [WebProfiler] Fix some design glitches (closes #2867)
+ * 662fdc3: [DoctrineBundle] Fixed incorrectly shown params
+ * 9e38d6a: [SwiftmailerBundle] fixed the send email command when the queue does not extends Swift_ConfigurableSpool
+ * 5c41ec9: [HttpKernel][Client] Only simple (name=value without any other params) cookies can be stored in same line, so lets add every as standalone to be compliant with rfc6265
+ * 8069ea6: [Form] Added missing use statements (closes #2880)
+ * d5a1343: [Console] Improve input definition output for Boolean defaults
+ * 62f3dc4: [SecurityBundle] Changed environment to something unique.
+ * 0900ecc: #2688: Entities are generated in wrong folder (doctrine:generate:entities Namespace)
+ * f3e92c4: [TwigBundle] Fix the exception message escaping
+ * 4d64d90: Allow empty result; change default *choices* value to **null** instead of **array()**. - added *testEmptyChoicesAreManaged* test - `null` as default value for choices. - is_array() used to test if choices are user-defined. - `null` as default value in __construct too. - `null` as default value for choices in EntityType.
+ * ec7eec5: [DependencyInjection] fixed espacing issue (close #2819)
+ * 6548354: fixed data-url
+ * d97d7e9: Added a check to see if the type is a string if it's not a FormTypeInterface
+ * 7827f72: Fixes #2817: ensure that the base loader is correctly initialised
+ * 9c1fbb8: [DoctrineBridge] fixed the refreshing of the user for invalid users
+ * 45bba7b: Added a hint about a possible cause for why no mime type guesser is be available
+ * 3759ff0: [Locale] StubNumberFormatter allow to parse 64bit number in 64bit mode
+ * db2d773: [FrameworkBundle] Improve the TemplateLocator exception message
+ * 2c3e9ad: [DependencyInjection] Made the reference case insensitive
+ * 4535abe: [DoctrineBridge] Fixed attempt to serialize non-serializable values
+
+* 2.0.7 (2011-12-08)
+
+ * b7fd519: [Security] fixed cast
+ * acbbe8a: [Process] introduced usage of PHP_BINARY (available as of PHP 5.4)
+ * 03ed770: [Validator] The current class isn't set in execution context when doing validateProperty()
+ * 7cfc392: check for session before trying to authentication details
+ * 3c83b89: [DoctrineBridge] Catch user-error when the identifier is not serialized with the User entity.
+ * 769c17b: Throw exceptions in case someone forgot to set method name in call.
+ * 4a8f101b: Fixed problem with multiple occurences of a given namespace. fix #2688
+ * 63e2a99: [CssSelector] Fixed Issue for XPathExprOr: missing prefix in string conversion
+ * 36c7d03: Fixed GH-2720 - Fix disabled atrribute handling for radio form elements
+ * 17dc605: [FrameworkBundle] Checks that the template is readable before checking its modification time
+ * 61e0bde: [HttpKernel] ControllerResolver arguments reflection for Closure object.
+ * e06cea9: [HttpFoundation] Cookie values should not be restricted
+ * a931e21: get correct client IP from X-forwarded-for header
+ * 78e9b2f: [Form] Fixed textarea_widget (W3C standards)
+ * 36cebf0: Fix infinite loop on circular reference in form factory
+ * 79ae3fc: [Form] fixed radio and checkbox when data is not bool
+ * c1426ba: added locale handling forward compatibility
+ * 10eed30: added MessageDataCollector forward compatibility
+ * 57e1aeb: Fixed undefined index notice in readProperty() method (PropertyPath)
+
 * 2.0.6 (2011-11-16)
 
  * f7c5bf1: [HttpKernel] fixed Content-Length header when using ESI tags (closes #2623)

@@ -34,8 +34,8 @@ class FullTransformer
     /**
      * Constructor
      *
-     * @param  string  $pattern   The pattern to be used to format and/or parse values
-     * @param  string  $timezone  The timezone to perform the date/time calculations
+     * @param string $pattern  The pattern to be used to format and/or parse values
+     * @param string $timezone The timezone to perform the date/time calculations
      */
     public function __construct($pattern, $timezone)
     {
@@ -79,7 +79,8 @@ class FullTransformer
     /**
      * Format a DateTime using ICU dateformat pattern
      *
-     * @param  DateTime  $dateTime  A DateTime object to be used to generate the formatted value
+     * @param DateTime $dateTime A DateTime object to be used to generate the formatted value
+     *
      * @return string               The formatted value
      */
     public function format(\DateTime $dateTime)
@@ -96,9 +97,11 @@ class FullTransformer
     /**
      * Return the formatted ICU value for the matched date characters
      *
-     * @param  string    $dateChars     The date characters to be replaced with a formatted ICU value
-     * @param  DateTime  $dateTime      A DateTime object to be used to generate the formatted value
+     * @param string   $dateChars The date characters to be replaced with a formatted ICU value
+     * @param DateTime $dateTime  A DateTime object to be used to generate the formatted value
+     *
      * @return string                   The formatted value
+     *
      * @throws NotImplementedException  When it encounters a not implemented date character
      */
     public function formatReplace($dateChars, $dateTime)
@@ -113,20 +116,22 @@ class FullTransformer
             $transformer = $this->transformers[$dateChars[0]];
 
             return $transformer->format($dateTime, $length);
-        } else {
-            // handle unimplemented characters
-            if (false !== strpos($this->notImplementedChars, $dateChars[0])) {
-                throw new NotImplementedException(sprintf("Unimplemented date character '%s' in format '%s'", $dateChars[0], $this->pattern));
-            }
+        }
+
+        // handle unimplemented characters
+        if (false !== strpos($this->notImplementedChars, $dateChars[0])) {
+            throw new NotImplementedException(sprintf("Unimplemented date character '%s' in format '%s'", $dateChars[0], $this->pattern));
         }
     }
 
     /**
      * Parse a pattern based string to a timestamp value
      *
-     * @param  DateTime  $dateTime       A configured DateTime object to use to perform the date calculation
-     * @param  string    $value          String to convert to a time value
+     * @param DateTime $dateTime A configured DateTime object to use to perform the date calculation
+     * @param string   $value    String to convert to a time value
+     *
      * @return int                       The corresponding Unix timestamp
+     *
      * @throws InvalidArgumentException  When the value can not be matched with pattern
      */
     public function parse(\DateTime $dateTime, $value)
@@ -149,13 +154,17 @@ class FullTransformer
             return $this->calculateUnixTimestamp($dateTime, $options);
         }
 
-        throw new \InvalidArgumentException(sprintf("Failed to match value '%s' with pattern '%s'", $value, $this->pattern));
+        // behave like the intl extension
+        StubIntl::setError(StubIntl::U_PARSE_ERROR, 'Date parsing failed');
+
+        return false;
     }
 
     /**
      * Retrieve a regular expression to match with a formatted value.
      *
-     * @param  string  $pattern  The pattern to create the reverse matching regular expression
+     * @param string $pattern The pattern to create the reverse matching regular expression
+     *
      * @return string            The reverse matching regular expression with named captures being formed by the
      *                           transformer index in the $transformer array
      */
@@ -175,7 +184,6 @@ class FullTransformer
             }
 
             $transformers = $that->getTransformers();
-
             if (isset($transformers[$transformerIndex])) {
                 $transformer = $transformers[$transformerIndex];
                 $captureName = str_repeat($transformerIndex, $length);
@@ -190,7 +198,8 @@ class FullTransformer
     /**
      * Check if the first char of a string is a single quote
      *
-     * @param  string  $quoteMatch  The string to check
+     * @param string $quoteMatch The string to check
+     *
      * @return Boolean              true if matches, false otherwise
      */
     public function isQuoteMatch($quoteMatch)
@@ -201,7 +210,8 @@ class FullTransformer
     /**
      * Replaces single quotes at the start or end of a string with two single quotes
      *
-     * @param  string  $quoteMatch  The string to replace the quotes
+     * @param string $quoteMatch The string to replace the quotes
+     *
      * @return string               A string with the single quotes replaced
      */
     public function replaceQuoteMatch($quoteMatch)
@@ -216,7 +226,8 @@ class FullTransformer
     /**
      * Builds a chars match regular expression
      *
-     * @param  string  $specialChars  A string of chars to build the regular expression
+     * @param string $specialChars A string of chars to build the regular expression
+     *
      * @return string                 The chars match regular expression
      */
     protected function buildCharsMatch($specialChars)
@@ -234,7 +245,8 @@ class FullTransformer
      * Normalize a preg_replace match array, removing the numeric keys and returning an associative array
      * with the value and pattern values for the matched Transformer
      *
-     * @param  array  $data
+     * @param array $data
+     *
      * @return array
      */
     protected function normalizeArray(array $data)
@@ -259,8 +271,9 @@ class FullTransformer
      * Calculates the Unix timestamp based on the matched values by the reverse matching regular
      * expression of parse()
      *
-     * @param  DateTime $dateTime The DateTime object to be used to calculate the timestamp
-     * @param  array    $options  An array with the matched values to be used to calculate the timestamp
+     * @param DateTime $dateTime The DateTime object to be used to calculate the timestamp
+     * @param array    $options  An array with the matched values to be used to calculate the timestamp
+     *
      * @return Boolean|int        The calculated timestamp or false if matched date is invalid
      */
     protected function calculateUnixTimestamp(\DateTime $dateTime, array $options)
@@ -279,7 +292,7 @@ class FullTransformer
 
         // If month is false, return immediately (intl behavior)
         if (false === $month) {
-            StubIntl::setErrorCode(StubIntl::U_PARSE_ERROR);
+            StubIntl::setError(StubIntl::U_PARSE_ERROR, 'Date parsing failed');
 
             return false;
         }
@@ -311,7 +324,8 @@ class FullTransformer
      * Add sensible default values for missing items in the extracted date/time options array. The values
      * are base in the beginning of the Unix era
      *
-     * @param  array  $options
+     * @param array $options
+     *
      * @return array
      */
     private function getDefaultValueForOptions(array $options)

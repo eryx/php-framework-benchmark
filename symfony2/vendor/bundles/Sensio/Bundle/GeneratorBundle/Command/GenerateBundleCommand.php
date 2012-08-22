@@ -145,6 +145,9 @@ EOT
             'sub-namespaces, and it should end with the bundle name itself',
             '(which must have <comment>Bundle</comment> as a suffix).',
             '',
+            'See http://symfony.com/doc/current/cookbook/bundles/best_practices.html#index-1 for more',
+            'details on bundle naming conventions.',
+            '',
             'Use <comment>/</comment> instead of <comment>\\</comment> for the namespace delimiter to avoid any problem.',
             '',
         ));
@@ -214,7 +217,7 @@ EOT
         $output->write('Checking that the bundle is autoloaded: ');
         if (!class_exists($namespace.'\\'.$bundle)) {
             return array(
-                '- Edit the <comment>app/autoloader.php</comment> file and register the bundle',
+                '- Edit the <comment>app/autoload.php</comment> file and register the bundle',
                 '  namespace at the top of the <comment>registerNamespaces()</comment> call:',
                 '',
                 sprintf('<comment>    \'%s\' => \'%s\',</comment>', $namespace, realpath($dir)),

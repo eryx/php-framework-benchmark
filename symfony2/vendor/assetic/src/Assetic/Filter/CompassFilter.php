@@ -35,6 +35,7 @@ class CompassFilter implements FilterInterface
     private $force;
     private $style;
     private $quiet;
+    private $boring;
     private $noLineComments;
     private $imagesDir;
     private $javascriptsDir;
@@ -50,6 +51,10 @@ class CompassFilter implements FilterInterface
     {
         $this->compassPath = $compassPath;
         $this->cacheLocation = sys_get_temp_dir();
+
+        if ('cli' !== php_sapi_name()) {
+            $this->boring = true;
+        }
     }
 
     public function setScss($scss)
@@ -92,6 +97,11 @@ class CompassFilter implements FilterInterface
     public function setQuiet($quiet)
     {
         $this->quiet = $quiet;
+    }
+
+    public function setBoring($boring)
+    {
+        $this->boring = $boring;
     }
 
     public function setNoLineComments($noLineComments)
@@ -145,20 +155,20 @@ class CompassFilter implements FilterInterface
         $root = $asset->getSourceRoot();
         $path = $asset->getSourcePath();
 
+        $loadPaths = $this->loadPaths;
         if ($root && $path) {
-            $this->loadPaths[] = dirname($root.'/'.$path);
+            $loadPaths[] = dirname($root.'/'.$path);
         }
 
         // compass does not seems to handle symlink, so we use realpath()
         $tempDir = realpath(sys_get_temp_dir());
 
-        $pb = new ProcessBuilder();
-        $pb
-            ->inheritEnvironmentVariables()
-            ->add($this->compassPath)
-            ->add('compile')
-            ->add($tempDir)
-        ;
+        $pb = new ProcessBuilder(array(
+            $this->compassPath,
+            'compile',
+            $tempDir,
+        ));
+        $pb->inheritEnvironmentVariables();
 
         if ($this->force) {
             $pb->add('--force');
@@ -170,6 +180,10 @@ class CompassFilter implements FilterInterface
 
         if ($this->quiet) {
             $pb->add('--quiet');
+        }
+
+        if ($this->boring) {
+            $pb->add('--boring');
         }
 
         if ($this->noLineComments) {
@@ -190,8 +204,8 @@ class CompassFilter implements FilterInterface
         // options in config file
         $optionsConfig = array();
 
-        if (!empty($this->loadPaths)) {
-            $optionsConfig['additional_import_paths'] = $this->loadPaths;
+        if (!empty($loadPaths)) {
+            $optionsConfig['additional_import_paths'] = $loadPaths;
         }
 
         if ($this->unixNewlines) {
@@ -275,7 +289,7 @@ class CompassFilter implements FilterInterface
                 unlink($configFile);
             }
 
-            throw new \RuntimeException($proc->getErrorOutput() ?: $proc->getOutput());
+            throw new \RuntimeException($proc->getErrorOutput().'...'.$proc->getOutput());
         }
 
         $asset->setContent(file_get_contents($output));

@@ -19,7 +19,7 @@ namespace Assetic\Filter;
 abstract class BaseCssFilter implements FilterInterface
 {
     /**
-     * Filters all references -- url() and @import -- through a callable.
+     * Filters all references -- url() and "@import" -- through a callable.
      *
      * @param string $content  The CSS
      * @param mixed  $callback A PHP callable
@@ -37,8 +37,10 @@ abstract class BaseCssFilter implements FilterInterface
     /**
      * Filters all CSS url()'s through a callable.
      *
-     * @param string $content  The CSS
-     * @param mixed  $callback A PHP callable
+     * @param string  $content  The CSS
+     * @param mixed   $callback A PHP callable
+     * @param integer $limit    Limit the number of replacements
+     * @param integer $count    Will be populated with the count
      *
      * @return string The filtered CSS
      */
@@ -52,6 +54,8 @@ abstract class BaseCssFilter implements FilterInterface
      *
      * @param string  $content    The CSS
      * @param mixed   $callback   A PHP callable
+     * @param integer $limit      Limit the number of replacements
+     * @param integer $count      Will be populated with the count
      * @param Boolean $includeUrl Whether to include url() in the pattern
      *
      * @return string The filtered CSS
@@ -59,8 +63,8 @@ abstract class BaseCssFilter implements FilterInterface
     protected function filterImports($content, $callback, $limit = -1, & $count = 0, $includeUrl = true)
     {
         $pattern = $includeUrl
-            ? '/@import +(?:url)? *\(? *([\'"])?(?<url>.*?)\1 *\)? *;?/'
-            : '/@import +([\'"])(?<url>.*?)\1 *;?/';
+            ? '/@import (?:url\()?(\'|"|)(?<url>[^\'"\)\n\r]*)\1\)?;?/'
+            : '/@import (?!url\()(\'|"|)(?<url>[^\'"\)\n\r]*)\1;?/';
 
         return preg_replace_callback($pattern, $callback, $content, $limit, $count);
     }

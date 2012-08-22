@@ -11,7 +11,6 @@
 
 namespace Symfony\Bundle\FrameworkBundle\Command;
 
-use Symfony\Component\Console\Output\Output;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
@@ -28,6 +27,9 @@ abstract class ContainerAwareCommand extends Command implements ContainerAwareIn
      */
     private $container;
 
+    /**
+     * @return ContainerInterface
+     */
     protected function getContainer()
     {
         if (null === $this->container) {

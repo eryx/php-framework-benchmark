@@ -40,7 +40,7 @@ class ExceptionHandler
      *
      * @return The registered exception handler
      */
-    static public function register($debug = true)
+    public static function register($debug = true)
     {
         $handler = new static($debug);
 
@@ -74,7 +74,7 @@ class ExceptionHandler
             $code = $exception instanceof HttpExceptionInterface ? $exception->getStatusCode() : 500;
             $exception = FlattenException::create($exception);
 
-            switch($code) {
+            switch ($code) {
                 case 404:
                     $title = 'Sorry, the page you are looking for could not be found.';
                     break;

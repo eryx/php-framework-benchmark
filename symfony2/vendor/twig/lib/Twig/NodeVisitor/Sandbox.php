@@ -28,10 +28,23 @@ class Twig_NodeVisitor_Sandbox implements Twig_NodeVisitorInterface
      * @param Twig_NodeInterface $node The node to visit
      * @param Twig_Environment   $env  The Twig environment instance
      *
-     * @param Twig_NodeInterface The modified node
+     * @return Twig_NodeInterface The modified node
      */
     public function enterNode(Twig_NodeInterface $node, Twig_Environment $env)
     {
+        // in a sandbox tag, only include tags are allowed
+        if ($node instanceof Twig_Node_Sandbox && !$node->getNode('body') instanceof Twig_Node_Include) {
+            foreach ($node->getNode('body') as $n) {
+                if ($n instanceof Twig_Node_Text && ctype_space($n->getAttribute('data'))) {
+                    continue;
+                }
+
+                if (!$n instanceof Twig_Node_Include) {
+                    throw new Twig_Error_Syntax('Only "include" tags are allowed within a "sandbox" section', $n->getLine());
+                }
+            }
+        }
+
         if ($node instanceof Twig_Node_Module) {
             $this->inAModule = true;
             $this->tags = array();
@@ -52,7 +65,7 @@ class Twig_NodeVisitor_Sandbox implements Twig_NodeVisitorInterface
 
             // look for functions
             if ($node instanceof Twig_Node_Expression_Function) {
-                $this->functions[] = $node->getNode('name')->getAttribute('name');
+                $this->functions[] = $node->getAttribute('name');
             }
 
             // wrap print to check __toString() calls
@@ -70,7 +83,7 @@ class Twig_NodeVisitor_Sandbox implements Twig_NodeVisitorInterface
      * @param Twig_NodeInterface $node The node to visit
      * @param Twig_Environment   $env  The Twig environment instance
      *
-     * @param Twig_NodeInterface The modified node
+     * @return Twig_NodeInterface The modified node
      */
     public function leaveNode(Twig_NodeInterface $node, Twig_Environment $env)
     {

@@ -18,6 +18,7 @@
 abstract class Twig_Filter implements Twig_FilterInterface
 {
     protected $options;
+    protected $arguments = array();
 
     public function __construct(array $options = array())
     {
@@ -25,7 +26,18 @@ abstract class Twig_Filter implements Twig_FilterInterface
             'needs_environment' => false,
             'needs_context'     => false,
             'pre_escape'        => null,
+            'preserves_safety'  => null,
         ), $options);
+    }
+
+    public function setArguments($arguments)
+    {
+        $this->arguments = $arguments;
+    }
+
+    public function getArguments()
+    {
+        return $this->arguments;
     }
 
     public function needsEnvironment()
@@ -48,7 +60,12 @@ abstract class Twig_Filter implements Twig_FilterInterface
             return call_user_func($this->options['is_safe_callback'], $filterArgs);
         }
 
-        return array();
+        return null;
+    }
+
+    public function getPreservesSafety()
+    {
+        return $this->options['preserves_safety'];
     }
 
     public function getPreEscape()

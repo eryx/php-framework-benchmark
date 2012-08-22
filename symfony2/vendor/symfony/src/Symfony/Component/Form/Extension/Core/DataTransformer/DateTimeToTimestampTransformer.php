@@ -25,7 +25,7 @@ class DateTimeToTimestampTransformer extends BaseDateTimeTransformer
     /**
      * Transforms a DateTime object into a timestamp in the configured timezone.
      *
-     * @param  DateTime $value  A DateTime object
+     * @param DateTime $value A DateTime object
      *
      * @return integer          A timestamp
      *
@@ -55,7 +55,7 @@ class DateTimeToTimestampTransformer extends BaseDateTimeTransformer
     /**
      * Transforms a timestamp in the configured timezone into a DateTime object
      *
-     * @param  string $value  A timestamp
+     * @param string $value A timestamp
      *
      * @return \DateTime      An instance of \DateTime
      *
@@ -73,7 +73,9 @@ class DateTimeToTimestampTransformer extends BaseDateTimeTransformer
         }
 
         try {
-            $dateTime = new \DateTime(sprintf("@%s %s", $value, $this->outputTimezone));
+            $dateTime = new \DateTime();
+            $dateTime->setTimezone(new \DateTimeZone($this->outputTimezone));
+            $dateTime->setTimestamp($value);
 
             if ($this->inputTimezone !== $this->outputTimezone) {
                 $dateTime->setTimezone(new \DateTimeZone($this->inputTimezone));

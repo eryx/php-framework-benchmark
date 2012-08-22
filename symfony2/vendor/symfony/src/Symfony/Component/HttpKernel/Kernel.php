@@ -26,7 +26,6 @@ use Symfony\Component\HttpKernel\Bundle\BundleInterface;
 use Symfony\Component\HttpKernel\Config\FileLocator;
 use Symfony\Component\HttpKernel\DependencyInjection\MergeExtensionConfigurationPass;
 use Symfony\Component\HttpKernel\DependencyInjection\AddClassesToCachePass;
-use Symfony\Component\HttpKernel\DependencyInjection\Extension as DIExtension;
 use Symfony\Component\HttpKernel\Debug\ErrorHandler;
 use Symfony\Component\HttpKernel\Debug\ExceptionHandler;
 use Symfony\Component\Config\Loader\LoaderResolver;
@@ -57,7 +56,12 @@ abstract class Kernel implements KernelInterface
     protected $startTime;
     protected $classes;
 
-    const VERSION = '2.0.6';
+    const VERSION         = '2.0.16';
+    const VERSION_ID      = '20016';
+    const MAJOR_VERSION   = '2';
+    const MINOR_VERSION   = '0';
+    const RELEASE_VERSION = '16';
+    const EXTRA_VERSION   = '';
 
     /**
      * Constructor.
@@ -370,7 +374,7 @@ abstract class Kernel implements KernelInterface
     {
         if (null === $this->rootDir) {
             $r = new \ReflectionObject($this);
-            $this->rootDir = dirname($r->getFileName());
+            $this->rootDir = str_replace('\\', '/', dirname($r->getFileName()));
         }
 
         return $this->rootDir;
@@ -391,8 +395,8 @@ abstract class Kernel implements KernelInterface
     /**
      * Loads the PHP class cache.
      *
-     * @param string  $name      The cache name prefix
-     * @param string  $extension File extension of the resulting file
+     * @param string $name      The cache name prefix
+     * @param string $extension File extension of the resulting file
      */
     public function loadClassCache($name = 'classes', $extension = '.php')
     {
@@ -597,7 +601,7 @@ abstract class Kernel implements KernelInterface
     {
         $parameters = array();
         foreach ($_SERVER as $key => $value) {
-            if ('SYMFONY__' === substr($key, 0, 9)) {
+            if (0 === strpos($key, 'SYMFONY__')) {
                 $parameters[strtolower(str_replace('__', '.', substr($key, 9)))] = $value;
             }
         }
@@ -702,7 +706,7 @@ abstract class Kernel implements KernelInterface
      *
      * @return string The PHP string with the comments removed
      */
-    static public function stripComments($source)
+    public static function stripComments($source)
     {
         if (!function_exists('token_get_all')) {
             return $source;

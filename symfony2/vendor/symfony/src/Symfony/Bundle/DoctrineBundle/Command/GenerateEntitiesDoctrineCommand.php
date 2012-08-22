@@ -31,7 +31,7 @@ class GenerateEntitiesDoctrineCommand extends DoctrineCommand
         $this
             ->setName('doctrine:generate:entities')
             ->setAliases(array('generate:doctrine:entities'))
-            ->setDescription('Generate entity classes and method stubs from your mapping information')
+            ->setDescription('Generates entity classes and method stubs from your mapping information')
             ->addArgument('name', InputArgument::REQUIRED, 'A bundle name, a namespace, or a class name')
             ->addOption('path', null, InputOption::VALUE_REQUIRED, 'The path where to generate entities when it cannot be guessed')
             ->addOption('no-backup', null, InputOption::VALUE_NONE, 'Do not backup existing entities files.')
@@ -112,8 +112,16 @@ EOT
                 $basename = substr($m->name, strrpos($m->name, '\\') + 1);
                 $output->writeln(sprintf('  > backing up <comment>%s.php</comment> to <comment>%s.php~</comment>', $basename, $basename));
             }
+            // Getting the metadata for the entity class once more to get the correct path if the namespace has multiple occurrences
+            try {
+                $entityMetadata = $manager->getClassMetadata($m->getName(), $input->getOption('path'));
+            } catch (\RuntimeException $e) {
+                // fall back to the bundle metadata when no entity class could be found
+                $entityMetadata = $metadata;
+            }
+
             $output->writeln(sprintf('  > generating <comment>%s</comment>', $m->name));
-            $generator->generate(array($m), $metadata->getPath());
+            $generator->generate(array($m), $entityMetadata->getPath());
 
             if ($m->customRepositoryClassName && false !== strpos($m->customRepositoryClassName, $metadata->getNamespace())) {
                 $repoGenerator->writeEntityRepositoryClass($m->customRepositoryClassName, $metadata->getPath());

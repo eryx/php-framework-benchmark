@@ -210,8 +210,7 @@ class PostgreSqlPlatform extends AbstractPlatform
                   (
                       SELECT c.oid
                       FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n
-                      WHERE " .$this->getTableWhereClause($table) ."
-                        AND n.oid = c.relnamespace
+                      WHERE " .$this->getTableWhereClause($table) ." AND n.oid = c.relnamespace
                   )
                   AND r.contype = 'f'";
     }
@@ -259,15 +258,23 @@ class PostgreSqlPlatform extends AbstractPlatform
                  ) AND pg_index.indexrelid = oid";
     }
 
+    /**
+     * @param string $table
+     * @param string $classAlias
+     * @param string $namespaceAlias
+     * @return string
+     */
     private function getTableWhereClause($table, $classAlias = 'c', $namespaceAlias = 'n')
     {
-        $whereClause = "";
+        $whereClause = $namespaceAlias.".nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast') AND ";
         if (strpos($table, ".") !== false) {
             list($schema, $table) = explode(".", $table);
-            $whereClause = "$classAlias.relname = '" . $table . "' AND $namespaceAlias.nspname = '" . $schema . "'";
+            $schema = "'" . $schema . "'";
         } else {
-            $whereClause = "$classAlias.relname = '" . $table . "'";
+            $schema = "ANY(string_to_array((select setting from pg_catalog.pg_settings where name = 'search_path'),','))";
         }
+        $whereClause .= "$classAlias.relname = '" . $table . "' AND $namespaceAlias.nspname = $schema";
+
         return $whereClause;
     }
 

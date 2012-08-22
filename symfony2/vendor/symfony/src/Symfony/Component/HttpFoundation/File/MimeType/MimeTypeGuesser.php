@@ -36,7 +36,7 @@ class MimeTypeGuesser implements MimeTypeGuesserInterface
      * The singleton instance
      * @var MimeTypeGuesser
      */
-    static private $instance = null;
+    private static $instance = null;
 
     /**
      * All registered MimeTypeGuesserInterface instances
@@ -49,7 +49,7 @@ class MimeTypeGuesser implements MimeTypeGuesserInterface
      *
      * @return MimeTypeGuesser
      */
-    static public function getInstance()
+    public static function getInstance()
     {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -96,8 +96,10 @@ class MimeTypeGuesser implements MimeTypeGuesserInterface
      * returns a value that is not NULL, this method terminates and returns the
      * value.
      *
-     * @param  string $path   The path to the file
+     * @param string $path The path to the file
+     *
      * @return string         The mime type or NULL, if none could be guessed
+     *
      * @throws FileException  If the file does not exist
      */
     public function guess($path)
@@ -111,7 +113,7 @@ class MimeTypeGuesser implements MimeTypeGuesserInterface
         }
 
         if (!$this->guessers) {
-            throw new \LogicException('Unable to guess the mime type as no guessers are available.');
+            throw new \LogicException('Unable to guess the mime type as no guessers are available (Did you enable the php_fileinfo extension?)');
         }
 
         foreach ($this->guessers as $guesser) {

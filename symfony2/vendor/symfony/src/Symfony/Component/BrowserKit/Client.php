@@ -15,9 +15,6 @@ use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\Link;
 use Symfony\Component\DomCrawler\Form;
 use Symfony\Component\Process\PhpProcess;
-use Symfony\Component\BrowserKit\Request;
-use Symfony\Component\BrowserKit\Response;
-use Symfony\Component\BrowserKit\Client;
 
 /**
  * Client simulates a browser.
@@ -84,7 +81,7 @@ abstract class Client
      */
     public function insulate($insulated = true)
     {
-        if (!class_exists('Symfony\\Component\\Process\\Process')) {
+        if ($insulated && !class_exists('Symfony\\Component\\Process\\Process')) {
             // @codeCoverageIgnoreStart
             throw new \RuntimeException('Unable to isolate requests as the Symfony Process Component is not installed.');
             // @codeCoverageIgnoreEnd
@@ -124,6 +121,7 @@ abstract class Client
      *
      * @param string $key     A key of the parameter to get
      * @param string $default A default value when key is undefined
+     *
      * @return string A value of the parameter
      */
     public function getServerParameter($key, $default = '')
@@ -196,6 +194,8 @@ abstract class Client
      *
      * @param Link $link A Link instance
      *
+     * @return Crawler
+     *
      * @api
      */
     public function click(Link $link)
@@ -212,6 +212,8 @@ abstract class Client
      *
      * @param Form  $form   A Form instance
      * @param array $values An array of form field values
+     *
+     * @return Crawler
      *
      * @api
      */
@@ -347,9 +349,9 @@ abstract class Client
     /**
      * Creates a crawler.
      *
-     * @param string $uri A uri
+     * @param string $uri     A uri
      * @param string $content Content for the crawler to use
-     * @param string $type Content type
+     * @param string $type    Content type
      *
      * @return Crawler
      */
@@ -432,12 +434,13 @@ abstract class Client
      * Takes a URI and converts it to absolute if it is not already absolute.
      *
      * @param string $uri A uri
+     *
      * @return string An absolute uri
      */
     protected function getAbsoluteUri($uri)
     {
         // already absolute?
-        if ('http' === substr($uri, 0, 4)) {
+        if (0 === strpos($uri, 'http')) {
             return $uri;
         }
 
@@ -478,6 +481,6 @@ abstract class Client
      */
     protected function requestFromRequest(Request $request, $changeHistory = true)
     {
-        return $this->request($request->getMethod(), $request->getUri(), $request->getParameters(), array(), $request->getFiles(), $request->getServer(), $request->getContent(), $changeHistory);
+        return $this->request($request->getMethod(), $request->getUri(), $request->getParameters(), $request->getFiles(), $request->getServer(), $request->getContent(), $changeHistory);
     }
 }

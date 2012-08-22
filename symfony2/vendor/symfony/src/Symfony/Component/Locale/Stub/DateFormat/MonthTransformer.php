@@ -11,7 +11,6 @@
 
 namespace Symfony\Component\Locale\Stub\DateFormat;
 
-
 /**
  * Parser and formatter for month format
  *
@@ -22,7 +21,7 @@ class MonthTransformer extends Transformer
     /**
      * @var array
      */
-    static protected $months = array(
+    protected static $months = array(
         'January',
         'February',
         'March',
@@ -41,26 +40,26 @@ class MonthTransformer extends Transformer
      * Short months names (first 3 letters)
      * @var array
      */
-    static protected $shortMonths = array();
+    protected static $shortMonths = array();
 
     /**
      * Flipped $months array, $name => $index
      * @var array
      */
-    static protected $flippedMonths = array();
+    protected static $flippedMonths = array();
 
     /**
      * Flipped $shortMonths array, $name => $index
      * @var array
      */
-    static protected $flippedShortMonths = array();
+    protected static $flippedShortMonths = array();
 
     /**
      * Constructor
      */
     public function __construct()
     {
-        if (0 == count(self::$shortMonths)) {
+        if (0 === count(self::$shortMonths)) {
             self::$shortMonths = array_map(function($month) {
                 return substr($month, 0, 3);
             }, self::$months);
@@ -76,19 +75,21 @@ class MonthTransformer extends Transformer
     public function format(\DateTime $dateTime, $length)
     {
         $matchLengthMap = array(
-            1   => 'n',
-            2   => 'm',
-            3   => 'M',
-            4   => 'F',
+            1 => 'n',
+            2 => 'm',
+            3 => 'M',
+            4 => 'F',
         );
 
         if (isset($matchLengthMap[$length])) {
-           return $dateTime->format($matchLengthMap[$length]);
-        } else if (5 == $length) {
-            return substr($dateTime->format('M'), 0, 1);
-        } else {
-            return $this->padLeft($dateTime->format('m'), $length);
+            return $dateTime->format($matchLengthMap[$length]);
         }
+
+        if (5 === $length) {
+            return substr($dateTime->format('M'), 0, 1);
+        }
+
+        return $this->padLeft($dateTime->format('m'), $length);
     }
 
     /**
@@ -123,18 +124,15 @@ class MonthTransformer extends Transformer
     public function extractDateOptions($matched, $length)
     {
         if (!is_numeric($matched)) {
-            if (3 == $length) {
+            if (3 === $length) {
                 $matched = self::$flippedShortMonths[$matched] + 1;
-            }
-            elseif (4 == $length) {
+            } elseif (4 === $length) {
                 $matched = self::$flippedMonths[$matched] + 1;
-            }
-            elseif (5 == $length) {
+            } elseif (5 === $length) {
                 // IntlDateFormatter::parse() always returns false for MMMMM or LLLLL
                 $matched = false;
             }
-        }
-        else {
+        } else {
             $matched = (int) $matched;
         }
 

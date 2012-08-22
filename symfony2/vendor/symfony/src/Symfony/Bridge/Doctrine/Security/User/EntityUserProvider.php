@@ -80,7 +80,19 @@ class EntityUserProvider implements UserProviderInterface
         // might have changed without proper persistence in the database.
         // That's the case when the user has been changed by a form with
         // validation errors.
-        return $this->repository->find($this->metadata->getIdentifierValues($user));
+        if (!$id = $this->metadata->getIdentifierValues($user)) {
+            throw new \InvalidArgumentException("You cannot refresh a user ".
+                "from the EntityUserProvider that does not contain an identifier. ".
+                "The user object has to be serialized with its own identifier " .
+                "mapped by Doctrine."
+            );
+        }
+
+        if (null === $refreshedUser = $this->repository->find($id)) {
+            throw new UsernameNotFoundException(sprintf('User with id %s not found', json_encode($id)));
+        }
+
+        return $refreshedUser;
     }
 
     /**
@@ -88,6 +100,6 @@ class EntityUserProvider implements UserProviderInterface
      */
     public function supportsClass($class)
     {
-        return $class === $this->class;
+        return $class === $this->class || is_subclass_of($class, $this->class);
     }
 }

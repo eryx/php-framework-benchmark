@@ -32,7 +32,7 @@ class HelpCommand extends Command
      */
     protected function configure()
     {
-        $this->ignoreValidationErrors = true;
+        $this->ignoreValidationErrors();
 
         $this
             ->setDefinition(array(
@@ -77,5 +77,7 @@ EOF
         } else {
             $output->writeln($this->command->asText());
         }
+
+        $this->command = null;
     }
 }

@@ -40,14 +40,26 @@ class Twig_Loader_Array implements Twig_LoaderInterface
     }
 
     /**
+     * Adds or overrides a template.
+     *
+     * @param string $name     The template name
+     * @param string $template The template source
+     */
+    public function setTemplate($name, $template)
+    {
+        $this->templates[(string) $name] = $template;
+    }
+
+    /**
      * Gets the source code of a template, given its name.
      *
-     * @param  string $name The name of the template to load
+     * @param string $name The name of the template to load
      *
      * @return string The template source code
      */
     public function getSource($name)
     {
+        $name = (string) $name;
         if (!isset($this->templates[$name])) {
             throw new Twig_Error_Loader(sprintf('Template "%s" is not defined.', $name));
         }
@@ -58,12 +70,13 @@ class Twig_Loader_Array implements Twig_LoaderInterface
     /**
      * Gets the cache key to use for the cache for a given template name.
      *
-     * @param  string $name The name of the template to load
+     * @param string $name The name of the template to load
      *
      * @return string The cache key
      */
     public function getCacheKey($name)
     {
+        $name = (string) $name;
         if (!isset($this->templates[$name])) {
             throw new Twig_Error_Loader(sprintf('Template "%s" is not defined.', $name));
         }
@@ -79,6 +92,11 @@ class Twig_Loader_Array implements Twig_LoaderInterface
      */
     public function isFresh($name, $time)
     {
+        $name = (string) $name;
+        if (!isset($this->templates[$name])) {
+            throw new Twig_Error_Loader(sprintf('Template "%s" is not defined.', $name));
+        }
+
         return true;
     }
 }

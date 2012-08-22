@@ -57,7 +57,7 @@ class ProfilerController extends ContainerAware
     /**
      * Exports data for a given token.
      *
-     * @param string $token    The profiler token
+     * @param string $token The profiler token
      *
      * @return Response A Response instance
      */
@@ -194,6 +194,7 @@ class ProfilerController extends ContainerAware
      * Search results.
      *
      * @param string $token The token
+     *
      * @return Response A Response instance
      */
     public function searchResultsAction($token)
@@ -230,7 +231,7 @@ class ProfilerController extends ContainerAware
 
         $request = $this->container->get('request');
 
-        $ip    = preg_replace('/[^\d\.]/', '', $request->query->get('ip'));
+        $ip    = preg_replace('/[^:\d\.]/', '', $request->query->get('ip'));
         $url   = $request->query->get('url');
         $limit = $request->query->get('limit');
         $token = $request->query->get('token');

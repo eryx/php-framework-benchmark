@@ -26,16 +26,16 @@ interface MatcherDumperInterface
      *  * class:      The class name
      *  * base_class: The base class name
      *
-     * @param  array  $options An array of options
+     * @param array $options An array of options
      *
      * @return string A PHP class representing the matcher class
      */
-    function dump(array $options = array());
+    public function dump(array $options = array());
 
     /**
      * Gets the routes to match.
      *
      * @return RouteCollection A RouteCollection instance
      */
-    function getRoutes();
+    public function getRoutes();
 }

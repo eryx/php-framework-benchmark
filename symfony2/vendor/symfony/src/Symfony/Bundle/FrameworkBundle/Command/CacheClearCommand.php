@@ -37,7 +37,7 @@ class CacheClearCommand extends ContainerAwareCommand
             ->setDefinition(array(
                 new InputOption('no-warmup', '', InputOption::VALUE_NONE, 'Do not warm up the cache'),
             ))
-            ->setDescription('Clear the cache')
+            ->setDescription('Clears the cache')
             ->setHelp(<<<EOF
 The <info>cache:clear</info> command clears the application cache for a given environment
 and debug mode:
@@ -105,7 +105,7 @@ EOF
             $content = preg_replace($regex, '', $content);
 
             // fix absolute paths to the cache directory
-            $content = preg_replace('/'.preg_quote($warmupDir,'/').'/', preg_replace('/_new$/', '', $warmupDir), $content);
+            $content = preg_replace('/'.preg_quote($warmupDir, '/').'/', preg_replace('/_new$/', '', $warmupDir), $content);
 
             file_put_contents(preg_replace($regex, '', $file), $content);
             unlink($file);

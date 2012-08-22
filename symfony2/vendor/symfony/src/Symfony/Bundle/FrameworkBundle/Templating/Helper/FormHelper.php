@@ -18,7 +18,7 @@ use Symfony\Component\Form\Exception\FormException;
 use Symfony\Component\Form\Util\FormUtil;
 
 /**
- *
+ * FormHelper provides helpers to help display forms.
  *
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Bernhard Schussek <bernhard.schussek@symfony.com>
@@ -68,8 +68,8 @@ class FormHelper extends Helper
      *
      * The theme format is "<Bundle>:<Controller>".
      *
-     * @param FormView     $view      A FormView instance
-     * @param string|array $resources A theme or an array of theme
+     * @param FormView     $view   A FormView instance
+     * @param string|array $themes A theme or an array of theme
      */
     public function setTheme(FormView $view, $themes)
     {
@@ -84,7 +84,7 @@ class FormHelper extends Helper
      *
      *     <form action="..." method="post" <?php echo $view['form']->enctype() ?>>
      *
-     * @param FormView $view  The view for which to render the encoding type
+     * @param FormView $view The view for which to render the encoding type
      *
      * @return string The html markup
      */
@@ -181,9 +181,9 @@ class FormHelper extends Helper
      * 3. the type name is recursively replaced by the parent type name until a
      *    corresponding block is found
      *
-     * @param FormView  $view       The form view
-     * @param string    $section    The section to render (i.e. 'row', 'widget', 'label', ...)
-     * @param array     $variables  Additional variables
+     * @param FormView $view      The form view
+     * @param string   $section   The section to render (i.e. 'row', 'widget', 'label', ...)
+     * @param array    $variables Additional variables
      *
      * @return string The html markup
      *
@@ -240,7 +240,7 @@ class FormHelper extends Helper
 
                 return $html;
             }
-        }  while (--$typeIndex >= 0);
+        } while (--$typeIndex >= 0);
 
         throw new FormException(sprintf(
             'Unable to render the form as none of the following blocks exist: "%s".',

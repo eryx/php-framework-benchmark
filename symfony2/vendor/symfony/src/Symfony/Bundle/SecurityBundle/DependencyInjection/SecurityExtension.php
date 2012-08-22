@@ -241,7 +241,7 @@ class SecurityExtension extends Extension
         $matcher = null;
         if (isset($firewall['request_matcher'])) {
             $matcher = new Reference($firewall['request_matcher']);
-        } else if (isset($firewall['pattern'])) {
+        } elseif (isset($firewall['pattern'])) {
             $matcher = $this->createRequestMatcher($container, $firewall['pattern']);
         }
 
@@ -492,7 +492,7 @@ class SecurityExtension extends Extension
 
             $container
                 ->setDefinition($userId, new DefinitionDecorator('security.user.provider.in_memory.user'))
-                ->setArguments(array($username, (string)$user['password'], $user['roles']))
+                ->setArguments(array($username, (string) $user['password'], $user['roles']))
             ;
 
             $definition->addMethodCall('createUser', array(new Reference($userId)));
@@ -515,7 +515,7 @@ class SecurityExtension extends Extension
         // access denied handler setup
         if (isset($config['access_denied_handler'])) {
             $listener->replaceArgument(5, new Reference($config['access_denied_handler']));
-        } else if (isset($config['access_denied_url'])) {
+        } elseif (isset($config['access_denied_url'])) {
             $listener->replaceArgument(4, $config['access_denied_url']);
         }
 
@@ -600,7 +600,6 @@ class SecurityExtension extends Extension
         return $this->factories = $factories;
     }
 
-
     /**
      * Returns the base path for the XSD files.
      *
@@ -616,4 +615,3 @@ class SecurityExtension extends Extension
         return 'http://symfony.com/schema/dic/security';
     }
 }
-
