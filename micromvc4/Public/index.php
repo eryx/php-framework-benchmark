@@ -40,8 +40,8 @@ if (!isset($_GET['debug'])) {
 }
 
 echo "Page rendered in <b>"
-    . round((microtime(true) - START_TIME), 5) * 1000 ." ms</b>, taking <b>"
-    . round((memory_get_usage() - START_MEMORY_USAGE) / 1024, 2) ." KB</b>";
+    . round((microtime(true) - START_TIME2), 5) * 1000 ." ms</b>, taking <b>"
+    . round((memory_get_usage() - START_MEMORY_USAGE2) / 1024, 2) ." KB</b>";
 $f = get_included_files();
 echo ", include files: ".count($f);
 
