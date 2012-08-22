@@ -1,0 +1,122 @@
+{% extends app.request.isXmlHttpRequest ? 'WebProfilerBundle:Profiler:ajax_layout.html.twig' : 'WebProfilerBundle:Profiler:layout.html.twig' %}
+
+{% block toolbar %}
+    {% set icon %}
+        <img width="20" height="28" alt="Database" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAcCAYAAABh2p9gAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAQRJREFUeNpi/P//PwM1ARMDlcGogZQDlpMnT7pxc3NbA9nhQKxOpL5rQLwJiPeBsI6Ozl+YBOOOHTv+AOllQNwtLS39F2owKYZ/gRq8G4i3ggxEToggWzvc3d2Pk+1lNL4fFAs6ODi8JzdS7mMRVyDVoAMHDsANdAPiOCC+jCQvQKqBQB/BDbwBxK5AHA3E/kB8nKJkA8TMQBwLxaBIKQbi70AvTADSBiSadwFXpCikpKQU8PDwkGTaly9fHFigkaKIJid4584dkiMFFI6jkTJII0WVmpHCAixZQEXWYhDeuXMnyLsVlEQKI45qFBQZ8eRECi4DBaAlDqle/8A48ip6gAADANdQY88Uc0oGAAAAAElFTkSuQmCC"/>
+        <span class="sf-toolbar-status{% if 50 < collector.querycount %} sf-toolbar-status-yellow{% endif %}">{{ collector.querycount }}</span>
+        <span class="sf-toolbar-info-piece-additional-detail">in {{ '%0.2f'|format(collector.time * 1000) }} ms</span>
+    {% endset %}
+    {% set text %}
+        <div class="sf-toolbar-info-piece">
+            <b>DB Queries</b>
+            <span>{{ collector.querycount }}</span>
+        </div>
+        <div class="sf-toolbar-info-piece">
+            <b>Query time</b>
+            <span>{{ '%0.2f'|format(collector.time * 1000) }} ms</span>
+        </div>
+    {% endset %}
+    {% include 'WebProfilerBundle:Profiler:toolbar_item.html.twig' with { 'link': profiler_url } %}
+{% endblock %}
+
+{% block menu %}
+<span class="label">
+    <span class="icon"><img src="{{ asset('bundles/webprofiler/images/profiler/db.png') }}" alt="" /></span>
+    <strong>Doctrine</strong>
+    <span class="count">
+        <span>{{ collector.querycount }}</span>
+        <span>{{ '%0.0f'|format(collector.time * 1000) }} ms</span>
+    </span>
+</span>
+{% endblock %}
+
+{% block panel %}
+    {% if 'explain' == page %}
+        {% render 'DoctrineBundle:Profiler:explain' with {
+            'token': token,
+            'panel': 'db',
+            'connectionName': app.request.query.get('connection'),
+            'query': app.request.query.get('query')
+        } %}
+    {% else %}
+        {{ block('queries') }}
+    {% endif %}
+{% endblock %}
+
+{% block queries %}
+    <h2>Queries</h2>
+
+    {% for connection, queries in collector.queries %}
+        <h3>Connection <em>{{ connection }}</em></h3>
+        {% if queries is empty %}
+            <p>
+                <em>No queries.</em>
+            </p>
+        {% else %}
+            <ul class="alt">
+                {% for i, query in queries %}
+                    <li class="{{ cycle(['odd', 'even'], i) }}">
+                        <div>
+                            {% if query.explainable %}
+                            <a href="{{ path('_profiler', {'panel': 'db', 'token': token, 'page': 'explain', 'connection': connection, 'query': i}) }}" onclick="return explain(this);" style="text-decoration: none;" title="Explains" data-target-id="explain-{{ i }}-{{ loop.parent.loop.index }}" >
+                                <img alt="+" src="{{ asset('bundles/framework/images/blue_picto_more.gif') }}" style="display: inline;" />
+                                <img alt="-" src="{{ asset('bundles/framework/images/blue_picto_less.gif') }}" style="display: none;" />
+                            </a>
+                            {% endif %}
+                            <code>{{ query.sql }}</code>
+                        </div>
+                        <small>
+                            <strong>Parameters</strong>: {{ query.params|yaml_encode }}<br />
+                            <strong>Time</strong>: {{ '%0.2f'|format(query.executionMS * 1000) }} ms
+                        </small>
+                        {% if query.explainable %}
+                        <div id="explain-{{ i }}-{{ loop.parent.loop.index }}" class="loading"></div>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endfor %}
+
+    <h2>Database Connections</h2>
+
+    {% if collector.connections %}
+        {% include 'WebProfilerBundle:Profiler:table.html.twig' with {data: collector.connections} only %}
+    {% else %}
+        <p>
+            <em>No connections.</em>
+        </p>
+    {% endif %}
+
+    <h2>Entity Managers</h2>
+
+    {% if collector.managers %}
+        {% include 'WebProfilerBundle:Profiler:table.html.twig' with {data: collector.managers} only %}
+    {% else %}
+        <p>
+            <em>No entity managers.</em>
+        </p>
+    {% endif %}
+
+    <script type="text/javascript">//<![CDATA[
+        function explain(link) {
+            "use strict";
+
+            var imgs = link.children,
+                target = link.getAttribute('data-target-id');
+
+            Sfjs.toggle(target, imgs[0], imgs[1])
+                .load(
+                    target,
+                    link.href,
+                    null,
+                    function(xhr, el) {
+                        el.innerHTML = 'An error occurred while loading the details';
+                        Sfjs.removeClass(el, 'loading');
+                    }
+                );
+
+            return false;
+        }
+    //]]></script>
+{% endblock %}
