@@ -17,7 +17,7 @@
  * @subpackage Helper
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: Navigation.php 24594 2012-01-05 21:27:01Z matthew $
+ * @version    $Id: Navigation.php 25024 2012-07-30 15:08:15Z rob $
  */
 
 /**
@@ -157,9 +157,17 @@ class Zend_View_Helper_Navigation
         }
 
         if (!$this->view->getPluginLoader('helper')->getPaths(self::NS)) {
+            // Add navigation helper path at the beginning
+            $paths = $this->view->getHelperPaths();
+            $this->view->setHelperPath(null);
+            
             $this->view->addHelperPath(
                     str_replace('_', '/', self::NS),
                     self::NS);
+            
+            foreach ($paths as $ns => $path) {
+                $this->view->addHelperPath($path, $ns);
+            }
         }
 
         if ($strict) {

@@ -34,7 +34,7 @@ require_once 'Zend/Form/Element/Multi.php';
  * @subpackage Element
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: MultiCheckbox.php 24594 2012-01-05 21:27:01Z matthew $
+ * @version    $Id: MultiCheckbox.php 24963 2012-06-15 14:32:23Z adamlundrigan $
  */
 class Zend_Form_Element_MultiCheckbox extends Zend_Form_Element_Multi
 {
@@ -49,4 +49,25 @@ class Zend_Form_Element_MultiCheckbox extends Zend_Form_Element_Multi
      * @var bool
      */
     protected $_isArray = true;
+
+    /**
+     * Load default decorators
+     *
+     * @return Zend_Form_Element_MultiCheckbox
+     */
+    public function loadDefaultDecorators()
+    {
+        if ($this->loadDefaultDecoratorsIsDisabled()) {
+            return $this;
+        }
+
+        parent::loadDefaultDecorators();
+
+        // Disable 'for' attribute
+        if (false !== $decorator = $this->getDecorator('label')) {
+            $decorator->setOption('disableFor', true);
+        }
+
+        return $this;
+    }
 }

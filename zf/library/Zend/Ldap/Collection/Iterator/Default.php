@@ -16,7 +16,7 @@
  * @package    Zend_Ldap
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: Default.php 24613 2012-01-21 14:44:26Z sgehrig $
+ * @version    $Id: Default.php 24612 2012-01-21 14:42:30Z sgehrig $
  */
 
 /**

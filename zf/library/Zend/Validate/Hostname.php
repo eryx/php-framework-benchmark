@@ -16,7 +16,7 @@
  * @package    Zend_Validate
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: Hostname.php 24632 2012-02-24 17:46:13Z adamlundrigan $
+ * @version    $Id: Hostname.php 24631 2012-02-24 17:43:08Z adamlundrigan $
  */
 
 /**

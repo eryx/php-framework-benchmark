@@ -39,7 +39,7 @@ require_once 'Zend/Form/Decorator/Abstract.php';
  * @subpackage Decorator
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: ViewHelper.php 24594 2012-01-05 21:27:01Z matthew $
+ * @version    $Id: ViewHelper.php 24873 2012-06-02 02:54:34Z adamlundrigan $
  */
 class Zend_Form_Decorator_ViewHelper extends Zend_Form_Decorator_Abstract
 {
@@ -243,7 +243,18 @@ class Zend_Form_Decorator_ViewHelper extends Zend_Form_Decorator_Abstract
             $helperObject->setTranslator($element->getTranslator());
         }
 
-        $elementContent = $view->$helper($name, $value, $attribs, $element->options);
+        // Check list separator
+        if (isset($attribs['listsep'])
+            && in_array($helper, array('formMulticheckbox', 'formRadio', 'formSelect'))
+        ) {
+            $listsep = $attribs['listsep'];
+            unset($attribs['listsep']);
+
+            $elementContent = $view->$helper($name, $value, $attribs, $element->options, $listsep);
+        } else {
+            $elementContent = $view->$helper($name, $value, $attribs, $element->options);
+        }
+
         switch ($this->getPlacement()) {
             case self::APPEND:
                 return $content . $separator . $elementContent;

@@ -16,7 +16,7 @@
  * @package    Zend_Json
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: Json.php 24594 2012-01-05 21:27:01Z matthew $
+ * @version    $Id: Json.php 24593 2012-01-05 20:35:02Z matthew $
  */
 
 /**
@@ -125,8 +125,12 @@ class Zend_Json
      */
     public static function encode($valueToEncode, $cycleCheck = false, $options = array())
     {
-        if (is_object($valueToEncode) && method_exists($valueToEncode, 'toJson')) {
-            return $valueToEncode->toJson();
+        if (is_object($valueToEncode)) {
+            if (method_exists($valueToEncode, 'toJson')) {
+                return $valueToEncode->toJson();
+            } elseif (method_exists($valueToEncode, 'toArray')) {
+                return self::encode($valueToEncode->toArray(), $cycleCheck, $options);
+            }
         }
 
         // Pre-encoding look for Zend_Json_Expr objects and replacing by tmp ids

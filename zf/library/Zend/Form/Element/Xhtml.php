@@ -30,7 +30,7 @@ require_once 'Zend/Form/Element.php';
  * @subpackage Element
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: Xhtml.php 24594 2012-01-05 21:27:01Z matthew $
+ * @version    $Id: Xhtml.php 24593 2012-01-05 20:35:02Z matthew $
  */
 abstract class Zend_Form_Element_Xhtml extends Zend_Form_Element
 {

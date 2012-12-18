@@ -16,7 +16,7 @@
  * @package    Zend_Mime
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: Mime.php 24594 2012-01-05 21:27:01Z matthew $
+ * @version    $Id: Mime.php 24953 2012-06-13 19:09:58Z rob $
  */
 
 
@@ -130,7 +130,7 @@ class Zend_Mime
         $str = self::_encodeQuotedPrintable($str);
 
         // Split encoded text into separate lines
-        while ($str) {
+        while(strlen($str) > 0) {
             $ptr = strlen($str);
             if ($ptr > $lineLength) {
                 $ptr = $lineLength;
@@ -194,7 +194,7 @@ class Zend_Mime
         $str = self::_encodeQuotedPrintable($str);
 
         // Mail-Header required chars have to be encoded also:
-        $str = str_replace(array('?', ' ', '_'), array('=3F', '=20', '=5F'), $str);
+        $str = str_replace(array('?', ' ', '_', ','), array('=3F', '=20', '=5F', '=2C'), $str);
 
         // initialize first line, we need it anyways
         $lines = array(0 => "");

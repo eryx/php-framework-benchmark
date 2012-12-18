@@ -16,7 +16,7 @@
  * @package    Zend_Rest
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: Controller.php 24594 2012-01-05 21:27:01Z matthew $
+ * @version    $Id: Controller.php 25024 2012-07-30 15:08:15Z rob $
  */
 
 /** Zend_Controller_Action */
@@ -46,6 +46,13 @@ abstract class Zend_Rest_Controller extends Zend_Controller_Action
      * by the 'id' value.
      */
     abstract public function getAction();
+
+    /**
+     * The head action handles HEAD requests and receives an 'id' parameter; it
+     * should respond with the server resource state of the resource identified
+     * by the 'id' value.
+     */
+    abstract public function headAction();
 
     /**
      * The post action handles POST requests; it should accept and digest a

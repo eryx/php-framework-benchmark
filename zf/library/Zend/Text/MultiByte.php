@@ -16,7 +16,7 @@
  * @package   Zend_Text
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd     New BSD License
- * @version   $Id: MultiByte.php 24763 2012-05-06 00:11:18Z adamlundrigan $
+ * @version   $Id: MultiByte.php 24762 2012-05-06 00:06:46Z adamlundrigan $
  */
 
 /**

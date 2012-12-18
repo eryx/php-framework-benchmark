@@ -16,7 +16,7 @@
  * @package    Zend_Paginator
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: DbSelect.php 24594 2012-01-05 21:27:01Z matthew $
+ * @version    $Id: DbSelect.php 24754 2012-05-05 02:30:56Z adamlundrigan $
  */
 
 /**
@@ -71,6 +71,14 @@ class Zend_Paginator_Adapter_DbSelect implements Zend_Paginator_Adapter_Interfac
     protected $_rowCount = null;
 
     /**
+     * Identifies this adapter for caching purposes.  This value will remain constant for
+     * the entire life of this adapter regardless of how many different pages are queried.
+     *
+     * @var string
+     */
+    protected $_cacheIdentifier = null;
+
+    /**
      * Constructor.
      *
      * @param Zend_Db_Select $select The select query
@@ -78,8 +86,19 @@ class Zend_Paginator_Adapter_DbSelect implements Zend_Paginator_Adapter_Interfac
     public function __construct(Zend_Db_Select $select)
     {
         $this->_select = $select;
+        $this->_cacheIdentifier = md5($select->assemble());
     }
 
+    /**
+     * Returns the cache identifier.
+     * 
+     * @return string
+     */
+    public function getCacheIdentifier()
+    {
+        return $this->_cacheIdentifier;
+    }
+    
     /**
      * Sets the total row count, either directly or through a supplied
      * query.  Without setting this, {@link getPages()} selects the count

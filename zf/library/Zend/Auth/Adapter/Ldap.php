@@ -17,7 +17,7 @@
  * @subpackage Zend_Auth_Adapter
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: Ldap.php 24619 2012-02-03 08:34:39Z sgehrig $
+ * @version    $Id: Ldap.php 24618 2012-02-03 08:32:06Z sgehrig $
  */
 
 /**

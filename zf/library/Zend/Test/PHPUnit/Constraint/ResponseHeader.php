@@ -17,7 +17,7 @@
  * @subpackage PHPUnit
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: ResponseHeader.php 24594 2012-01-05 21:27:01Z matthew $
+ * @version    $Id: ResponseHeader.php 24851 2012-05-31 19:37:46Z rob $
  */
 
 /** @see PHPUnit_Framework_Constraint */
@@ -65,6 +65,11 @@ class Zend_Test_PHPUnit_Constraint_ResponseHeader extends PHPUnit_Framework_Cons
      * @var int Response code
      */
     protected $_code              = 200;
+    
+    /**
+     * @var int Actual response code
+     */
+    protected $_actualCode        = null;
 
     /**
      * @var string Header
@@ -197,6 +202,9 @@ class Zend_Test_PHPUnit_Constraint_ResponseHeader extends PHPUnit_Framework_Cons
                     $failure = 'Failed asserting response code IS NOT "%s"';
                 }
                 $failure = sprintf($failure, $this->_code);
+                if (!$this->_negate && $this->_actualCode) {
+                    $failure .= sprintf(PHP_EOL . 'Was "%s"', $this->_actualCode);
+                }
                 break;
             case self::ASSERT_HEADER:
                 $failure = 'Failed asserting response header "%s" found';
@@ -250,6 +258,7 @@ class Zend_Test_PHPUnit_Constraint_ResponseHeader extends PHPUnit_Framework_Cons
     protected function _code(Zend_Controller_Response_Abstract $response, $code)
     {
         $test = $this->_getCode($response);
+        $this->_actualCode = $test;
         return ($test == $code);
     }
 

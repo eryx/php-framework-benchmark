@@ -16,7 +16,7 @@
  * @package    Zend_Feed_Writer
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: FeedAbstract.php 24648 2012-02-25 22:06:01Z adamlundrigan $
+ * @version    $Id: FeedAbstract.php 24647 2012-02-25 22:01:16Z adamlundrigan $
  */
 
 /**

@@ -17,7 +17,7 @@
  * @subpackage Adapter
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: Image.php 24594 2012-01-05 21:27:01Z matthew $
+ * @version    $Id: Image.php 24821 2012-05-29 14:54:50Z adamlundrigan $
  */
 
 /** @see Zend_Captcha_Word */
@@ -580,7 +580,7 @@ class Zend_Captcha_Image extends Zend_Captcha_Word
         $suffixLength = strlen($this->_suffix);
         foreach (new DirectoryIterator($imgdir) as $file) {
             if (!$file->isDot() && !$file->isDir()) {
-                if ($file->getMTime() < $expire) {
+                if (file_exists($file->getPathname()) && $file->getMTime() < $expire) {
                     // only deletes files ending with $this->_suffix
                     if (substr($file->getFilename(), -($suffixLength)) == $this->_suffix) {
                         unlink($file->getPathname());

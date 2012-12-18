@@ -32,7 +32,7 @@ require_once 'Zend/Dojo/Form/Element/Dijit.php';
  * @subpackage Form_Element
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: DijitMulti.php 24594 2012-01-05 21:27:01Z matthew $
+ * @version    $Id: DijitMulti.php 24593 2012-01-05 20:35:02Z matthew $
  */
 abstract class Zend_Dojo_Form_Element_DijitMulti extends Zend_Dojo_Form_Element_Dijit
 {

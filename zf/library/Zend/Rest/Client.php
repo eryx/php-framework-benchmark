@@ -17,7 +17,7 @@
  * @subpackage Client
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: Client.php 24594 2012-01-05 21:27:01Z matthew $
+ * @version    $Id: Client.php 24593 2012-01-05 20:35:02Z matthew $
  */
 
 
@@ -50,6 +50,13 @@ class Zend_Rest_Client extends Zend_Service_Abstract
      * @var Zend_Uri_Http
      */
     protected $_uri = null;
+    
+    /**
+     * Flag indicating the Zend_Http_Client is fresh and needs no reset.
+     * Must be set explicitly if you want to keep preset parameters.
+     * @var bool true if you do not want a reset. Default false.
+     */
+    protected $_noReset = false;
 
     /**
      * Constructor
@@ -118,7 +125,29 @@ class Zend_Rest_Client extends Zend_Service_Abstract
          * Get the HTTP client and configure it for the endpoint URI.  Do this each time
          * because the Zend_Http_Client instance is shared among all Zend_Service_Abstract subclasses.
          */
-        self::getHttpClient()->resetParameters()->setUri($this->_uri);
+        if ($this->_noReset) {
+            // if $_noReset we do not want to reset on this request, 
+            // but we do on any subsequent request
+            $this->_noReset = false;
+        } else {
+            self::getHttpClient()->resetParameters();
+        }
+        
+        self::getHttpClient()->setUri($this->_uri);
+    }
+    
+    /**
+     * Tells Zend_Rest_Client not to reset all parameters on it's 
+     * Zend_Http_Client. If you want no reset, this must be called explicitly
+     * before every request for which you do not want to reset the parameters.
+     * Parameters will accumulate between requests, but as soon as you do not
+     * call this function prior to any request, all preset parameters will be reset
+     * as by default.
+     * @param boolean $bool
+     */
+    public function setNoReset($bool = true)
+    {
+        $this->_noReset = $bool;
     }
 
     /**

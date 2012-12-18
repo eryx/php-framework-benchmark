@@ -17,7 +17,7 @@
  * @subpackage Analysis
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: Token.php 24594 2012-01-05 21:27:01Z matthew $
+ * @version    $Id: Token.php 24832 2012-05-30 13:14:44Z adamlundrigan $
  */
 
 
@@ -122,6 +122,18 @@ class Zend_Search_Lucene_Analysis_Token
     public function getTermText()
     {
         return $this->_termText;
+    }
+    
+    /**
+     * Sets the Token's term text.
+     * 
+     * @param string $text
+     * @return this
+     */
+    public function setTermText($text)
+    {
+        $this->_termText = $text;
+        return $this;
     }
 
     /**

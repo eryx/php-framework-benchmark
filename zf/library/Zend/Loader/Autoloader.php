@@ -16,7 +16,7 @@
  * @package    Zend_Loader
  * @subpackage Autoloader
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @version    $Id: Autoloader.php 24594 2012-01-05 21:27:01Z matthew $
+ * @version    $Id: Autoloader.php 25024 2012-07-30 15:08:15Z rob $
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 

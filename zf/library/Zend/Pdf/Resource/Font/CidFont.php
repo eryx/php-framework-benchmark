@@ -17,7 +17,7 @@
  * @subpackage Fonts
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: CidFont.php 24665 2012-02-26 16:53:25Z adamlundrigan $
+ * @version    $Id: CidFont.php 24664 2012-02-26 16:36:51Z adamlundrigan $
  */
 
 /** Internally used classes */

@@ -1,4 +1,4 @@
-f<?php
+<?php
 /**
  * Zend Framework
  *
@@ -16,7 +16,7 @@ f<?php
  * @package    Zend_Feed_Writer
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: Deleted.php 24648 2012-02-25 22:06:01Z adamlundrigan $
+ * @version    $Id: Deleted.php 24710 2012-04-16 18:55:12Z bittarman $
  */
 
 require_once 'Zend/Feed/Writer/Feed/FeedAbstract.php';

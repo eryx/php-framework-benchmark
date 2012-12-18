@@ -16,12 +16,18 @@
  * @package    Zend_Search_Lucene
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: MultiSearcher.php 24594 2012-01-05 21:27:01Z matthew $
+ * @version    $Id: MultiSearcher.php 24862 2012-06-02 00:04:53Z adamlundrigan $
  */
 
 
 /** Zend_Search_Lucene_Interface */
 require_once 'Zend/Search/Lucene/Interface.php';
+
+/**
+ * Import Zend_Search_Lucene_Interface_MultiSearcher for BC (see ZF-12067)
+ * @see Zend_Search_Lucene_Interface_MultiSearcher 
+ */
+require_once 'Zend/Search/Lucene/Interface/MultiSearcher.php';
 
 /**
  * Multisearcher allows to search through several independent indexes.
@@ -31,7 +37,7 @@ require_once 'Zend/Search/Lucene/Interface.php';
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
-class Zend_Search_Lucene_Interface_MultiSearcher implements Zend_Search_Lucene_Interface
+class Zend_Search_Lucene_MultiSearcher implements Zend_Search_Lucene_Interface
 {
     /**
      * List of indices for searching.
@@ -970,4 +976,17 @@ class Zend_Search_Lucene_Interface_MultiSearcher implements Zend_Search_Lucene_I
     {
         // Do nothing, since it's never referenced by indices
     }
+}
+
+/**
+ * This class is provided for backwards-compatibility (See ZF-12067)
+ *
+ * @category   Zend
+ * @package    Zend_Search_Lucene
+ * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ */
+class Zend_Search_Lucene_Interface_MultiSearcher
+    extends Zend_Search_Lucene_MultiSearcher
+{
 }

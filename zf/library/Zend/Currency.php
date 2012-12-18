@@ -16,7 +16,7 @@
  * @package   Zend_Currency
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd     New BSD License
- * @version   $Id: Currency.php 24594 2012-01-05 21:27:01Z matthew $
+ * @version   $Id: Currency.php 24855 2012-06-01 00:12:25Z adamlundrigan $
  */
 
 /**
@@ -91,6 +91,11 @@ class Zend_Currency
      */
     public function __construct($options = null, $locale = null)
     {
+        $calloptions = $options;
+        if (is_array($options) && isset($options['display'])) {
+            $this->_options['display'] = $options['display'];
+        }
+
         if (is_array($options)) {
             $this->setLocale($locale);
             $this->setFormat($options);
@@ -120,10 +125,13 @@ class Zend_Currency
         }
 
         // Get the format
-        if (!empty($this->_options['symbol'])) {
-            $this->_options['display'] = self::USE_SYMBOL;
-        } else if (!empty($this->_options['currency'])) {
-            $this->_options['display'] = self::USE_SHORTNAME;
+        if ((is_array($calloptions) && !isset($calloptions['display']))
+                || (!is_array($calloptions) && $this->_options['display'] == self::NO_SYMBOL)) {
+            if (!empty($this->_options['symbol'])) {
+                $this->_options['display'] = self::USE_SYMBOL;
+            } else if (!empty($this->_options['currency'])) {
+                $this->_options['display'] = self::USE_SHORTNAME;
+            }
         }
     }
 

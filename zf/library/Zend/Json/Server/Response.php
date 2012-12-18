@@ -17,7 +17,7 @@
  * @subpackage Server
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: Response.php 24594 2012-01-05 21:27:01Z matthew $
+ * @version    $Id: Response.php 24807 2012-05-15 12:10:42Z adamlundrigan $
  */
 
 /**
@@ -144,13 +144,14 @@ class Zend_Json_Server_Response
      */
     public function setVersion($version)
     {
-        $version = (string) $version;
-        if ('2.0' == $version) {
+        $version = is_array($version)
+            ? implode(' ', $version)
+            : $version;
+        if ((string)$version == '2.0') {
             $this->_version = '2.0';
         } else {
             $this->_version = null;
         }
-
         return $this;
     }
 

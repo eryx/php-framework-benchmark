@@ -18,7 +18,7 @@
  * @subpackage Gbase
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: ItemFeed.php 24594 2012-01-05 21:27:01Z matthew $
+ * @version    $Id: ItemFeed.php 24777 2012-05-08 18:50:23Z adamlundrigan $
  */
 
 /**
@@ -39,10 +39,4 @@ require_once 'Zend/Gdata/Gbase/Feed.php';
  */
 class Zend_Gdata_Gbase_ItemFeed extends Zend_Gdata_Feed
 {
-    /**
-     * The classname for individual item feed elements.
-     *
-     * @var string
-     */
-    protected $_entryClassName = 'Zend_Gdata_Gbase_ItemEntry';
 }

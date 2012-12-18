@@ -17,7 +17,7 @@
  * @subpackage Adapter
  * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: PythonPickle.php 24816 2012-05-24 08:58:32Z mabe $
+ * @version    $Id: PythonPickle.php 24815 2012-05-24 08:50:24Z mabe $
  */
 
 /** @see Zend_Serializer_Adapter_AdapterAbstract */
