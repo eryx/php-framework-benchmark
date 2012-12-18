@@ -12,6 +12,7 @@ namespace Zend\InputFilter;
 
 use Zend\Filter\FilterChain;
 use Zend\Validator\ValidatorChain;
+use Zend\Validator\NotEmpty;
 
 /**
  * @category   Zend
@@ -19,85 +20,178 @@ use Zend\Validator\ValidatorChain;
  */
 class Input implements InputInterface
 {
+    /**
+     * @var boolean
+     */
     protected $allowEmpty = false;
+
+    /**
+     * @var boolean
+     */
     protected $breakOnFailure = false;
+
+    /**
+     * @var string|null
+     */
     protected $errorMessage;
+
+    /**
+     * @var FilterChain
+     */
     protected $filterChain;
+
+    /**
+     * @var string
+     */
     protected $name;
+
+    /**
+     * @var boolean
+     */
     protected $notEmptyValidator = false;
+
+    /**
+     * @var boolean
+     */
     protected $required = true;
+
+    /**
+     * @var ValidatorChain
+     */
     protected $validatorChain;
+
+    /**
+     * @var mixed
+     */
     protected $value;
+
+    /**
+     * @var mixed
+     */
+    protected $fallbackValue;
 
     public function __construct($name = null)
     {
         $this->name = $name;
     }
 
+    /**
+     * @param  boolean $allowEmpty
+     * @return Input
+     */
     public function setAllowEmpty($allowEmpty)
     {
         $this->allowEmpty = (bool) $allowEmpty;
         return $this;
     }
 
+    /**
+     * @param  boolean $breakOnFailure
+     * @return Input
+     */
     public function setBreakOnFailure($breakOnFailure)
     {
         $this->breakOnFailure = (bool) $breakOnFailure;
         return $this;
     }
 
+    /**
+     * @param  string|null $errorMessage
+     * @return Input
+     */
     public function setErrorMessage($errorMessage)
     {
-        $errorMessage = (null === $errorMessage) ? null : (string) $errorMessage;
-        $this->errorMessage = $errorMessage;
+        $this->errorMessage = (null === $errorMessage) ? null : (string) $errorMessage;
         return $this;
     }
 
+    /**
+     * @param  FilterChain $filterChain
+     * @return Input
+     */
     public function setFilterChain(FilterChain $filterChain)
     {
         $this->filterChain = $filterChain;
         return $this;
     }
 
+    /**
+     * @param  string $name
+     * @return Input
+     */
     public function setName($name)
     {
         $this->name = (string) $name;
         return $this;
     }
 
+    /**
+     * @param  boolean $required
+     * @return Input
+     */
     public function setRequired($required)
     {
         $this->required = (bool) $required;
         return $this;
     }
 
+    /**
+     * @param  ValidatorChain $validatorChain
+     * @return Input
+     */
     public function setValidatorChain(ValidatorChain $validatorChain)
     {
         $this->validatorChain = $validatorChain;
         return $this;
     }
 
+    /**
+     * @param  mixed $value
+     * @return Input
+     */
     public function setValue($value)
     {
         $this->value = $value;
         return $this;
     }
 
+    /**
+     * @param  mixed $value
+     * @return Input
+     */
+    public function setFallbackValue($value)
+    {
+        $this->fallbackValue = $value;
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
     public function allowEmpty()
     {
         return $this->allowEmpty;
     }
 
+    /**
+     * @return boolean
+     */
     public function breakOnFailure()
     {
         return $this->breakOnFailure;
     }
 
+    /**
+     * @return string|null
+     */
     public function getErrorMessage()
     {
         return $this->errorMessage;
     }
 
+    /**
+     * @return FilterChain
+     */
     public function getFilterChain()
     {
         if (!$this->filterChain) {
@@ -106,21 +200,33 @@ class Input implements InputInterface
         return $this->filterChain;
     }
 
+    /**
+     * @return string
+     */
     public function getName()
     {
         return $this->name;
     }
 
+    /**
+     * @return mixed
+     */
     public function getRawValue()
     {
         return $this->value;
     }
 
+    /**
+     * @return boolean
+     */
     public function isRequired()
     {
         return $this->required;
     }
 
+    /**
+     * @return ValidatorChain
+     */
     public function getValidatorChain()
     {
         if (!$this->validatorChain) {
@@ -129,12 +235,27 @@ class Input implements InputInterface
         return $this->validatorChain;
     }
 
+    /**
+     * @return mixed
+     */
     public function getValue()
     {
         $filter = $this->getFilterChain();
         return $filter->filter($this->value);
     }
 
+    /**
+     * @return mixed
+     */
+    public function getFallbackValue()
+    {
+        return $this->fallbackValue;
+    }
+
+    /**
+     * @param  InputInterface $input
+     * @return Input
+     */
     public function merge(InputInterface $input)
     {
         $this->setAllowEmpty($input->allowEmpty());
@@ -142,27 +263,45 @@ class Input implements InputInterface
         $this->setErrorMessage($input->getErrorMessage());
         $this->setName($input->getName());
         $this->setRequired($input->isRequired());
-        $this->setValue($input->getValue());
+        $this->setValue($input->getRawValue());
 
         $filterChain = $input->getFilterChain();
         $this->getFilterChain()->merge($filterChain);
 
         $validatorChain = $input->getValidatorChain();
         $this->getValidatorChain()->merge($validatorChain);
+        return $this;
     }
 
+    /**
+     * @param  mixed $context Extra "context" to provide the validator
+     * @return boolean
+     */
     public function isValid($context = null)
     {
         $this->injectNotEmptyValidator();
         $validator = $this->getValidatorChain();
         $value     = $this->getValue();
-        return $validator->isValid($value, $context);
+        $result    = $validator->isValid($value, $context);
+        if (!$result && $fallbackValue = $this->getFallbackValue()) {
+            $this->setValue($fallbackValue);
+            $result = true;
+        }
+
+        return $result;
     }
 
+    /**
+     * @return array
+     */
     public function getMessages()
     {
         if (null !== $this->errorMessage) {
             return (array) $this->errorMessage;
+        }
+
+        if ($this->getFallbackValue()) {
+            return array();
         }
 
         $validator = $this->getValidatorChain();
@@ -171,10 +310,20 @@ class Input implements InputInterface
 
     protected function injectNotEmptyValidator()
     {
-        if (!$this->isRequired() && $this->allowEmpty() && !$this->notEmptyValidator) {
+        if ((!$this->isRequired() && $this->allowEmpty()) || $this->notEmptyValidator) {
             return;
         }
         $chain = $this->getValidatorChain();
+
+        // Check if NotEmpty validator is already first in chain
+        $validators = $chain->getValidators();
+        if (isset($validators[0]['instance'])
+            && $validators[0]['instance'] instanceof NotEmpty
+        ) {
+            $this->notEmptyValidator = true;
+            return;
+        }
+
         $chain->prependByName('NotEmpty', array(), true);
         $this->notEmptyValidator = true;
     }

@@ -91,7 +91,7 @@ class FileGenerator extends AbstractGenerator
             include $realpath;
         }
 
-        $codeGenerator = self::fromReflection(($fileReflector = new FileReflection($realpath)));
+        $codeGenerator = static::fromReflection(($fileReflector = new FileReflection($realpath)));
 
         return $codeGenerator;
     }
@@ -516,7 +516,8 @@ class FileGenerator extends AbstractGenerator
         $output .= self::LINE_FEED;
 
         // namespace, if any
-        if ($namespace = $this->getNamespace()) {
+        $namespace = $this->getNamespace();
+        if ($namespace) {
             $output .= sprintf('namespace %s;%s', $namespace, str_repeat(self::LINE_FEED, 2));
         }
 

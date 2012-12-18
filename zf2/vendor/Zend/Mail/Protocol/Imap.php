@@ -10,6 +10,8 @@
 
 namespace Zend\Mail\Protocol;
 
+use Zend\Stdlib\ErrorHandler;
+
 /**
  * @category   Zend
  * @package    Zend_Mail
@@ -76,12 +78,14 @@ class Imap
             $port = $ssl === 'SSL' ? 993 : 143;
         }
 
-        $errno  =  0;
-        $errstr = '';
-        $this->socket = @fsockopen($host, $port, $errno, $errstr, self::TIMEOUT_CONNECTION);
+        ErrorHandler::start();
+        $this->socket = fsockopen($host, $port, $errno, $errstr, self::TIMEOUT_CONNECTION);
+        $error = ErrorHandler::stop();
         if (!$this->socket) {
-            throw new Exception\RuntimeException('cannot connect to host; error = ' . $errstr .
-                                                   ' (errno = ' . $errno . ' )');
+            throw new Exception\RuntimeException(sprintf(
+                'cannot connect to host%s',
+                ($error ? sprintf('; error = %s (errno = %d )', $error->getMessage(), $error->getCode()) : '')
+            ), 0, $error);
         }
 
         if (!$this->_assumedNextLine('* OK')) {
@@ -375,7 +379,7 @@ class Imap
     public function escapeList($list)
     {
         $result = array();
-        foreach ($list as $k => $v) {
+        foreach ($list as $v) {
             if (!is_array($v)) {
 //              $result[] = $this->escapeString($v);
                 $result[] = $v;
@@ -469,7 +473,7 @@ class Imap
                     $result[strtolower($tokens[1])] = $tokens[0];
                     break;
                 case '[UIDVALIDITY':
-                    $result['uidvalidity'] = (int)$tokens[2];
+                    $result['uidvalidity'] = (int) $tokens[2];
                     break;
                 default:
                     // ignore
@@ -525,14 +529,14 @@ class Imap
         if (is_array($from)) {
             $set = implode(',', $from);
         } elseif ($to === null) {
-            $set = (int)$from;
+            $set = (int) $from;
         } elseif ($to === INF) {
-            $set = (int)$from . ':*';
+            $set = (int) $from . ':*';
         } else {
-            $set = (int)$from . ':' . (int)$to;
+            $set = (int) $from . ':' . (int)$to;
         }
 
-        $items = (array)$items;
+        $items = (array) $items;
         $itemList = $this->escapeList($items);
 
         $tag = null;  // define $tag variable before first use
@@ -639,9 +643,9 @@ class Imap
         }
 
         $flags = $this->escapeList($flags);
-        $set = (int)$from;
+        $set = (int) $from;
         if ($to != null) {
-            $set .= ':' . ($to == INF ? '*' : (int)$to);
+            $set .= ':' . ($to == INF ? '*' : (int) $to);
         }
 
         $result = $this->requestAndResponse('STORE', array($set, $item, $flags), $silent);
@@ -698,9 +702,9 @@ class Imap
      */
     public function copy($folder, $from, $to = null)
     {
-        $set = (int)$from;
+        $set = (int) $from;
         if ($to != null) {
-            $set .= ':' . ($to == INF ? '*' : (int)$to);
+            $set .= ':' . ($to == INF ? '*' : (int) $to);
         }
 
         return $this->requestAndResponse('COPY', array($set, $this->escapeString($folder)), true);

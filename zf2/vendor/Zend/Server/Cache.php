@@ -10,6 +10,8 @@
 
 namespace Zend\Server;
 
+use Zend\Stdlib\ErrorHandler;
+
 /**
  * \Zend\Server\Cache: cache server definitions
  *
@@ -49,7 +51,7 @@ class Cache
         if ($methods instanceof Definition) {
             $definition = new Definition();
             foreach ($methods as $method) {
-                if (in_array($method->getName(), self::$skipMethods)) {
+                if (in_array($method->getName(), static::$skipMethods)) {
                     continue;
                 }
                 $definition->addMethod($method);
@@ -57,7 +59,10 @@ class Cache
             $methods = $definition;
         }
 
-        if (0 === @file_put_contents($filename, serialize($methods))) {
+        ErrorHandler::start();
+        $test = file_put_contents($filename, serialize($methods));
+        ErrorHandler::stop();
+        if (0 === $test) {
             return false;
         }
 
@@ -104,12 +109,17 @@ class Cache
             return false;
         }
 
-
-        if (false === ($dispatch = @file_get_contents($filename))) {
+        ErrorHandler::start();
+        $dispatch = file_get_contents($filename);
+        ErrorHandler::stop();
+        if (false === $dispatch) {
             return false;
         }
 
-        if (false === ($dispatchArray = @unserialize($dispatch))) {
+        ErrorHandler::start(E_NOTICE);
+        $dispatchArray = unserialize($dispatch);
+        ErrorHandler::stop();
+        if (false === $dispatchArray) {
             return false;
         }
 

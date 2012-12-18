@@ -11,7 +11,6 @@
 namespace Zend\Session\Config;
 
 use Zend\Session\Exception;
-use Zend\Validator\Hostname as HostnameValidator;
 
 /**
  * Session configuration proxying to session INI options
@@ -76,7 +75,7 @@ class SessionConfig extends StandardConfig
      *
      * @param  string $storageName
      * @param  mixed $storageValue
-     * @return SessionConfiguration
+     * @return SessionConfig
      */
     public function setStorageOption($storageName, $storageValue)
     {
@@ -129,7 +128,7 @@ class SessionConfig extends StandardConfig
      * Set session.save_handler
      *
      * @param  string $phpSaveHandler
-     * @return SessionConfiguration
+     * @return SessionConfig
      * @throws Exception\InvalidArgumentException
      */
     public function setPhpSaveHandler($phpSaveHandler)
@@ -149,10 +148,28 @@ class SessionConfig extends StandardConfig
     }
 
     /**
+     * Set session.save_path
+     *
+     * @param  string $savePath
+     * @return SessionConfig
+     * @throws Exception\InvalidArgumentException on invalid path
+     */
+    public function setSavePath($savePath)
+    {
+        if ($this->getOption('save_handler') == 'files') {
+            parent::setSavePath($savePath);
+        }
+        $this->savePath = $savePath;
+        $this->setOption('save_path', $savePath);
+        return $this;
+    }
+
+
+    /**
      * Set session.serialize_handler
      *
      * @param  string $serializeHandler
-     * @return SessionConfiguration
+     * @return SessionConfig
      * @throws Exception\InvalidArgumentException
      */
     public function setSerializeHandler($serializeHandler)
@@ -176,7 +193,7 @@ class SessionConfig extends StandardConfig
      * Set cache limiter
      *
      * @param $cacheLimiter
-     * @return SessionConfiguration
+     * @return SessionConfig
      * @throws Exception\InvalidArgumentException
      */
     public function setCacheLimiter($cacheLimiter)
@@ -194,14 +211,14 @@ class SessionConfig extends StandardConfig
      * Set session.hash_function
      *
      * @param  string|int $hashFunction
-     * @return SessionConfiguration
+     * @return SessionConfig
      * @throws Exception\InvalidArgumentException
      */
     public function setHashFunction($hashFunction)
     {
         $hashFunction = (string) $hashFunction;
         $validHashFunctions = $this->getHashFunctions();
-        if (!in_array($hashFunction, $this->getHashFunctions(), true)) {
+        if (!in_array($hashFunction, $validHashFunctions, true)) {
             throw new Exception\InvalidArgumentException('Invalid hash function provided');
         }
 
@@ -214,7 +231,7 @@ class SessionConfig extends StandardConfig
      * Set session.hash_bits_per_character
      *
      * @param  int $hashBitsPerCharacter
-     * @return SessionConfiguration
+     * @return SessionConfig
      * @throws Exception\InvalidArgumentException
      */
     public function setHashBitsPerCharacter($hashBitsPerCharacter)

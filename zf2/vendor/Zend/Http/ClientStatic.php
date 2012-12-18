@@ -26,14 +26,14 @@ class ClientStatic
     /**
      * Get the static HTTP client
      *
-     * @return Zend\Http\Client
+     * @return Client
      */
     protected static function getStaticClient()
     {
-        if (!isset(self::$client)) {
-            self::$client = new Client();
+        if (!isset(static::$client)) {
+            static::$client = new Client();
         }
-        return self::$client;
+        return static::$client;
     }
 
     /**
@@ -42,9 +42,10 @@ class ClientStatic
      * @param  string $url
      * @param  array $query
      * @param  array $headers
+     * @param  mixed $body
      * @return Response|boolean
      */
-    public static function get($url, $query=array(), $headers=array(), $body=null)
+    public static function get($url, $query = array(), $headers = array(), $body = null)
     {
         if (empty($url)) {
             return false;
@@ -66,17 +67,20 @@ class ClientStatic
             $request->setBody($body);
         }
 
-        return self::getStaticClient()->send($request);
+        return static::getStaticClient()->send($request);
     }
+
     /**
      * HTTP POST METHOD (static)
      *
      * @param  string $url
      * @param  array $params
      * @param  array $headers
+     * @param  mixed $body
+     * @throws Exception\InvalidArgumentException
      * @return Response|boolean
      */
-    public static function post($url, $params, $headers=array(), $body=null)
+    public static function post($url, $params, $headers = array(), $body = null)
     {
         if (empty($url)) {
             return false;
@@ -104,6 +108,6 @@ class ClientStatic
             $request->setContent($body);
         }
 
-        return self::getStaticClient()->send($request);
+        return static::getStaticClient()->send($request);
     }
 }

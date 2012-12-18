@@ -12,6 +12,8 @@ namespace Zend\Http\Client\Adapter;
 
 use Zend\Http\Client;
 use Zend\Http\Client\Adapter\Exception as AdapterException;
+use Zend\Http\Response;
+use Zend\Stdlib\ErrorHandler;
 
 /**
  * HTTP Proxy-supporting Zend_Http_Client adapter class, based on the default
@@ -38,6 +40,7 @@ class Proxy extends Socket
         'sslcert'            => null,
         'sslpassphrase'      => null,
         'sslverifypeer'      => true,
+        'sslcapath'          => null,
         'sslallowselfsigned' => false,
         'sslusecontext'      => false,
         'proxy_host'         => '',
@@ -54,6 +57,24 @@ class Proxy extends Socket
      * @var boolean
      */
     protected $negotiated = false;
+
+    /**
+     * Set the configuration array for the adapter
+     *
+     * @param array $options
+     */
+    public function setOptions($options = array())
+    {
+        //enforcing that the proxy keys are set in the form proxy_*
+        foreach ($options as $k => $v) {
+            if (preg_match("/^proxy[a-z]+/", $k)) {
+                $options['proxy_' . substr($k, 5, strlen($k))] = $v;
+                unset($options[$k]);
+            }
+        }
+
+        parent::setOptions($options);
+    }
 
     /**
      * Connect to the remote server
@@ -93,6 +114,7 @@ class Proxy extends Socket
      * @param string        $http_ver
      * @param array         $headers
      * @param string        $body
+     * @throws AdapterException\RuntimeException
      * @return string Request as string
      */
     public function write($method, $uri, $http_ver = '1.1', $headers = array(), $body = '')
@@ -153,8 +175,11 @@ class Proxy extends Socket
         }
 
         // Send the request
-        if (! @fwrite($this->socket, $request)) {
-            throw new AdapterException\RuntimeException("Error writing request to proxy server");
+        ErrorHandler::start();
+        $test  = fwrite($this->socket, $request);
+        $error = ErrorHandler::stop();
+        if (!$test) {
+            throw new AdapterException\RuntimeException("Error writing request to proxy server", 0, $error);
         }
 
         if (is_resource($body)) {
@@ -173,6 +198,7 @@ class Proxy extends Socket
      * @param integer $port
      * @param string  $http_ver
      * @param array   $headers
+     * @throws AdapterException\RuntimeException
      */
     protected function connectHandshake($host, $port = 443, $http_ver = '1.1', array &$headers = array())
     {
@@ -194,23 +220,28 @@ class Proxy extends Socket
         $request .= "\r\n";
 
         // Send the request
-        if (! @fwrite($this->socket, $request)) {
-            throw new AdapterException\RuntimeException("Error writing request to proxy server");
+        ErrorHandler::start();
+        $test  = fwrite($this->socket, $request);
+        $error = ErrorHandler::stop();
+        if (!$test) {
+            throw new AdapterException\RuntimeException("Error writing request to proxy server", 0, $error);
         }
 
         // Read response headers only
         $response = '';
         $gotStatus = false;
-        while ($line = @fgets($this->socket)) {
+        ErrorHandler::start();
+        while ($line = fgets($this->socket)) {
             $gotStatus = $gotStatus || (strpos($line, 'HTTP') !== false);
             if ($gotStatus) {
                 $response .= $line;
                 if (!rtrim($line)) break;
             }
         }
+        ErrorHandler::stop();
 
         // Check that the response from the proxy is 200
-        if (\Zend\Http\Response::extractCode($response) != 200) {
+        if (Response::extractCode($response) != 200) {
             throw new AdapterException\RuntimeException("Unable to connect to HTTPS proxy. Server response: " . $response);
         }
 

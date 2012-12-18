@@ -89,7 +89,7 @@ class ValidatorPluginManager extends AbstractPluginManager
         'greaterthan'              => 'Zend\Validator\GreaterThan',
         'hex'                      => 'Zend\Validator\Hex',
         'hostname'                 => 'Zend\Validator\Hostname',
-        'iban'                     => 'Zend\I18n\Validator\Iban',
+        'iban'                     => 'Zend\Validator\Iban',
         'identical'                => 'Zend\Validator\Identical',
         'inarray'                  => 'Zend\Validator\InArray',
         'int'                      => 'Zend\I18n\Validator\Int',
@@ -105,6 +105,7 @@ class ValidatorPluginManager extends AbstractPluginManager
         'sitemappriority'          => 'Zend\Validator\Sitemap\Priority',
         'stringlength'             => 'Zend\Validator\StringLength',
         'step'                     => 'Zend\Validator\Step',
+        'uri'                      => 'Zend\Validator\Uri',
     );
 
     /**

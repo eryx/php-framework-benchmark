@@ -12,7 +12,6 @@ namespace Zend\Db\RowGateway;
 
 use ArrayAccess;
 use Countable;
-use Zend\Db\Adapter\Adapter;
 use Zend\Db\Sql\Sql;
 use Zend\Db\Sql\TableIdentifier;
 
@@ -97,8 +96,9 @@ abstract class AbstractRowGateway implements ArrayAccess, Countable, RowGatewayI
     /**
      * Populate Data
      *
-     * @param  array $currentData
-     * @return RowGateway
+     * @param  array $rowData
+     * @param  bool  $rowExistsInDatabase
+     * @return AbstractRowGateway
      */
     public function populate(array $rowData, $rowExistsInDatabase = false)
     {
@@ -163,6 +163,9 @@ abstract class AbstractRowGateway implements ArrayAccess, Countable, RowGatewayI
             $result = $statement->execute();
             if (($primaryKeyValue = $result->getGeneratedValue()) && count($this->primaryKeyColumn) == 1) {
                 $this->primaryKeyData = array($this->primaryKeyColumn[0] => $primaryKeyValue);
+            } else {
+                // make primary key data available so that $where can be complete
+                $this->processPrimaryKeyData();
             }
             $rowsAffected = $result->getAffectedRows();
             unset($statement, $result); // cleanup
@@ -253,7 +256,7 @@ abstract class AbstractRowGateway implements ArrayAccess, Countable, RowGatewayI
      * Offset unset
      *
      * @param  string $offset
-     * @return RowGateway
+     * @return AbstractRowGateway
      */
     public function offsetUnset($offset)
     {

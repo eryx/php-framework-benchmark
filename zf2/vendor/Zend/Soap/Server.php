@@ -13,6 +13,7 @@ namespace Zend\Soap;
 use DOMDocument;
 use DOMNode;
 use SimpleXMLElement;
+use SoapFault;
 use stdClass;
 use Traversable;
 use Zend\Stdlib\ArrayUtils;
@@ -385,7 +386,7 @@ class Server implements \Zend\Server\Server
         if (!is_array($classmap)) {
             throw new Exception\InvalidArgumentException('Classmap must be an array');
         }
-        foreach ($classmap as $type => $class) {
+        foreach ($classmap as $class) {
             if (!class_exists($class)) {
                 throw new Exception\InvalidArgumentException('Invalid class in class map');
             }
@@ -557,6 +558,7 @@ class Server implements \Zend\Server\Server
      * Accepts an instanciated object to use when handling requests.
      *
      * @param object $object
+     * @throws Exception\InvalidArgumentException
      * @return Server
      */
     public function setObject($object)
@@ -599,7 +601,7 @@ class Server implements \Zend\Server\Server
     /**
      * Unimplemented: Load server definition
      *
-     * @param array $array
+     * @param array $definition
      * @return void
      * @throws Exception\RuntimeException Unimplemented
      */
@@ -612,6 +614,7 @@ class Server implements \Zend\Server\Server
      * Set server persistence
      *
      * @param int $mode
+     * @throws Exception\InvalidArgumentException
      * @return Server
      */
     public function setPersistence($mode)
@@ -645,6 +648,7 @@ class Server implements \Zend\Server\Server
      * - string; if so, verifies XML
      *
      * @param DOMDocument|DOMNode|SimpleXMLElement|stdClass|string $request
+     * @throws Exception\InvalidArgumentException
      * @return Server
      */
     protected function _setRequest($request)
@@ -733,7 +737,7 @@ class Server implements \Zend\Server\Server
      * SoapServer object, and then registers any functions or class with it, as
      * well as persistence.
      *
-     * @return SoapServer
+     * @return \SoapServer
      */
     protected function _getSoap()
     {
@@ -798,34 +802,45 @@ class Server implements \Zend\Server\Server
 
         $soap = $this->_getSoap();
 
-        $fault = false;
-        ob_start();
+        $fault          = false;
+        $this->response = '';
+
         if ($setRequestException instanceof \Exception) {
             // Create SOAP fault message if we've caught a request exception
             $fault = $this->fault($setRequestException->getMessage(), 'Sender');
-        } else {
+        }
+        if (!$setRequestException instanceof \Exception) {
+            ob_start();
             try {
                 $soap->handle($this->request);
             } catch (\Exception $e) {
                 $fault = $this->fault($e);
             }
+            $this->response = ob_get_clean();
         }
-        $this->response = ob_get_clean();
 
         // Restore original error handler
         restore_error_handler();
         ini_set('display_errors', $displayErrorsOriginalState);
 
         // Send a fault, if we have one
-        if ($fault) {
-            $this->response = $fault;
+        if ($fault instanceof SoapFault && !$this->returnResponse) {
+            $soap->fault($fault->faultcode, $fault->getMessage());
+            return;
         }
 
+        // Echo the response, if we're not returning it
         if (!$this->returnResponse) {
             echo $this->response;
             return;
         }
 
+        // Return a fault, if we have it
+        if ($fault instanceof SoapFault) {
+            return $fault;
+        }
+
+        // Return the response
         return $this->response;
     }
 
@@ -891,7 +906,7 @@ class Server implements \Zend\Server\Server
      * {@Link registerFaultException()}.
      *
      * @link   http://www.w3.org/TR/soap12-part1/#faultcodes
-     * @param  string|Exception $fault
+     * @param  string|\Exception $fault
      * @param  string $code SOAP Fault Codes
      * @return SoapFault
      */
@@ -920,7 +935,7 @@ class Server implements \Zend\Server\Server
             $code = "Receiver";
         }
 
-        return new \SoapFault($code, $message);
+        return new SoapFault($code, $message);
     }
 
     /**

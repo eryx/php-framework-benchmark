@@ -67,6 +67,7 @@ abstract class AbstractSource implements MetadataInterface
      * Get table names
      *
      * @param  string $schema
+     * @param  bool   $includeViews
      * @return string[]
      */
     public function getTableNames($schema = null, $includeViews = false)
@@ -95,6 +96,7 @@ abstract class AbstractSource implements MetadataInterface
      * Get tables
      *
      * @param  string $schema
+     * @param  bool   $includeViews
      * @return Object\TableObject[]
      */
     public function getTables($schema = null, $includeViews = false)
@@ -144,6 +146,7 @@ abstract class AbstractSource implements MetadataInterface
                 throw new \Exception('Table "' . $tableName . '" is of an unsupported type "' . $data['table_type'] . '"');
         }
         $table->setColumns($this->getColumns($tableName, $schema));
+        $table->setConstraints($this->getConstraints($tableName, $schema));
         return $table;
     }
 
@@ -351,18 +354,18 @@ abstract class AbstractSource implements MetadataInterface
         $constraint = new Object\ConstraintObject($constraintName, $table, $schema);
 
         foreach (array(
-            'constraint_type'    => 'setType',
-            'match_option'       => 'setMatchOption',
-            'update_rule'        => 'setUpdateRule',
-            'delete_rule'        => 'setDeleteRule',
-            'columns'            => 'setColumns',
+            'constraint_type'         => 'setType',
+            'match_option'            => 'setMatchOption',
+            'update_rule'             => 'setUpdateRule',
+            'delete_rule'             => 'setDeleteRule',
+            'columns'                 => 'setColumns',
             'referenced_table_schema' => 'setReferencedTableSchema',
             'referenced_table_name'   => 'setReferencedTableName',
             'referenced_columns'      => 'setReferencedColumns',
-            'match_option'       => 'setMatchOption',
-            'update_rule'        => 'setUpdateRule',
-            'delete_rule'        => 'setDeleteRule',
-            'check_clause'       => 'setCheckClause',
+            'match_option'            => 'setMatchOption',
+            'update_rule'             => 'setUpdateRule',
+            'delete_rule'             => 'setDeleteRule',
+            'check_clause'            => 'setCheckClause',
         ) as $key => $setMethod) {
             if (isset($info[$key])) {
                 $constraint->{$setMethod}($info[$key]);

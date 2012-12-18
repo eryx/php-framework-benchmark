@@ -74,10 +74,15 @@ class Url extends AbstractHelper
      * @throws Exception\RuntimeException  If no RouteMatch was provided
      * @throws Exception\RuntimeException  If RouteMatch didn't contain a matched route name
      */
-    public function __invoke($name = null, array $params = array(), array $options = array(), $reuseMatchedParams = false)
+    public function __invoke($name = null, array $params = array(), $options = array(), $reuseMatchedParams = false)
     {
         if (null === $this->router) {
             throw new Exception\RuntimeException('No RouteStackInterface instance provided');
+        }
+
+        if (3 == func_num_args() && is_bool($options)) {
+            $reuseMatchedParams = $options;
+            $options = array();
         }
 
         if ($name === null) {
@@ -97,6 +102,11 @@ class Url extends AbstractHelper
 
             if (isset($routeMatchParams[ModuleRouteListener::ORIGINAL_CONTROLLER])) {
                 $routeMatchParams['controller'] = $routeMatchParams[ModuleRouteListener::ORIGINAL_CONTROLLER];
+                unset($routeMatchParams[ModuleRouteListener::ORIGINAL_CONTROLLER]);
+            }
+
+            if (isset($routeMatchParams[ModuleRouteListener::MODULE_NAMESPACE])) {
+                unset($routeMatchParams[ModuleRouteListener::MODULE_NAMESPACE]);
             }
 
             $params = array_merge($routeMatchParams, $params);

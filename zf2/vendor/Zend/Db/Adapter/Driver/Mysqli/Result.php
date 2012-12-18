@@ -10,6 +10,7 @@
 
 namespace Zend\Db\Adapter\Driver\Mysqli;
 
+use Iterator;
 use Zend\Db\Adapter\Driver\ResultInterface;
 use Zend\Db\Adapter\Exception;
 
@@ -18,7 +19,9 @@ use Zend\Db\Adapter\Exception;
  * @package    Zend_Db
  * @subpackage Adapter
  */
-class Result implements \Iterator, ResultInterface
+class Result implements
+    Iterator,
+    ResultInterface
 {
 
     /**
@@ -72,9 +75,11 @@ class Result implements \Iterator, ResultInterface
 
     /**
      * Initialize
+     *
      * @param mixed $resource
      * @param mixed $generatedValue
      * @param bool|null $isBuffered
+     * @throws Exception\InvalidArgumentException
      * @return Result
      */
     public function initialize($resource, $generatedValue, $isBuffered = null)
@@ -99,6 +104,7 @@ class Result implements \Iterator, ResultInterface
 
     /**
      * Force buffering
+     *
      * @throws Exception\RuntimeException
      */
     public function buffer()
@@ -113,7 +119,18 @@ class Result implements \Iterator, ResultInterface
     }
 
     /**
+     * Check if is buffered
+     *
+     * @return bool|null
+     */
+    public function isBuffered()
+    {
+        return $this->isBuffered;
+    }
+
+    /**
      * Return the resource
+     *
      * @return mixed
      */
     public function getResource()
@@ -133,6 +150,7 @@ class Result implements \Iterator, ResultInterface
 
     /**
      * Get affected rows
+     *
      * @return integer
      */
     public function getAffectedRows()
@@ -146,6 +164,7 @@ class Result implements \Iterator, ResultInterface
 
     /**
      * Current
+     *
      * @return mixed
      */
     public function current()
@@ -170,7 +189,7 @@ class Result implements \Iterator, ResultInterface
      * get data out.  These values have to be references:
      * @see http://php.net/manual/en/mysqli-stmt.bind-result.php
      *
-     * @throws \RuntimeException
+     * @throws Exception\RuntimeException
      * @return bool
      */
     protected function loadDataFromMysqliStatement()
@@ -192,7 +211,9 @@ class Result implements \Iterator, ResultInterface
         }
 
         if (($r = $this->resource->fetch()) === null) {
-            $this->resource->close();
+            if (!$this->isBuffered) {
+                $this->resource->close();
+            }
             return false;
         } elseif ($r === false) {
             throw new Exception\RuntimeException($this->resource->error);
@@ -231,6 +252,8 @@ class Result implements \Iterator, ResultInterface
 
     /**
      * Next
+     *
+     * @return void
      */
     public function next()
     {
@@ -245,6 +268,7 @@ class Result implements \Iterator, ResultInterface
 
     /**
      * Key
+     *
      * @return mixed
      */
     public function key()
@@ -254,6 +278,9 @@ class Result implements \Iterator, ResultInterface
 
     /**
      * Rewind
+     *
+     * @throws Exception\RuntimeException
+     * @return void
      */
     public function rewind()
     {
@@ -269,6 +296,7 @@ class Result implements \Iterator, ResultInterface
 
     /**
      * Valid
+     *
      * @return boolean
      */
     public function valid()
@@ -286,6 +314,8 @@ class Result implements \Iterator, ResultInterface
 
     /**
      * Count
+     *
+     * @throws Exception\RuntimeException
      * @return integer
      */
     public function count()
@@ -297,7 +327,9 @@ class Result implements \Iterator, ResultInterface
     }
 
     /**
-     * @return int
+     * Get field count
+     *
+     * @return integer
      */
     public function getFieldCount()
     {
@@ -305,6 +337,8 @@ class Result implements \Iterator, ResultInterface
     }
 
     /**
+     * Get generated value
+     *
      * @return mixed|null
      */
     public function getGeneratedValue()

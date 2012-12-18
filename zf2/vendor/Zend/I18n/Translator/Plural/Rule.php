@@ -47,7 +47,7 @@ class Rule
      *
      * @param  integer $numPlurals
      * @param  array   $ast
-     * @return void
+     * @return Rule
      */
     protected function __construct($numPlurals, array $ast)
     {
@@ -177,12 +177,13 @@ class Rule
      * Create a new rule from a string.
      *
      * @param  string $string
+     * @throws Exception\ParseException
      * @return Rule
      */
     public static function fromString($string)
     {
-        if (self::$parser === null) {
-            self::$parser = new Parser();
+        if (static::$parser === null) {
+            static::$parser = new Parser();
         }
 
         if (!preg_match('(nplurals=(?P<nplurals>\d+))', $string, $match)) {
@@ -201,8 +202,8 @@ class Rule
             ));
         }
 
-        $tree = self::$parser->parse($match['plural']);
-        $ast  = self::createAst($tree);
+        $tree = static::$parser->parse($match['plural']);
+        $ast  = static::createAst($tree);
 
         return new self($numPlurals, $ast);
     }
@@ -229,18 +230,18 @@ class Rule
                 break;
 
             case '!':
-                $ast['arguments'][] = self::createAst($symbol->first);
+                $ast['arguments'][] = static::createAst($symbol->first);
                 break;
 
             case '?':
-                $ast['arguments'][] = self::createAst($symbol->first);
-                $ast['arguments'][] = self::createAst($symbol->second);
-                $ast['arguments'][] = self::createAst($symbol->third);
+                $ast['arguments'][] = static::createAst($symbol->first);
+                $ast['arguments'][] = static::createAst($symbol->second);
+                $ast['arguments'][] = static::createAst($symbol->third);
                 break;
 
             default:
-                $ast['arguments'][] = self::createAst($symbol->first);
-                $ast['arguments'][] = self::createAst($symbol->second);
+                $ast['arguments'][] = static::createAst($symbol->first);
+                $ast['arguments'][] = static::createAst($symbol->second);
                 break;
         }
 

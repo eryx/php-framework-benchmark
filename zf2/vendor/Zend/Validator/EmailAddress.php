@@ -12,7 +12,7 @@ namespace Zend\Validator;
 
 /**
  * @category   Zend
- * @package    Zend_Validate
+ * @package    Zend_Validator
  */
 class EmailAddress extends AbstractValidator
 {
@@ -122,13 +122,13 @@ class EmailAddress extends AbstractValidator
     public function setMessage($messageString, $messageKey = null)
     {
         if ($messageKey === null) {
-            $this->options['hostnameValidator']->setMessage($messageString);
+            $this->getHostnameValidator()->setMessage($messageString);
             parent::setMessage($messageString);
             return $this;
         }
 
         if (!isset($this->messageTemplates[$messageKey])) {
-            $this->options['hostnameValidator']->setMessage($messageString, $messageKey);
+            $this->getHostnameValidator()->setMessage($messageString, $messageKey);
         } else {
             parent::setMessage($messageString, $messageKey);
         }
@@ -143,6 +143,12 @@ class EmailAddress extends AbstractValidator
      */
     public function getHostnameValidator()
     {
+        if (!isset($this->options['hostnameValidator'])
+            || !$this->options['hostnameValidator'] instanceof Hostname
+        ) {
+            $this->setHostnameValidator();
+        }
+
         return $this->options['hostnameValidator'];
     }
 
@@ -480,7 +486,7 @@ class EmailAddress extends AbstractValidator
     }
 
     /**
-     * Defined by Zend_Validate_Interface
+     * Defined by Zend\Validator\ValidatorInterface
      *
      * Returns true if and only if $value is a valid email address
      * according to RFC2822

@@ -208,7 +208,7 @@ abstract class AbstractWord extends AbstractAdapter
     /**
      * Sets if session should be preserved on generate()
      *
-     * @param $keepSession Should session be kept on generate()?
+     * @param bool $keepSession Should session be kept on generate()?
      * @return AbstractWord
      */
     public function setKeepSession($keepSession)
@@ -242,6 +242,7 @@ abstract class AbstractWord extends AbstractAdapter
     /**
      * Get session object
      *
+     * @throws Exception\InvalidArgumentException
      * @return Container
      */
     public function getSession()
@@ -310,8 +311,8 @@ abstract class AbstractWord extends AbstractAdapter
     {
         $word       = '';
         $wordLen    = $this->getWordLen();
-        $vowels     = $this->useNumbers ? self::$VN : self::$V;
-        $consonants = $this->useNumbers ? self::$CN : self::$C;
+        $vowels     = $this->useNumbers ? static::$VN : static::$V;
+        $consonants = $this->useNumbers ? static::$CN : static::$C;
 
         for ($i=0; $i < $wordLen; $i = $i + 2) {
             // generate word with mix of vowels and consonants
@@ -359,6 +360,7 @@ abstract class AbstractWord extends AbstractAdapter
      *
      * @see    Zend\Validator\ValidatorInterface::isValid()
      * @param  mixed $value
+     * @param  mixed $context
      * @return bool
      */
     public function isValid($value, $context = null)

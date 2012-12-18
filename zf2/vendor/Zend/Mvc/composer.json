@@ -8,12 +8,13 @@
     ],
     "autoload": {
         "psr-0": {
-            "Zend\\Mvc": ""
+            "Zend\\Mvc\\": ""
         }
     },
     "target-dir": "Zend/Mvc",
     "require": {
         "php": ">=5.3.3",
+        "zendframework/zend-console": "self.version",
         "zendframework/zend-di": "self.version",
         "zendframework/zend-eventmanager": "self.version",
         "zendframework/zend-modulemanager": "self.version",

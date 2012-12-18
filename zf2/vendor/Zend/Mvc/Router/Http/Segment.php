@@ -20,10 +20,47 @@ use Zend\Stdlib\RequestInterface as Request;
  *
  * @package    Zend_Mvc_Router
  * @subpackage Http
- * @see        http://manuals.rubyonrails.com/read/chapter/65
+ * @see        http://guides.rubyonrails.org/routing.html
  */
 class Segment implements RouteInterface
 {
+    /**
+     * @var array Cache for the encode output
+     */
+    private static $cacheEncode = array();
+
+    /**
+     * Map of allowed special chars in path segments.
+     *
+     * http://tools.ietf.org/html/rfc3986#appendix-A
+     * segement      = *pchar
+     * pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
+     * unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~"
+     * sub-delims    = "!" / "$" / "&" / "'" / "(" / ")"
+     *               / "*" / "+" / "," / ";" / "="
+     *
+     * @var array
+     */
+    private static $urlencodeCorrectionMap = array(
+        '%21' => "!", // sub-delims
+        '%24' => "$", // sub-delims
+        '%26' => "&", // sub-delims
+        '%27' => "'", // sub-delims
+        '%28' => "(", // sub-delims
+        '%29' => ")", // sub-delims
+        '%2A' => "*", // sub-delims
+        '%2B' => "+", // sub-delims
+        '%2C' => ",", // sub-delims
+//      '%2D' => "-", // unreserved - not touched by rawurlencode
+//      '%2E' => ".", // unreserved - not touched by rawurlencode
+        '%3A' => ":", // pchar
+        '%3B' => ";", // sub-delims
+        '%3D' => "=", // sub-delims
+        '%40' => "@", // pchar
+//      '%5F' => "_", // unreserved - not touched by rawurlencode
+        '%7E' => "~", // unreserved
+    );
+
     /**
      * Parts of the route.
      *
@@ -264,7 +301,7 @@ class Segment implements RouteInterface
                         $skip = false;
                     }
 
-                    $path .= urlencode($mergedParams[$part[1]]);
+                    $path .= $this->encode($mergedParams[$part[1]]);
 
                     $this->assembledParams[] = $part[1];
                     break;
@@ -273,7 +310,7 @@ class Segment implements RouteInterface
                     $skippable    = true;
                     $optionalPart = $this->buildPath($part[1], $mergedParams, true, $hasChild);
 
-                    if ($optionalPart !== null) {
+                    if ($optionalPart !== '') {
                         $path .= $optionalPart;
                         $skip  = false;
                     }
@@ -330,7 +367,7 @@ class Segment implements RouteInterface
 
         foreach ($this->paramMap as $index => $name) {
             if (isset($matches[$index]) && $matches[$index] !== '') {
-                $params[$name] = urldecode($matches[$index]);
+                $params[$name] = $this->decode($matches[$index]);
             }
         }
 
@@ -366,5 +403,31 @@ class Segment implements RouteInterface
     public function getAssembledParams()
     {
         return $this->assembledParams;
+    }
+
+    /**
+     * Encode a path segment.
+     *
+     * @param string $value
+     * @return string
+     */
+    private function encode($value)
+    {
+        if (!isset(static::$cacheEncode[$value])) {
+            static::$cacheEncode[$value] = rawurlencode($value);
+            static::$cacheEncode[$value] = strtr(static::$cacheEncode[$value], static::$urlencodeCorrectionMap);
+        }
+        return static::$cacheEncode[$value];
+    }
+
+    /**
+     * Decode a path segment.
+     *
+     * @param string $value
+     * @return string
+     */
+    private function decode($value)
+    {
+        return rawurldecode($value);
     }
 }

@@ -11,9 +11,11 @@
 namespace Zend\View\Renderer;
 
 use ArrayAccess;
+use Traversable;
 use Zend\Filter\FilterChain;
 use Zend\View\Exception;
 use Zend\View\HelperPluginManager;
+use Zend\View\Helper\AbstractHelper;
 use Zend\View\Model\ModelInterface as Model;
 use Zend\View\Renderer\RendererInterface as Renderer;
 use Zend\View\Resolver\ResolverInterface as Resolver;
@@ -77,7 +79,7 @@ class PhpRenderer implements Renderer, TreeRendererInterface
     private $__helpers;
 
     /**
-     * @var Zend\Filter\FilterChain
+     * @var FilterChain
      */
     private $__filterChain;
 
@@ -90,6 +92,11 @@ class PhpRenderer implements Renderer, TreeRendererInterface
      * @var array Temporary variable stack; used when variables passed to render()
      */
     private $__varsCache = array();
+
+    /**
+     * @var array Cache for the plugin call
+     */
+    private $__pluginCache = array();
 
     /**
      * Constructor.
@@ -324,9 +331,9 @@ class PhpRenderer implements Renderer, TreeRendererInterface
     /**
      * Get plugin instance
      *
-     * @param  string     $plugin  Name of plugin to return
+     * @param  string     $name Name of plugin to return
      * @param  null|array $options Options to pass to plugin constructor (if not already instantiated)
-     * @return Helper
+     * @return AbstractHelper
      */
     public function plugin($name, array $options = null)
     {
@@ -348,11 +355,13 @@ class PhpRenderer implements Renderer, TreeRendererInterface
      */
     public function __call($method, $argv)
     {
-        $helper = $this->plugin($method);
-        if (is_callable($helper)) {
-            return call_user_func_array($helper, $argv);
+        if (!isset($this->__pluginCache[$method])) {
+            $this->__pluginCache[$method] = $this->plugin($method);
         }
-        return $helper;
+        if (is_callable($this->__pluginCache[$method])) {
+            return call_user_func_array($this->__pluginCache[$method], $argv);
+        }
+        return $this->__pluginCache[$method];
     }
 
     /**
@@ -387,7 +396,7 @@ class PhpRenderer implements Renderer, TreeRendererInterface
      *                                   ViewModel. The ViewModel must have the
      *                                   template as an option in order to be
      *                                   valid.
-     * @param  null|array|Traversable Values to use when rendering. If none
+     * @param  null|array|Traversable $values Values to use when rendering. If none
      *                                provided, uses those in the composed
      *                                variables container.
      * @return string The script output.
@@ -395,6 +404,7 @@ class PhpRenderer implements Renderer, TreeRendererInterface
      *                                   contain a template option.
      * @throws Exception\InvalidArgumentException if the values passed are not
      *                                            an array or ArrayAccess object
+     * @throws Exception\RuntimeException if the template cannot be rendered
      */
     public function render($nameOrModel, $values = null)
     {

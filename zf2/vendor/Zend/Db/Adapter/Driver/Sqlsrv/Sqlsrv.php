@@ -69,21 +69,25 @@ class Sqlsrv implements DriverInterface
      * Register statement prototype
      *
      * @param Statement $statementPrototype
+     * @return Sqlsrv
      */
     public function registerStatementPrototype(Statement $statementPrototype)
     {
         $this->statementPrototype = $statementPrototype;
         $this->statementPrototype->setDriver($this);
+        return $this;
     }
 
     /**
      * Register result prototype
      *
      * @param Result $resultPrototype
+     * @return Sqlsrv
      */
     public function registerResultPrototype(Result $resultPrototype)
     {
         $this->resultPrototype = $resultPrototype;
+        return $this;
     }
 
     /**
@@ -103,6 +107,9 @@ class Sqlsrv implements DriverInterface
 
     /**
      * Check environment
+     *
+     * @throws Exception\RuntimeException
+     * @return void
      */
     public function checkEnvironment()
     {
@@ -120,7 +127,8 @@ class Sqlsrv implements DriverInterface
     }
 
     /**
-     * @param string $sql
+     * @param string|resource $sqlOrResource
+     * @throws Exception\InvalidArgumentException
      * @return Statement
      */
     public function createStatement($sqlOrResource = null)
@@ -128,15 +136,20 @@ class Sqlsrv implements DriverInterface
         $statement = clone $this->statementPrototype;
         if (is_string($sqlOrResource)) {
             $statement->setSql($sqlOrResource);
-        } elseif ($sqlOrResource instanceof \PDOStatement) {
-            $statement->setResource($sqlOrResource);
+            if (!$this->connection->isConnected()) {
+                $this->connection->connect();
+            }
+            $statement->initialize($this->connection->getResource());
+        } elseif (is_resource($sqlOrResource)) {
+            $statement->initialize($sqlOrResource); // will check the resource type
+        } else {
+            throw new Exception\InvalidArgumentException('createStatement() only accepts an SQL string or a Sqlsrv resource');
         }
-        $statement->initialize($this->connection->getResource());
         return $statement;
     }
 
     /**
-     * @param resource $result
+     * @param resource $resource
      * @return Result
      */
     public function createResult($resource)
@@ -155,7 +168,8 @@ class Sqlsrv implements DriverInterface
     }
 
     /**
-     * @param $name
+     * @param string $name
+     * @param mixed  $type
      * @return string
      */
     public function formatParameterName($name, $type = null)

@@ -26,18 +26,18 @@ class Between implements PredicateInterface
      * Constructor
      *
      * @param  string $identifier
-     * @param  string $minValue
-     * @param  string $maxValue
+     * @param  int|float|string $minValue
+     * @param  int|float|string $maxValue
      */
     public function __construct($identifier = null, $minValue = null, $maxValue = null)
     {
         if ($identifier) {
             $this->setIdentifier($identifier);
         }
-        if ($minValue) {
+        if (!is_null($minValue)) {
             $this->setMinValue($minValue);
         }
-        if ($maxValue) {
+        if (!is_null($maxValue)) {
             $this->setMaxValue($maxValue);
         }
     }

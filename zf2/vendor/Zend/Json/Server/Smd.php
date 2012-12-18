@@ -114,6 +114,7 @@ class Smd
      * Set transport
      *
      * @param  string $transport
+     * @throws Exception\InvalidArgumentException
      * @return \Zend\Json\Server\Smd
      */
     public function setTransport($transport)
@@ -139,6 +140,7 @@ class Smd
      * Set envelope
      *
      * @param  string $envelopeType
+     * @throws Exception\InvalidArgumentException
      * @return Smd
      */
     public function setEnvelope($envelopeType)
@@ -165,6 +167,7 @@ class Smd
      * Set content type
      *
      * @param  string $type
+     * @throws Exception\InvalidArgumentException
      * @return \Zend\Json\Server\Smd
      */
     public function setContentType($type)
@@ -211,7 +214,7 @@ class Smd
     /**
      * Set service ID
      *
-     * @param  string $Id
+     * @param  string $id
      * @return Smd
      */
     public function setId($id)
@@ -278,6 +281,8 @@ class Smd
      * Add Service
      *
      * @param Smd\Service|array $service
+     * @throws Exception\RuntimeException
+     * @throws Exception\InvalidArgumentException
      * @return Smd
      */
     public function addService($service)
@@ -377,7 +382,7 @@ class Smd
         $transport   = $this->getTransport();
         $envelope    = $this->getEnvelope();
         $contentType = $this->getContentType();
-        $SMDVersion  = self::SMD_VERSION;
+        $SMDVersion  = static::SMD_VERSION;
         $service = compact('transport', 'envelope', 'contentType', 'SMDVersion');
 
         if (null !== ($target = $this->getTarget())) {

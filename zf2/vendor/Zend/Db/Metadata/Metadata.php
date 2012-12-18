@@ -11,7 +11,6 @@
 namespace Zend\Db\Metadata;
 
 use Zend\Db\Adapter\Adapter;
-use Zend\Db\Adapter\Driver;
 
 /**
  * @category   Zend
@@ -71,6 +70,7 @@ class Metadata implements MetadataInterface
      * Get base tables and views
      *
      * @param string $schema
+     * @param bool   $includeViews
      * @return Object\TableObject[]
      */
     public function getTables($schema = null, $includeViews = false)
@@ -93,7 +93,6 @@ class Metadata implements MetadataInterface
      * Get triggers
      *
      * @param  string $schema
-     * @param  string $database
      * @return array
      */
     public function getTriggers($schema = null)
@@ -106,7 +105,6 @@ class Metadata implements MetadataInterface
      *
      * @param  string $table
      * @param  string $schema
-     * @param  string $database
      * @return array
      */
     public function getConstraints($table, $schema = null)
@@ -119,7 +117,6 @@ class Metadata implements MetadataInterface
      *
      * @param  string $table
      * @param  string $schema
-     * @param  string $database
      * @return array
      */
     public function getColumns($table, $schema = null)
@@ -133,7 +130,6 @@ class Metadata implements MetadataInterface
      * @param  string $constraint
      * @param  string $table
      * @param  string $schema
-     * @param  string $database
      * @return array
      */
     public function getConstraintKeys($constraint, $table, $schema = null)
@@ -147,7 +143,6 @@ class Metadata implements MetadataInterface
      * @param  string $constraintName
      * @param  string $table
      * @param  string $schema
-     * @param  string $database
      * @return Object\ConstraintObject
      */
     public function getConstraint($constraintName, $table, $schema = null)
@@ -167,7 +162,7 @@ class Metadata implements MetadataInterface
      * Get table names
      *
      * @param  string $schema
-     * @param  string $database
+     * @param  bool   $includeViews
      * @return array
      */
     public function getTableNames($schema = null, $includeViews = false)
@@ -180,7 +175,6 @@ class Metadata implements MetadataInterface
      *
      * @param  string $tableName
      * @param  string $schema
-     * @param  string $database
      * @return Object\TableObject
      */
     public function getTable($tableName, $schema = null)

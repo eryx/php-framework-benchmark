@@ -12,13 +12,14 @@ namespace Zend\Validator\File;
 
 use Traversable;
 use Zend\Stdlib\ArrayUtils;
+use Zend\Stdlib\ErrorHandler;
 use Zend\Validator\Exception;
 
 /**
  * Validator for the size of all files which will be validated in sum
  *
  * @category  Zend
- * @package   Zend_Validate
+ * @package   Zend_Validator
  */
 class FilesSize extends Size
 {
@@ -111,7 +112,9 @@ class FilesSize extends Size
             }
 
             // limited to 2GB files
-            $size += @filesize($files);
+            ErrorHandler::start();
+            $size += filesize($files);
+            ErrorHandler::stop();
             $this->size = $size;
             if (($max !== null) && ($max < $size)) {
                 if ($this->getByteString()) {

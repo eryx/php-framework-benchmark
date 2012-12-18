@@ -10,6 +10,8 @@
 
 namespace Zend\Loader;
 
+use Traversable;
+
 // Grab SplAutoloader interface
 require_once __DIR__ . '/SplAutoloader.php';
 
@@ -40,7 +42,7 @@ class ClassMapAutoloader implements SplAutoloader
      *
      * Create a new instance, and optionally configure the autoloader.
      *
-     * @param  null|array|\Traversable $options
+     * @param  null|array|Traversable $options
      */
     public function __construct($options = null)
     {
@@ -73,6 +75,7 @@ class ClassMapAutoloader implements SplAutoloader
      * classname/file pairs.
      *
      * @param  string|array $map
+     * @throws Exception\InvalidArgumentException
      * @return ClassMapAutoloader
      */
     public function registerAutoloadMap($map)
@@ -105,11 +108,12 @@ class ClassMapAutoloader implements SplAutoloader
      * Register many autoload maps at once
      *
      * @param  array $locations
+     * @throws Exception\InvalidArgumentException
      * @return ClassMapAutoloader
      */
     public function registerAutoloadMaps($locations)
     {
-        if (!is_array($locations) && !($locations instanceof \Traversable)) {
+        if (!is_array($locations) && !($locations instanceof Traversable)) {
             require_once __DIR__ . '/Exception/InvalidArgumentException.php';
             throw new Exception\InvalidArgumentException('Map list must be an array or implement Traversable');
         }
@@ -130,16 +134,17 @@ class ClassMapAutoloader implements SplAutoloader
     }
 
     /**
-     * Defined by Autoloadable
-     *
-     * @param  string $class
-     * @return void
+     * {@inheritDoc}
      */
     public function autoload($class)
     {
         if (isset($this->map[$class])) {
             require_once $this->map[$class];
+
+            return $class;
         }
+
+        return false;
     }
 
     /**
@@ -191,7 +196,7 @@ class ClassMapAutoloader implements SplAutoloader
      * Resolve the real_path() to a file within a phar.
      *
      * @see https://bugs.php.net/bug.php?id=52769
-     * @param string $path
+     * @param  string $path
      * @return string
      */
     public static function realPharPath($path)

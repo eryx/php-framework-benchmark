@@ -19,7 +19,7 @@ use Zend\Validator\Exception;
  * Validates IBAN Numbers (International Bank Account Numbers)
  *
  * @category   Zend
- * @package    Zend_Validate
+ * @package    Zend_Validator
  */
 class Iban extends AbstractValidator
 {
@@ -180,7 +180,7 @@ class Iban extends AbstractValidator
         if ($countryCode !== null) {
             $countryCode = (string) $countryCode;
 
-            if (!isset(self::$ibanRegex[$countryCode])) {
+            if (!isset(static::$ibanRegex[$countryCode])) {
                 throw new Exception\InvalidArgumentException(
                     "Country code '{$countryCode}' invalid by ISO 3166-1 or not supported"
                 );
@@ -222,11 +222,11 @@ class Iban extends AbstractValidator
     public function isValid($value)
     {
         if (!is_string($value)) {
-            $this->error(self::INVALID);
+            $this->error(self::FALSEFORMAT);
             return false;
         }
 
-        $value = strtoupper($value);
+        $value = str_replace(' ', '', strtoupper($value));
         $this->setValue($value);
 
         $countryCode = $this->getCountryCode();
@@ -234,19 +234,19 @@ class Iban extends AbstractValidator
             $countryCode = substr($value, 0, 2);
         }
 
-        if (!array_key_exists($countryCode, self::$ibanRegex)) {
+        if (!array_key_exists($countryCode, static::$ibanRegex)) {
             $this->setValue($countryCode);
             $this->error(self::NOTSUPPORTED);
             return false;
         }
 
-        if (!$this->allowNonSepa && !in_array($countryCode, self::$sepaCountries)) {
+        if (!$this->allowNonSepa && !in_array($countryCode, static::$sepaCountries)) {
             $this->setValue($countryCode);
             $this->error(self::SEPANOTSUPPORTED);
             return false;
         }
 
-        if (!preg_match('/^' . self::$ibanRegex[$countryCode] . '$/', $value)) {
+        if (!preg_match('/^' . static::$ibanRegex[$countryCode] . '$/', $value)) {
             $this->error(self::FALSEFORMAT);
             return false;
         }

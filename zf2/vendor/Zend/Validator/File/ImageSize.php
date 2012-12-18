@@ -10,6 +10,7 @@
 
 namespace Zend\Validator\File;
 
+use Zend\Stdlib\ErrorHandler;
 use Zend\Validator\AbstractValidator;
 use Zend\Validator\Exception;
 
@@ -17,7 +18,7 @@ use Zend\Validator\Exception;
  * Validator for the image size of a image file
  *
  * @category  Zend
- * @package   Zend_Validate
+ * @package   Zend_Validator
  */
 class ImageSize extends AbstractValidator
 {
@@ -336,10 +337,12 @@ class ImageSize extends AbstractValidator
             return $this->throwError($file, self::NOT_READABLE);
         }
 
-        $size = @getimagesize($value);
+        ErrorHandler::start();
+        $size = getimagesize($value);
+        ErrorHandler::stop();
         $this->setValue($file);
 
-        if (empty($size) or ($size[0] === 0) or ($size[1] === 0)) {
+        if (empty($size) || ($size[0] === 0) || ($size[1] === 0)) {
             return $this->throwError($file, self::NOT_DETECTED);
         }
 
@@ -349,7 +352,7 @@ class ImageSize extends AbstractValidator
             $this->throwError($file, self::WIDTH_TOO_SMALL);
         }
 
-        if (($this->getMaxWidth() !== null) and ($this->getMaxWidth() < $this->width)) {
+        if (($this->getMaxWidth() !== null) && ($this->getMaxWidth() < $this->width)) {
             $this->throwError($file, self::WIDTH_TOO_BIG);
         }
 
@@ -357,7 +360,7 @@ class ImageSize extends AbstractValidator
             $this->throwError($file, self::HEIGHT_TOO_SMALL);
         }
 
-        if (($this->getMaxHeight() !== null) and ($this->getMaxHeight() < $this->height)) {
+        if (($this->getMaxHeight() !== null) && ($this->getMaxHeight() < $this->height)) {
             $this->throwError($file, self::HEIGHT_TOO_BIG);
         }
 

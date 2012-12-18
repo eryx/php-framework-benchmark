@@ -19,6 +19,7 @@ use Zend\Db\Sql\Select;
 use Zend\Db\Sql\Sql;
 use Zend\Db\Sql\TableIdentifier;
 use Zend\Db\Sql\Update;
+use Zend\Db\Sql\Where;
 
 /**
  * @category   Zend
@@ -84,6 +85,7 @@ abstract class AbstractTableGateway implements TableGatewayInterface
     /**
      * Initialize
      *
+     * @throws Exception\RuntimeException
      * @return null
      */
     public function initialize()
@@ -177,7 +179,7 @@ abstract class AbstractTableGateway implements TableGatewayInterface
     /**
      * Select
      *
-     * @param string|array|\Closure $where
+     * @param Where|\Closure|string|array $where
      * @return ResultSet
      */
     public function select($where = null)
@@ -361,7 +363,7 @@ abstract class AbstractTableGateway implements TableGatewayInterface
     /**
      * Delete
      *
-     * @param  Closure $where
+     * @param  Where|\Closure|string|array $where
      * @return int
      */
     public function delete($where)
@@ -428,6 +430,7 @@ abstract class AbstractTableGateway implements TableGatewayInterface
      * __get
      *
      * @param  string $property
+     * @throws Exception\InvalidArgumentException
      * @return mixed
      */
     public function __get($property)
@@ -447,7 +450,8 @@ abstract class AbstractTableGateway implements TableGatewayInterface
     }
 
     /**
-     * @param $property
+     * @param string $property
+     * @param mixed $value
      * @return mixed
      * @throws Exception\InvalidArgumentException
      */

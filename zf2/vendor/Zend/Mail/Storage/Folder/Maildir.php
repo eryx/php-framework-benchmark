@@ -58,7 +58,7 @@ class Maildir extends Storage\Maildir implements FolderInterface
     public function __construct($params)
     {
         if (is_array($params)) {
-            $params = (object)$params;
+            $params = (object) $params;
         }
 
         if (!isset($params->dirname) || !is_dir($params->dirname)) {
@@ -89,10 +89,10 @@ class Maildir extends Storage\Maildir implements FolderInterface
         $this->rootFolder->INBOX = new Storage\Folder('INBOX', 'INBOX', true);
 
         ErrorHandler::start(E_WARNING);
-        $dh = opendir($this->rootdir);
-        ErrorHandler::stop();
+        $dh    = opendir($this->rootdir);
+        $error = ErrorHandler::stop();
         if (!$dh) {
-            throw new Exception\RuntimeException("can't read folders in maildir");
+            throw new Exception\RuntimeException("can't read folders in maildir", 0, $error);
         }
         $dirs = array();
 
@@ -186,7 +186,7 @@ class Maildir extends Storage\Maildir implements FolderInterface
      */
     public function selectFolder($globalName)
     {
-        $this->currentFolder = (string)$globalName;
+        $this->currentFolder = (string) $globalName;
 
         // getting folder from folder tree for validation
         $folder = $this->getFolders($this->currentFolder);

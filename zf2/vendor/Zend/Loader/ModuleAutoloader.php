@@ -30,6 +30,11 @@ class ModuleAutoloader implements SplAutoloader
     protected $explicitPaths = array();
 
     /**
+     * @var array An array of namespaceName => namespacePath
+     */
+    protected $namespacedPaths = array();
+
+    /**
      * @var array An array of supported phar extensions (filled on constructor)
      */
     protected $pharExtensions = array();
@@ -85,7 +90,7 @@ class ModuleAutoloader implements SplAutoloader
      * Traversable object.
      *
      * @param  array|Traversable $options
-     * @return SplAutoloader
+     * @return ModuleAutoloader
      */
     public function setOptions($options)
     {
@@ -120,6 +125,28 @@ class ModuleAutoloader implements SplAutoloader
                 return $classLoaded;
             }
         }
+
+        if (count($this->namespacedPaths) >= 1 ) {
+            foreach ( $this->namespacedPaths as $namespace=>$path ) {
+                if ( false === strpos($moduleName,$namespace) ) {
+                    continue;
+                }
+
+                $moduleName_buffer = str_replace($namespace . "\\", "", $moduleName );
+                $path .= DIRECTORY_SEPARATOR . $moduleName_buffer . DIRECTORY_SEPARATOR;
+
+                $classLoaded = $this->loadModuleFromDir($path, $class);
+                if ($classLoaded) {
+                    return $classLoaded;
+                }
+
+                $classLoaded = $this->loadModuleFromPhar($path, $class);
+                if ($classLoaded) {
+                    return $classLoaded;
+                }
+            }
+        }
+
 
         $moduleClassPath   = str_replace('\\', DIRECTORY_SEPARATOR, $moduleName);
 
@@ -161,8 +188,8 @@ class ModuleAutoloader implements SplAutoloader
     /**
      * loadModuleFromDir
      *
-     * @param string $dirPath
-     * @param string $class
+     * @param  string $dirPath
+     * @param  string $class
      * @return  mixed
      *          False [if unable to load $class]
      *          get_class($class) [if $class is successfully loaded]
@@ -184,8 +211,8 @@ class ModuleAutoloader implements SplAutoloader
     /**
      * loadModuleFromPhar
      *
-     * @param string $pharPath
-     * @param string $class
+     * @param  string $pharPath
+     * @param  string $class
      * @return  mixed
      *          False [if unable to load $class]
      *          get_class($class) [if $class is successfully loaded]
@@ -255,14 +282,15 @@ class ModuleAutoloader implements SplAutoloader
      */
     public function unregister()
     {
-        $test = spl_autoload_unregister(array($this, 'autoload'));
+        spl_autoload_unregister(array($this, 'autoload'));
     }
 
     /**
      * registerPaths
      *
-     * @param array|Traversable $paths
-     * @return ModuleLoader
+     * @param  array|Traversable $paths
+     * @throws \InvalidArgumentException
+     * @return ModuleAutoloader
      */
     public function registerPaths($paths)
     {
@@ -288,9 +316,10 @@ class ModuleAutoloader implements SplAutoloader
     /**
      * registerPath
      *
-     * @param string $path
-     * @param string $moduleName
-     * @return ModuleLoader
+     * @param  string $path
+     * @param  bool|string $moduleName
+     * @throws \InvalidArgumentException
+     * @return ModuleAutoloader
      */
     public function registerPath($path, $moduleName = false)
     {
@@ -301,7 +330,11 @@ class ModuleAutoloader implements SplAutoloader
             ));
         }
         if ($moduleName) {
-            $this->explicitPaths[$moduleName] = static::normalizePath($path);
+            if (in_array( substr($moduleName, -2 ), array('\\*','\\%') ) ) {
+                $this->namespacedPaths[ substr($moduleName, 0, -2 ) ] = static::normalizePath($path);
+            } else {
+                $this->explicitPaths[$moduleName] = static::normalizePath($path);
+            }
         } else {
             $this->paths[] = static::normalizePath($path);
         }
@@ -323,7 +356,7 @@ class ModuleAutoloader implements SplAutoloader
     /**
      * Returns the base module name from the path to a phar
      *
-     * @param string $pharPath
+     * @param  string $pharPath
      * @return string
      */
     protected function pharFileToModuleName($pharPath)
@@ -339,6 +372,7 @@ class ModuleAutoloader implements SplAutoloader
      * Normalize a path for insertion in the stack
      *
      * @param  string $path
+     * @param  bool   $trailingSlash Whether trailing slash should be included
      * @return string
      */
     public static function normalizePath($path, $trailingSlash = true)

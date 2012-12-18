@@ -55,6 +55,7 @@ class Encrypt extends AbstractFilter
      *
      * @param  string|array $options (Optional) Encryption options
      * @return Encrypt
+     * @throws Exception\DomainException
      * @throws Exception\InvalidArgumentException
      */
     public function setAdapter($options = null)
@@ -103,7 +104,7 @@ class Encrypt extends AbstractFilter
     public function __call($method, $options)
     {
         $part = substr($method, 0, 3);
-        if ((($part != 'get') and ($part != 'set')) or !method_exists($this->adapter, $method)) {
+        if ((($part != 'get') && ($part != 'set')) || !method_exists($this->adapter, $method)) {
             throw new Exception\BadMethodCallException("Unknown method '{$method}'");
         }
 

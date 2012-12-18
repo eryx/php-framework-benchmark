@@ -13,7 +13,13 @@ namespace Zend\I18n\Filter;
 use NumberFormatter;
 use Traversable;
 use Zend\I18n\Exception;
+use Zend\Stdlib\ErrorHandler;
 
+/**
+ * @category   Zend
+ * @package    Zend_I18n
+ * @subpackage Filter
+ */
 class NumberFormat extends AbstractLocale
 {
     protected $options = array(
@@ -143,10 +149,14 @@ class NumberFormat extends AbstractLocale
         $type      = $this->getType();
 
         if (is_int($value) || is_float($value)) {
-            $result = @numfmt_format($formatter, $value, $type);
+            ErrorHandler::start();
+            $result = $formatter->format($value, $type);
+            ErrorHandler::stop();
         } else {
             $value = str_replace(array("\xC2\xA0", ' '), '', $value);
-            $result = @numfmt_parse($formatter, $value, $type);
+            ErrorHandler::start();
+            $result = $formatter->parse($value, $type);
+            ErrorHandler::stop();
         }
 
         if ($result === false) {

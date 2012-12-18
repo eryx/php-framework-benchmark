@@ -83,7 +83,7 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
     /**
      * ACL role to use when iterating pages
      *
-     * @var string|Acl\Role
+     * @var string|Acl\Role\RoleInterface
      */
     protected $role;
 
@@ -127,7 +127,7 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
      * Default ACL role to use when iterating pages if not explicitly set in the
      * instance by calling {@link setRole()}
      *
-     * @var string|Acl\Role
+     * @var string|Acl\Role\RoleInterface
      */
     protected static $defaultRole;
 
@@ -335,8 +335,8 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
      */
     public function getAcl()
     {
-        if ($this->acl === null && self::$defaultAcl !== null) {
-            return self::$defaultAcl;
+        if ($this->acl === null && static::$defaultAcl !== null) {
+            return static::$defaultAcl;
         }
 
         return $this->acl;
@@ -380,8 +380,8 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
      */
     public function getRole()
     {
-        if ($this->role === null && self::$defaultRole !== null) {
-            return self::$defaultRole;
+        if ($this->role === null && static::$defaultRole !== null) {
+            return static::$defaultRole;
         }
 
         return $this->role;
@@ -485,7 +485,7 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
      *                                          {@link getMinDepth()}. A
      *                                          null value means no minimum
      *                                          depth required.
-     * @param  int|null             $minDepth   [optional] maximum depth
+     * @param  int|null             $maxDepth   [optional] maximum depth
      *                                          a page can have to be
      *                                          valid. Default is to use
      *                                          {@link getMaxDepth()}. A
@@ -850,7 +850,7 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
      */
     public static function setDefaultAcl(Acl\Acl $acl = null)
     {
-        self::$defaultAcl = $acl;
+        static::$defaultAcl = $acl;
     }
 
     /**
@@ -869,7 +869,7 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
             || is_string($role)
             || $role instanceof Acl\Role\RoleInterface
         ) {
-            self::$defaultRole = $role;
+            static::$defaultRole = $role;
         } else {
             throw new Exception\InvalidArgumentException(sprintf(
                 '$role must be null|string|Zend\Permissions\Role\RoleInterface; received "%s"',

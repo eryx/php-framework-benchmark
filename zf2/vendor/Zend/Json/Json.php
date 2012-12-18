@@ -10,6 +10,7 @@
 
 namespace Zend\Json;
 
+use SimpleXMLElement;
 use Zend\Json\Exception\RecursionException;
 use Zend\Json\Exception\RuntimeException;
 
@@ -51,12 +52,12 @@ class Json
      * @param int $objectDecodeType Optional; flag indicating how to decode
      * objects. See {@link Zend_Json_Decoder::decode()} for details.
      * @return mixed
-     * @throws Zend\Json\Exception\RuntimeException
+     * @throws RuntimeException
      */
     public static function decode($encodedValue, $objectDecodeType = self::TYPE_OBJECT)
     {
         $encodedValue = (string) $encodedValue;
-        if (function_exists('json_decode') && self::$useBuiltinEncoderDecoder !== true) {
+        if (function_exists('json_decode') && static::$useBuiltinEncoderDecoder !== true) {
             $decode = json_decode($encodedValue, $objectDecodeType);
 
             switch (json_last_error()) {
@@ -104,7 +105,7 @@ class Json
             if (method_exists($valueToEncode, 'toJson')) {
                 return $valueToEncode->toJson();
             } elseif (method_exists($valueToEncode, 'toArray')) {
-                return self::encode($valueToEncode->toArray(), $cycleCheck, $options);
+                return static::encode($valueToEncode->toArray(), $cycleCheck, $options);
             }
         }
 
@@ -113,11 +114,11 @@ class Json
         if (isset($options['enableJsonExprFinder'])
            && ($options['enableJsonExprFinder'] == true)
         ) {
-            $valueToEncode = self::_recursiveJsonExprFinder($valueToEncode, $javascriptExpressions);
+            $valueToEncode = static::_recursiveJsonExprFinder($valueToEncode, $javascriptExpressions);
         }
 
         // Encoding
-        if (function_exists('json_encode') && self::$useBuiltinEncoderDecoder !== true) {
+        if (function_exists('json_encode') && static::$useBuiltinEncoderDecoder !== true) {
             $encodedResult = json_encode(
                 $valueToEncode,
                 JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
@@ -174,11 +175,11 @@ class Json
             $value = $magicKey;
         } elseif (is_array($value)) {
             foreach ($value as $k => $v) {
-                $value[$k] = self::_recursiveJsonExprFinder($value[$k], $javascriptExpressions, $k);
+                $value[$k] = static::_recursiveJsonExprFinder($value[$k], $javascriptExpressions, $k);
             }
         } elseif (is_object($value)) {
             foreach ($value as $k => $v) {
-                $value->$k = self::_recursiveJsonExprFinder($value->$k, $javascriptExpressions, $k);
+                $value->$k = static::_recursiveJsonExprFinder($value->$k, $javascriptExpressions, $k);
             }
         }
         return $value;
@@ -192,7 +193,7 @@ class Json
      * if it matches, we return a new Zend_Json_Expr instead of a text node
      *
      * @param SimpleXMLElement $simpleXmlElementObject
-     * @return Zend_Json_Expr|string
+     * @return Expr|string
      */
     protected static function _getXmlValue($simpleXmlElementObject)
     {
@@ -201,10 +202,10 @@ class Json
         $match     = preg_match($pattern, $simpleXmlElementObject, $matchings);
         if ($match) {
             return new Expr($matchings[1]);
-        } else {
-            return (trim(strval($simpleXmlElementObject)));
         }
+        return (trim(strval($simpleXmlElementObject)));
     }
+
     /**
      * _processXml - Contains the logic for xml2json
      *
@@ -219,33 +220,32 @@ class Json
      * calling a recursive (protected static) function in this class. Once all
      * the XML elements are stored in the PHP array, it is returned to the caller.
      *
-     * Throws a Zend\Json\RecursionException if the XML tree is deeper than the allowed limit.
-     *
      * @param SimpleXMLElement $simpleXmlElementObject
      * @param boolean $ignoreXmlAttributes
      * @param integer $recursionDepth
+     * @throws Exception\RecursionException if the XML tree is deeper than the allowed limit.
      * @return array
      */
     protected static function _processXml($simpleXmlElementObject, $ignoreXmlAttributes, $recursionDepth = 0)
     {
         // Keep an eye on how deeply we are involved in recursion.
-        if ($recursionDepth > self::$maxRecursionDepthAllowed) {
+        if ($recursionDepth > static::$maxRecursionDepthAllowed) {
             // XML tree is too deep. Exit now by throwing an exception.
             throw new RecursionException(
                 "Function _processXml exceeded the allowed recursion depth of "
-                .  self::$maxRecursionDepthAllowed
+                .  static::$maxRecursionDepthAllowed
             );
         }
 
         $children   = $simpleXmlElementObject->children();
         $name       = $simpleXmlElementObject->getName();
-        $value      = self::_getXmlValue($simpleXmlElementObject);
+        $value      = static::_getXmlValue($simpleXmlElementObject);
         $attributes = (array) $simpleXmlElementObject->attributes();
 
         if (!count($children)) {
             if (!empty($attributes) && !$ignoreXmlAttributes) {
                 foreach ($attributes['@attributes'] as $k => $v) {
-                    $attributes['@attributes'][$k] = self::_getXmlValue($v);
+                    $attributes['@attributes'][$k] = static::_getXmlValue($v);
                 }
                 if (!empty($value)) {
                     $attributes['@text'] = $value;
@@ -259,7 +259,7 @@ class Json
         $childArray = array();
         foreach ($children as $child) {
             $childname = $child->getName();
-            $element   = self::_processXml($child,$ignoreXmlAttributes,$recursionDepth + 1);
+            $element   = static::_processXml($child, $ignoreXmlAttributes, $recursionDepth + 1);
             if (array_key_exists($childname, $childArray)) {
                 if (empty($subChild[$childname])) {
                     $childArray[$childname] = array($childArray[$childname]);
@@ -273,7 +273,7 @@ class Json
 
         if (!empty($attributes) && !$ignoreXmlAttributes) {
             foreach ($attributes['@attributes'] as $k => $v) {
-                $attributes['@attributes'][$k] = self::_getXmlValue($v);
+                $attributes['@attributes'][$k] = static::_getXmlValue($v);
             }
             $childArray['@attributes'] = $attributes['@attributes'];
         }
@@ -323,11 +323,11 @@ class Json
         $resultArray = null;
 
         // Call the recursive function to convert the XML into a PHP array.
-        $resultArray = self::_processXml($simpleXmlElementObject, $ignoreXmlAttributes);
+        $resultArray = static::_processXml($simpleXmlElementObject, $ignoreXmlAttributes);
 
         // Convert the PHP array to JSON using Zend_Json encode method.
         // It is just that simple.
-        $jsonStringOutput = self::encode($resultArray);
+        $jsonStringOutput = static::encode($resultArray);
         return($jsonStringOutput);
     }
 

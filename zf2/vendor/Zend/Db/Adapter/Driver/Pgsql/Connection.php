@@ -47,18 +47,20 @@ class Connection implements ConnectionInterface
     /**
      * Constructor
      *
-     * @param mysqli $connectionInfo
+     * @param resource|array|null $connectionInfo
      */
     public function __construct($connectionInfo = null)
     {
         if (is_array($connectionInfo)) {
             $this->setConnectionParameters($connectionInfo);
-        } elseif ($connectionInfo instanceof \mysqli) {
+        } elseif (is_resource($connectionInfo)) {
             $this->setResource($connectionInfo);
         }
     }
 
     /**
+     * Set connection parameters
+     *
      * @param  array $connectionParameters
      * @return Connection
      */
@@ -69,6 +71,8 @@ class Connection implements ConnectionInterface
     }
 
     /**
+     * Set driver
+     *
      * @param  Pgsql $driver
      * @return Connection
      */
@@ -79,6 +83,8 @@ class Connection implements ConnectionInterface
     }
 
     /**
+     * Set resource
+     *
      * @param  resource $resource
      * @return Connection
      */
@@ -89,7 +95,9 @@ class Connection implements ConnectionInterface
     }
 
     /**
-     * @return null
+     * Get current schema
+     *
+     * @return null|string
      */
     public function getCurrentSchema()
     {
@@ -105,6 +113,8 @@ class Connection implements ConnectionInterface
     }
 
     /**
+     * Get resource
+     *
      * @return resource
      */
     public function getResource()
@@ -200,6 +210,7 @@ class Connection implements ConnectionInterface
 
     /**
      * @param  string $sql
+     * @throws Exception\InvalidQueryException
      * @return resource|\Zend\Db\ResultSet\ResultSetInterface
      */
     public function execute($sql)
@@ -212,7 +223,7 @@ class Connection implements ConnectionInterface
 
         //var_dump(pg_result_status($resultResource));
 
-        // if the returnValue is something other than a mysqli_result, bypass wrapping it
+        // if the returnValue is something other than a pg result resource, bypass wrapping it
         if ($resultResource === false) {
             throw new Exception\InvalidQueryException(pg_errormessage());
         }

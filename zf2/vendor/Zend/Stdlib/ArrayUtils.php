@@ -172,6 +172,7 @@ abstract class ArrayUtils
      *
      * @param  array|Traversable  $iterator     The array or Traversable object to convert
      * @param  bool               $recursive    Recursively check all nested structures
+     * @throws Exception\InvalidArgumentException if $iterator is not an array or a Traversable object
      * @return array
      */
     public static function iteratorToArray($iterator, $recursive = true)
@@ -234,7 +235,7 @@ abstract class ArrayUtils
                 if (is_int($key)) {
                     $a[] = $value;
                 } elseif (is_array($value) && is_array($a[$key])) {
-                    $a[$key] = self::merge($a[$key], $value);
+                    $a[$key] = static::merge($a[$key], $value);
                 } else {
                     $a[$key] = $value;
                 }

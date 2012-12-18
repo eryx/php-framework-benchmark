@@ -10,6 +10,7 @@
 
 namespace Zend\Db\Adapter\Driver\Mysqli;
 
+use mysqli_stmt;
 use Zend\Db\Adapter\Driver\DriverInterface;
 use Zend\Db\Adapter\Exception;
 
@@ -44,11 +45,14 @@ class Mysqli implements DriverInterface
     );
 
     /**
+     * Constructor
+     *
      * @param array|Connection|\mysqli $connection
      * @param null|Statement $statementPrototype
      * @param null|Result $resultPrototype
+     * @param array $options
      */
-    public function __construct($connection, Statement $statementPrototype = null, Result $resultPrototype = null, $options = array())
+    public function __construct($connection, Statement $statementPrototype = null, Result $resultPrototype = null, array $options = array())
     {
         if (!$connection instanceof Connection) {
             $connection = new Connection($connection);
@@ -86,6 +90,8 @@ class Mysqli implements DriverInterface
     }
 
     /**
+     * Get statement prototype
+     *
      * @return null|Statement
      */
     public function getStatementPrototype()
@@ -128,6 +134,9 @@ class Mysqli implements DriverInterface
 
     /**
      * Check environment
+     *
+     * @throws Exception\RuntimeException
+     * @return void
      */
     public function checkEnvironment()
     {
@@ -137,6 +146,8 @@ class Mysqli implements DriverInterface
     }
 
     /**
+     * Get connection
+     *
      * @return Connection
      */
     public function getConnection()
@@ -145,26 +156,40 @@ class Mysqli implements DriverInterface
     }
 
     /**
-     * @param string $sql
+     * Create statement
+     *
+     * @param string $sqlOrResource
      * @return Statement
      */
     public function createStatement($sqlOrResource = null)
     {
+        /**
+         * @todo Resource tracking
         if (is_resource($sqlOrResource) && !in_array($sqlOrResource, $this->resources, true)) {
             $this->resources[] = $sqlOrResource;
         }
+        */
 
         $statement = clone $this->statementPrototype;
-        if (is_string($sqlOrResource)) {
-            $statement->setSql($sqlOrResource);
-        } elseif ($sqlOrResource instanceof \mysqli_stmt) {
+        if ($sqlOrResource instanceof mysqli_stmt) {
             $statement->setResource($sqlOrResource);
+        } else {
+            if (is_string($sqlOrResource)) {
+                $statement->setSql($sqlOrResource);
+            }
+            if (!$this->connection->isConnected()) {
+                $this->connection->connect();
+            }
+            $statement->initialize($this->connection->getResource());
         }
-        $statement->initialize($this->connection->getResource());
         return $statement;
     }
 
     /**
+     * Create result
+     *
+     * @param resource $resource
+     * @param null|bool $isBuffered
      * @return Result
      */
     public function createResult($resource, $isBuffered = null)
@@ -175,6 +200,8 @@ class Mysqli implements DriverInterface
     }
 
     /**
+     * Get prepare type
+     *
      * @return array
      */
     public function getPrepareType()
@@ -183,7 +210,10 @@ class Mysqli implements DriverInterface
     }
 
     /**
-     * @param $name
+     * Format parameter name
+     *
+     * @param string $name
+     * @param mixed  $type
      * @return string
      */
     public function formatParameterName($name, $type = null)
@@ -192,6 +222,8 @@ class Mysqli implements DriverInterface
     }
 
     /**
+     * Get last generated value
+     *
      * @return mixed
      */
     public function getLastGeneratedValue()

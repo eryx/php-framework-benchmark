@@ -11,7 +11,6 @@
 namespace Zend\Cache\Pattern;
 
 use Zend\Cache\Exception;
-use Zend\Cache\StorageFactory;
 
 /**
  * @category   Zend
@@ -50,8 +49,8 @@ class OutputCache extends AbstractPattern
      * else start buffering output until end() is called or the script ends.
      *
      * @param  string  $key Key
+     * @throws Exception\MissingKeyException if key is missing
      * @return boolean
-     * @throws Exception
      */
     public function start($key)
     {
@@ -76,8 +75,8 @@ class OutputCache extends AbstractPattern
      * Stops buffering output, write buffered data to cache using the given key on start()
      * and displays the buffer.
      *
+     * @throws Exception\RuntimeException if output cache not started or buffering not active
      * @return boolean TRUE on success, FALSE on failure writing to cache
-     * @throws Exception
      */
     public function end()
     {
@@ -86,7 +85,7 @@ class OutputCache extends AbstractPattern
             throw new Exception\RuntimeException('Output cache not started');
         }
 
-        $output = ob_end_flush();
+        $output = ob_get_flush();
         if ($output === false) {
             throw new Exception\RuntimeException('Output buffering not active');
         }

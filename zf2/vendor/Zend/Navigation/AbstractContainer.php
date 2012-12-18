@@ -14,7 +14,6 @@ use Countable;
 use RecursiveIterator;
 use RecursiveIteratorIterator;
 use Traversable;
-use Zend\Stdlib\ArrayUtils;
 use Zend\Stdlib\ErrorHandler;
 
 /**
@@ -351,18 +350,16 @@ abstract class AbstractContainer implements Countable, RecursiveIterator
     {
         ErrorHandler::start(E_WARNING);
         $result = preg_match('/(find(?:One|All)?By)(.+)/', $method, $match);
-        ErrorHandler::stop();
-        if ($result) {
-            return $this->{$match[1]}($match[2], $arguments[0]);
-        }
-
-        throw new Exception\BadMethodCallException(
-            sprintf(
+        $error  = ErrorHandler::stop();
+        if (!$result) {
+            throw new Exception\BadMethodCallException(sprintf(
                 'Bad method call: Unknown method %s::%s',
                 get_called_class(),
                 $method
-            )
-        );
+            ), 0, $error);
+        }
+        return $this->{$match[1]}($match[2], $arguments[0]);
+
     }
 
     /**

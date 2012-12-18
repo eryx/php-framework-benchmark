@@ -104,12 +104,16 @@ class ClassDefinition implements DefinitionInterface, PartialMarker
             $this->methodParameters[$method] = array();
         }
 
-        $type = (isset($parameterInfo['type'])) ? $parameterInfo['type'] : null;
+        $type     = (isset($parameterInfo['type'])) ? $parameterInfo['type'] : null;
         $required = (isset($parameterInfo['required'])) ? (bool) $parameterInfo['required'] : false;
+        $default  = (isset($parameterInfo['default'])) ? $parameterInfo['default'] : null;
 
         $fqName = $this->class . '::' . $method . ':' . $parameterName;
         $this->methodParameters[$method][$fqName] = array(
-            $parameterName, $type, $required
+            $parameterName,
+            $type,
+            $required,
+            $default
         );
 
         return $this;
@@ -136,6 +140,9 @@ class ClassDefinition implements DefinitionInterface, PartialMarker
      */
     public function getClassSupertypes($class)
     {
+        if ($this->class !== $class) {
+            return array();
+        }
         return $this->supertypes;
     }
 
@@ -144,6 +151,9 @@ class ClassDefinition implements DefinitionInterface, PartialMarker
      */
     public function getInstantiator($class)
     {
+        if ($this->class !== $class) {
+            return null;
+        }
         return $this->instantiator;
     }
 
@@ -152,7 +162,7 @@ class ClassDefinition implements DefinitionInterface, PartialMarker
      */
     public function hasMethods($class)
     {
-        return ($this->methods);
+        return (count($this->methods) > 0);
     }
 
     /**
@@ -160,6 +170,9 @@ class ClassDefinition implements DefinitionInterface, PartialMarker
      */
     public function getMethods($class)
     {
+        if ($this->class !== $class) {
+            return array();
+        }
         return $this->methods;
     }
 
@@ -168,6 +181,10 @@ class ClassDefinition implements DefinitionInterface, PartialMarker
      */
     public function hasMethod($class, $method)
     {
+        if ($this->class !== $class) {
+            return null;
+        }
+
         if (is_array($this->methods)) {
             return array_key_exists($method, $this->methods);
         } else {
@@ -180,6 +197,9 @@ class ClassDefinition implements DefinitionInterface, PartialMarker
      */
     public function hasMethodParameters($class, $method)
     {
+        if ($this->class !== $class) {
+            return false;
+        }
         return (array_key_exists($method, $this->methodParameters));
     }
 
@@ -188,6 +208,10 @@ class ClassDefinition implements DefinitionInterface, PartialMarker
      */
     public function getMethodParameters($class, $method)
     {
+        if ($this->class !== $class) {
+            return null;
+        }
+
         if (array_key_exists($method, $this->methodParameters)) {
             return $this->methodParameters[$method];
         }

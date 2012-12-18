@@ -395,9 +395,9 @@ class Node extends Node\AbstractNode implements \Iterator, \RecursiveIterator
             return false;
         } elseif ($this->newDn !== null) {
             return ($this->dn != $this->newDn);
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -814,7 +814,7 @@ class Node extends Node\AbstractNode implements \Iterator, \RecursiveIterator
             throw new Exception\LdapException(null, 'DN cannot be changed.');
         } elseif (array_key_exists($name, $rdn)) {
             throw new Exception\LdapException(null, 'Cannot change attribute because it\'s part of the RDN');
-        } elseif (in_array($name, self::$systemAttributes)) {
+        } elseif (in_array($name, static::$systemAttributes)) {
             throw new Exception\LdapException(null, 'Cannot change attribute because it\'s read-only');
         } else {
             return true;
@@ -995,12 +995,10 @@ class Node extends Node\AbstractNode implements \Iterator, \RecursiveIterator
         if (!is_array($this->children)) {
             if ($this->isAttached()) {
                 return ($this->countChildren() > 0);
-            } else {
-                return false;
             }
-        } else {
-            return (count($this->children) > 0);
+            return false;
         }
+        return (count($this->children) > 0);
     }
 
     /**
@@ -1041,7 +1039,7 @@ class Node extends Node\AbstractNode implements \Iterator, \RecursiveIterator
         $ldap     = $this->getLdap();
         $parentDn = $this->_getDn()->getParentDn(1);
 
-        return self::fromLdap($parentDn, $ldap);
+        return static::fromLdap($parentDn, $ldap);
     }
 
     /**

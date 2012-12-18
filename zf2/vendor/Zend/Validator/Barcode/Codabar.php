@@ -12,7 +12,7 @@ namespace Zend\Validator\Barcode;
 
 /**
  * @category   Zend
- * @package    Zend_Validate
+ * @package    Zend_Validator
  */
 class Codabar extends AbstractAdapter
 {
@@ -32,7 +32,6 @@ class Codabar extends AbstractAdapter
      */
     public function hasValidCharacters($value)
     {
-        $first = $value[0];
         if (strpbrk($value, 'ABCD')) {
             $first = $value[0];
             if (!strpbrk($first, 'ABCD')) {

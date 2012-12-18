@@ -19,7 +19,8 @@ use Zend\Validator\Exception;
 
 /**
  * @category   Zend
- * @package    Zend_Validate
+ * @package    Zend_I18n
+ * @subpackage Validator
  */
 class Float extends AbstractValidator
 {
@@ -122,6 +123,12 @@ class Float extends AbstractValidator
 
         $valueFiltered = str_replace($groupingSep, '', $value);
         $valueFiltered = str_replace($decimalSep, '.', $valueFiltered);
+
+        while (strpos($valueFiltered, '.') !== false
+               && (substr($valueFiltered, -1) == '0' || substr($valueFiltered, -1) == '.')
+        ) {
+            $valueFiltered = substr($valueFiltered, 0, strlen($valueFiltered) - 1);
+        }
 
         if (strval($parsedFloat) !== $valueFiltered) {
             $this->error(self::NOT_FLOAT);

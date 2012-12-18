@@ -13,7 +13,7 @@ namespace Zend\Navigation\Page;
 use Zend\Mvc\Router\RouteMatch;
 use Zend\Mvc\Router\RouteStackInterface;
 use Zend\Navigation\Exception;
-use Zend\View\Helper\Url as UrlHelper;
+use Zend\Mvc\ModuleRouteListener;
 
 /**
  * Represents a page that is defined using controller, action, route
@@ -110,6 +110,10 @@ class Mvc extends AbstractPage
             if ($this->routeMatch instanceof RouteMatch) {
                 $reqParams  = $this->routeMatch->getParams();
 
+                if (isset($reqParams[ModuleRouteListener::ORIGINAL_CONTROLLER])) {
+                    $reqParams['controller'] = $reqParams[ModuleRouteListener::ORIGINAL_CONTROLLER];
+                }
+
                 $myParams   = $this->params;
                 if (null !== $this->controller) {
                     $myParams['controller'] = $this->controller;
@@ -174,7 +178,7 @@ class Mvc extends AbstractPage
 
         $router = $this->router;
         if (null === $router) {
-            $router = self::$defaultRouter;
+            $router = static::$defaultRouter;
         }
 
         if (!$router instanceof RouteStackInterface) {
@@ -407,7 +411,7 @@ class Mvc extends AbstractPage
      */
     public static function setDefaultRouter($router)
     {
-        self::$defaultRouter = $router;
+        static::$defaultRouter = $router;
     }
 
     /**
@@ -417,7 +421,7 @@ class Mvc extends AbstractPage
      */
     public static function getDefaultRouter()
     {
-        return self::$defaultRouter;
+        return static::$defaultRouter;
     }
 
     // Public methods:

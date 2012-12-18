@@ -12,8 +12,12 @@ namespace Zend\Stdlib\Hydrator;
 
 use ReflectionClass;
 use Zend\Stdlib\Exception;
-use Zend\Stdlib\Hydrator\HydratorInterface;
 
+/**
+ * @category   Zend
+ * @package    Zend_Stdlib
+ * @subpackage Hydrator
+ */
 class Reflection extends AbstractHydrator
 {
     /**
@@ -64,7 +68,8 @@ class Reflection extends AbstractHydrator
      * class has not been loaded.
      *
      * @static
-     * @param string|object $object
+     * @param string|object $input
+     * @throws Exception\InvalidArgumentException
      * @return array
      */
     protected static function getReflProperties($input)
@@ -75,16 +80,16 @@ class Reflection extends AbstractHydrator
             throw new Exception\InvalidArgumentException('Input must be a string or an object.');
         }
 
-        if (!isset(self::$reflProperties[$input])) {
+        if (!isset(static::$reflProperties[$input])) {
             $reflClass      = new ReflectionClass($input);
             $reflProperties = $reflClass->getProperties();
 
-            foreach ($reflProperties as $key => $property) {
+            foreach ($reflProperties as $property) {
                 $property->setAccessible(true);
-                self::$reflProperties[$input][$property->getName()] = $property;
+                static::$reflProperties[$input][$property->getName()] = $property;
             }
         }
 
-        return self::$reflProperties[$input];
+        return static::$reflProperties[$input];
     }
 }

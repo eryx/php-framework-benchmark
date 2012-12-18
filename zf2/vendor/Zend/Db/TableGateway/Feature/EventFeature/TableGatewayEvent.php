@@ -12,7 +12,6 @@ namespace Zend\Db\TableGateway\Feature\EventFeature;
 
 use Zend\Db\TableGateway\AbstractTableGateway;
 use Zend\EventManager\EventInterface;
-use Zend\EventManager\EventManagerInterface;
 
 /**
  * @category   Zend
@@ -33,7 +32,7 @@ class TableGatewayEvent implements EventInterface
     protected $name = null;
 
     /**
-     * @var array
+     * @var array|\ArrayAccess
      */
     protected $params = array();
 
@@ -44,7 +43,7 @@ class TableGatewayEvent implements EventInterface
      */
     public function getName()
     {
-        return get_class($this->target) . '.' . $this->name;
+        return $this->name;
     }
 
     /**
@@ -60,7 +59,7 @@ class TableGatewayEvent implements EventInterface
     /**
      * Get parameters passed to the event
      *
-     * @return array|ArrayAccess
+     * @return array|\ArrayAccess
      */
     public function getParams()
     {
@@ -132,7 +131,7 @@ class TableGatewayEvent implements EventInterface
      */
     public function stopPropagation($flag = true)
     {
-        return false;
+        return;
     }
 
     /**

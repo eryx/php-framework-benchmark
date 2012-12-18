@@ -221,7 +221,7 @@ class Maildir extends AbstractStorage
     public function __construct($params)
     {
         if (is_array($params)) {
-            $params = (object)$params;
+            $params = (object) $params;
         }
 
         if (!isset($params->dirname) || !is_dir($params->dirname)) {
@@ -267,22 +267,22 @@ class Maildir extends AbstractStorage
         }
 
         ErrorHandler::start(E_WARNING);
-        $dh = opendir($dirname . '/cur/');
-        ErrorHandler::stop();
+        $dh    = opendir($dirname . '/cur/');
+        $error = ErrorHandler::stop();
         if (!$dh) {
-            throw new Exception\RuntimeException('cannot open maildir');
+            throw new Exception\RuntimeException('cannot open maildir', 0, $error);
         }
         $this->_getMaildirFiles($dh, $dirname . '/cur/');
         closedir($dh);
 
         ErrorHandler::start(E_WARNING);
-        $dh = opendir($dirname . '/new/');
-        ErrorHandler::stop();
+        $dh    = opendir($dirname . '/new/');
+        $error = ErrorHandler::stop();
         if ($dh) {
             $this->_getMaildirFiles($dh, $dirname . '/new/', array(Mail\Storage::FLAG_RECENT));
             closedir($dh);
         } elseif (file_exists($dirname . '/new/')) {
-            throw new Exception\RuntimeException('cannot read recent mails in maildir');
+            throw new Exception\RuntimeException('cannot read recent mails in maildir', 0, $error);
         }
     }
 
@@ -302,7 +302,7 @@ class Maildir extends AbstractStorage
 
             ErrorHandler::start(E_NOTICE);
             list($uniq, $info) = explode(':', $entry, 2);
-            list(,$size) = explode(',', $uniq, 2);
+            list(, $size) = explode(',', $uniq, 2);
             ErrorHandler::stop();
             if ($size && $size[0] == 'S' && $size[1] == '=') {
                 $size = substr($size, 2);
@@ -322,7 +322,7 @@ class Maildir extends AbstractStorage
             $length = strlen($flags);
             for ($i = 0; $i < $length; ++$i) {
                 $flag = $flags[$i];
-                $named_flags[$flag] = isset(self::$knownFlags[$flag]) ? self::$knownFlags[$flag] : $flag;
+                $named_flags[$flag] = isset(static::$knownFlags[$flag]) ? static::$knownFlags[$flag] : $flag;
             }
 
             $data = array('uniq'       => $uniq,
@@ -330,7 +330,7 @@ class Maildir extends AbstractStorage
                           'flaglookup' => array_flip($named_flags),
                           'filename'   => $dirname . $entry);
             if ($size !== null) {
-                $data['size'] = (int)$size;
+                $data['size'] = (int) $size;
             }
             $this->files[] = $data;
         }
