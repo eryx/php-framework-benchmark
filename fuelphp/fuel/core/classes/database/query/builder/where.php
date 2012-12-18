@@ -43,6 +43,14 @@ abstract class Database_Query_Builder_Where extends \Database_Query_Builder
 	 */
 	public function and_where($column, $op = null, $value = null)
 	{
+		if($column instanceof \Closure)
+		{
+			$this->and_where_open();
+			$column($this);
+			$this->and_where_close();
+			return $this;
+		}
+
 		if (is_array($column))
 		{
 			foreach ($column as $key => $val)
@@ -80,6 +88,14 @@ abstract class Database_Query_Builder_Where extends \Database_Query_Builder
 	 */
 	public function or_where($column, $op = null, $value = null)
 	{
+		if($column instanceof \Closure)
+		{
+			$this->or_where_open();
+			$column($this);
+			$this->or_where_close();
+			return $this;
+		}
+
 		if (is_array($column))
 		{
 			foreach ($column as $key => $val)
@@ -181,7 +197,7 @@ abstract class Database_Query_Builder_Where extends \Database_Query_Builder
 	 * @param   string  direction of sorting
 	 * @return  $this
 	 */
-	public function order_by($column, $direction = NULL)
+	public function order_by($column, $direction = null)
 	{
 		$this->_order_by[] = array($column, $direction);
 

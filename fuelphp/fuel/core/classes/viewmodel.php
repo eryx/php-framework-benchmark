@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -23,18 +23,6 @@ namespace Fuel\Core;
  */
 abstract class ViewModel
 {
-
-	/**
-	 * This method is deprecated...use forge() instead.
-	 *
-	 * @deprecated until 1.2
-	 */
-	public static function factory($viewmodel, $method = 'view')
-	{
-		logger(\Fuel::L_WARNING, 'This method is deprecated.  Please use a forge() instead.', __METHOD__);
-		return static::forge($viewmodel, $method);
-	}
-
 	/**
 	 * Factory for fetching the ViewModel
 	 *
@@ -42,8 +30,12 @@ abstract class ViewModel
 	 * @param   string  Method to execute
 	 * @return  ViewModel
 	 */
-	public static function forge($viewmodel, $method = 'view', $auto_filter = null)
+	public static function forge($view, $method = 'view', $auto_filter = null)
 	{
+		// strip any extensions from the view name to determine the viewmodel to load
+		$viewmodel = strpos($view, '.') === false ? $view : substr($view, 0, -strlen(strrchr($view, '.'))) ;
+
+		// determine the viewmodel namespace and classname
 		$namespace = \Request::active() ? ucfirst(\Request::active()->module) : '';
 		$class = $namespace.'\\View_'.ucfirst(str_replace(array('/', DS), '_', $viewmodel));
 
@@ -55,19 +47,13 @@ abstract class ViewModel
 			}
 		}
 
-		return new $class($method, $auto_filter);
+		return new $class($method, $auto_filter, $view);
 	}
 
 	/**
 	 * @var  string  method to execute when rendering
 	 */
 	protected $_method;
-
-	/**
-	 * @var  string|View  view name, after instantiation a View object
-	 * @deprecated until v1.2
-	 */
-	protected $_template;
 
 	/**
 	 * @var  string|View  view name, after instantiation a View object
@@ -84,13 +70,11 @@ abstract class ViewModel
 	 */
 	protected $_active_request;
 
-	protected function __construct($method, $auto_filter = null)
+	protected function __construct($method, $auto_filter = null, $view = null)
 	{
 		$this->_auto_filter = $auto_filter;
+		$this->_view === null and $this->_view = $view;
 		class_exists('Request', false) and $this->_active_request = \Request::active();
-
-		// @TODO Remove in 1.2.  This is for backwards compat only.
-		empty($this->_view) and $this->_view = $this->_template;
 
 		if (empty($this->_view))
 		{
@@ -101,28 +85,9 @@ abstract class ViewModel
 
 		$this->set_view();
 
-		// @TODO Remove in 1.2.  This is for backwards compat only.
-		if ( ! empty($this->_template))
-		{
-			logger(\Fuel::L_WARNING, '$this->_template is deprecated.  Please use a $this->_view instead.', __METHOD__);
-			$this->_view = $this->_template;
-		}
-
 		$this->_method = $method;
 
 		$this->before();
-	}
-
-	/**
-	 * Must return a View object or something compatible
-	 *
-	 * @return     Object  any object on which the template vars can be set and which has a toString method
-	 * @deprecated until 1.2
-	 */
-	protected function set_template()
-	{
-		logger(\Fuel::L_WARNING, 'This method is deprecated.  Please use a $this->set_view() instead.', __METHOD__);
-		return $this->set_view();
 	}
 
 	/**
@@ -176,7 +141,7 @@ abstract class ViewModel
 	 *
 	 * @param  string
 	 */
-	public function & get($key, $default = null)
+	public function & get($key = null, $default = null)
 	{
 		if (is_null($default) and func_num_args() === 1)
 		{

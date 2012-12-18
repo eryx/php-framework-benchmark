@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -80,12 +80,6 @@ class Session_Redis extends \Session_Driver
 		$this->keys['created'] 		= $this->time->get_timestamp();
 		$this->keys['updated'] 		= $this->keys['created'];
 
-		// create the session record
-		$this->_write_redis($this->keys['session_id'], serialize(array()));
-
-		// and set the session cookie
-		$this->_set_cookie();
-
 		return $this;
 	}
 
@@ -103,54 +97,55 @@ class Session_Redis extends \Session_Driver
 		// get the session cookie
 		$cookie = $this->_get_cookie();
 
-		// if no session cookie was present, create it
+		// if no session cookie was present, initialize a new session
 		if ($cookie === false or $force)
 		{
-			$this->create();
+			$this->data = array();
+			$this->keys = array();
 		}
-
-		// read the session file
-		$payload = $this->_read_redis($this->keys['session_id']);
-
-		if ($payload === false)
+		else
 		{
-			// try to find the previous one
-			$payload = $this->_read_redis($this->keys['previous_id']);
+			// read the session file
+			$payload = $this->_read_redis($this->keys['session_id']);
 
 			if ($payload === false)
 			{
-				// cookie present, but session record missing. force creation of a new session
-				$this->read(true);
-				return;
+				// try to find the previous one
+				$payload = $this->_read_redis($this->keys['previous_id']);
+
+				if ($payload === false)
+				{
+					// cookie present, but session record missing. force creation of a new session
+					return $this->read(true);
+				}
 			}
-		}
 
-		// unpack the payload
-		$payload = $this->_unserialize($payload);
+			// unpack the payload
+			$payload = $this->_unserialize($payload);
 
-		// session referral?
-		if (isset($payload['rotated_session_id']))
-		{
-			$payload = $this->_read_redis($payload['rotated_session_id']);
-			if ($payload === false)
+			// session referral?
+			if (isset($payload['rotated_session_id']))
 			{
-				// cookie present, but session record missing. force creation of a new session
-				$this->read(true);
-				return;
-			}
-			else
-			{
-				// update the session
-				$this->keys['previous_id'] = $this->keys['session_id'];
-				$this->keys['session_id']  = $payload['rotated_session_id'];
+				$payload = $this->_read_redis($payload['rotated_session_id']);
+				if ($payload === false)
+				{
+					// cookie present, but session record missing. force creation of a new session
+					return $this->read(true);
+				}
+				else
+				{
+					// update the session
+					$this->keys['previous_id'] = $this->keys['session_id'];
+					$this->keys['session_id']  = $payload['rotated_session_id'];
 
-				// unpack the payload
-				$payload = $this->_unserialize($payload);
+					// unpack the payload
+					$payload = $this->_unserialize($payload);
+				}
 			}
+
+			if (isset($payload[0])) $this->data = $payload[0];
+			if (isset($payload[1])) $this->flash = $payload[1];
 		}
-
-		if (isset($payload[0])) $this->data = $payload[0];
-		if (isset($payload[1])) $this->flash = $payload[1];
 
 		return parent::read();
 	}
@@ -166,7 +161,7 @@ class Session_Redis extends \Session_Driver
 	public function write()
 	{
 		// do we have something to write?
-		if ( ! empty($this->keys))
+		if ( ! empty($this->keys) or ! empty($this->data) or ! empty($this->flash))
 		{
 			parent::write();
 

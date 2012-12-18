@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -18,7 +18,7 @@ namespace Fuel\Core;
  * @group Core
  * @group Html
  */
-class Tests_Html extends TestCase
+class Test_Html extends TestCase
 {
 
 	/**
@@ -211,19 +211,17 @@ class Tests_Html extends TestCase
 		$list = array('one', 'two');
 
 		$output = Html::ul($list);
-		$expected = '<ul>
-	<li>one</li>
-	<li>two</li>
-</ul>
-';
+		$expected = '<ul>'.PHP_EOL
+					.'	<li>one</li>'.PHP_EOL
+					.'	<li>two</li>'.PHP_EOL
+					.'</ul>'.PHP_EOL;
 		$this->assertEquals($expected, $output);
 
 		$output = Html::ol($list);
-		$expected = '<ol>
-	<li>one</li>
-	<li>two</li>
-</ol>
-';
+		$expected = '<ol>'.PHP_EOL
+					.'	<li>one</li>'.PHP_EOL
+					.'	<li>two</li>'.PHP_EOL
+					.'</ol>'.PHP_EOL;
 		$this->assertEquals($expected, $output);
 	}
 }

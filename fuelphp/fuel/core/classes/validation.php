@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -27,7 +27,6 @@ namespace Fuel\Core;
  */
 class Validation
 {
-
 	/**
 	 * @var  Validation  keeps a reference to an instance of Validation while it is being run
 	 */
@@ -39,16 +38,11 @@ class Validation
 	protected static $active_field;
 
 	/**
-	 * This method is deprecated...use forge() instead.
-	 *
-	 * @deprecated until 1.2
-	 */
-	public static function factory($fieldset = 'default')
-	{
-		logger(\Fuel::L_WARNING, 'This method is deprecated.  Please use a forge() instead.', __METHOD__);
-		return static::forge($fieldset);
-	}
-
+	* Gets a new instance of the Validation class.
+	*
+	* @param   string      The name or instance of the Fieldset to link to
+	* @return  Validation
+	*/
 	public static function forge($fieldset = 'default')
 	{
 		if (is_string($fieldset))
@@ -133,6 +127,11 @@ class Validation
 	protected $callables = array();
 
 	/**
+	 * @var  bool  $global_input_fallback  wether to fall back to Input::param
+	 */
+	protected $global_input_fallback = true;
+
+	/**
 	 * @var  array  contains validation error messages, will overwrite those from lang files
 	 */
 	protected $error_messages = array();
@@ -150,6 +149,7 @@ class Validation
 		}
 
 		$this->callables = array($this);
+		$this->global_input_fallback = \Config::get('validation.global_input_fallback', true);
 	}
 
 	/**
@@ -165,16 +165,18 @@ class Validation
 	/**
 	 * Simpler alias for Validation->add()
 	 *
-	 * @param   string      Field name
-	 * @param   string      Field label
-	 * @param   string      Rules as a piped string
+	 * @param   string  Field name
+	 * @param   string  Field label
+	 * @param   string  Rules as a piped string
 	 * @return  Fieldset_Field  $this to allow chaining
+	 * @depricated  Remove in v2.0, passing rules as string is to be removed use add() instead
 	 */
 	public function add_field($name, $label, $rules)
 	{
 		$field = $this->add($name, $label);
 
 		$rules = explode('|', $rules);
+
 		foreach ($rules as $rule)
 		{
 			if (($pos = strpos($rule, '[')) !== false)
@@ -327,7 +329,7 @@ class Validation
 	 */
 	public function run($input = null, $allow_partial = false, $temp_callables = array())
 	{
-		if (empty($input) && \Input::method() != 'POST')
+		if (is_null($input) and \Input::method() != 'POST')
 		{
 			return false;
 		}
@@ -351,7 +353,10 @@ class Validation
 		{
 			static::set_active_field($field);
 
-			$value = $this->input($field->name);
+			// convert form field array's to Fuel dotted notation
+			$name = str_replace(array('[',']'), array('.', ''), $field->name);
+
+			$value = $this->input($name);
 			if (($allow_partial === true and $value === null)
 				or (is_array($allow_partial) and ! in_array($field->name, $allow_partial)))
 			{
@@ -365,11 +370,23 @@ class Validation
 					$params    = $rule[1];
 					$this->_run_rule($callback, $value, $params, $field);
 				}
-				$this->validated[$field->name] = $value;
+				if (strpos($name, '.') !== false)
+				{
+					\Arr::set($this->validated, $name, $value);
+				}
+				else
+				{
+					$this->validated[$name] = $value;
+				}
 			}
 			catch (Validation_Error $v)
 			{
 				$this->errors[$field->name] = $v;
+
+				if($field->fieldset())
+				{
+					$field->fieldset()->Validation()->add_error($field->name, $v);
+				}
 			}
 		}
 
@@ -484,7 +501,14 @@ class Validation
 
 		if ( ! array_key_exists($key, $this->input))
 		{
-			$this->input[$key] = \Input::param($key, $default);
+			if (strpos($key,'[') !== false)
+			{
+				$this->input[$key] =  $this->global_input_fallback ? \Arr::get(\Input::param(), str_replace(array('[', ']'),array('.', ''),$key), $default) : $default;
+			}
+			else
+			{
+				$this->input[$key] =  $this->global_input_fallback ? \Input::param($key, $default) : $default;
+			}
 		}
 
 		return $this->input[$key];
@@ -529,17 +553,6 @@ class Validation
 	}
 
 	/**
-	 * Alias of Validation::error() for backwards compatibility
-	 *
-	 * @depricated  Remove in v1.2
-	 */
-	public function errors($field = null, $default = false)
-	{
-		logger(\Fuel::L_WARNING, 'This method is deprecated. Please use Validation::error() instead.', __METHOD__);
-		return static::error($field, $default);
-	}
-
-	/**
 	 * Show errors
 	 *
 	 * Returns all errors in a list or with set markup from $options param
@@ -571,6 +584,25 @@ class Validation
 		$output .= $options['close_list'];
 
 		return $output;
+	}
+
+	/**
+	 * Add error
+	 *
+	 * Adds an error for a given field.
+	 *
+	 * @param   string				field name for which to set the error
+	 * @param   Validation_Error  	error for the field
+	 * @return  Validation 			this, to allow chaining
+	 */
+	protected function add_error($name = null, $error = null)
+	{
+		if($name !== null and $error !== null)
+		{
+			$this->errors[$name] = $error;
+		}
+
+		return $this;
 	}
 
 	/**
@@ -687,7 +719,13 @@ class Validation
 	 */
 	public function _validation_match_field($val, $field)
 	{
-		return $this->_empty($val) || $this->input($field) === $val;
+		if ($this->input($field) !== $val)
+		{
+			$validating = $this->active_field();
+			throw new \Validation_Error($validating, $val, array('match_field' => array($field)), array($this->field($field)->label));
+		}
+
+		return true;
 	}
 
 	/**
@@ -743,14 +781,14 @@ class Validation
 	 * @param   string
 	 * @return  bool
 	 */
-	public function _validation_valid_emails($val)
+	public function _validation_valid_emails($val, $separator = ',')
 	{
 		if ($this->_empty($val))
 		{
 			return true;
 		}
 
-		$emails = explode(',', $val);
+		$emails = explode($separator, $val);
 
 		foreach ($emails as $e)
 		{
@@ -837,6 +875,7 @@ class Validation
 		$pattern .= in_array('newlines', $flags) ? "\n" : '';
 		$pattern .= in_array('tabs', $flags) ? "\t" : '';
 		$pattern .= in_array('dots', $flags) && ! in_array('punctuation', $flags) ? '\.' : '';
+		$pattern .= in_array('commas', $flags) && ! in_array('punctuation', $flags) ? ',' : '';
 		$pattern .= in_array('punctuation', $flags) ? "\.,\!\?:;\&" : '';
 		$pattern .= in_array('dashes', $flags) ? '_\-' : '';
 		$pattern = empty($pattern) ? '/^(.*)$/' : ('/^(['.$pattern.'])+$/');
@@ -867,5 +906,24 @@ class Validation
 	public function _validation_numeric_max($val, $max_val)
 	{
 		return $this->_empty($val) || floatval($val) <= floatval($max_val);
+	}
+
+	/**
+	 * Conditionally requires completion of current field based on completion of another field
+	 *
+	 * @param mixed
+	 * @param string
+	 * @return bool
+	 */
+	public function _validation_required_with($val, $field)
+	{
+
+	  if ( ! $this->_empty($this->input($field)) and $this->_empty($val))
+	  {
+			$validating = $this->active_field();
+			throw new \Validation_Error($validating, $val, array('required_with' => array($this->field($field))), array($this->field($field)->label));
+	  }
+
+	  return true;
 	}
 }

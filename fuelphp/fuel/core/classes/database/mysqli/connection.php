@@ -73,6 +73,7 @@ class Database_MySQLi_Connection extends \Database_Connection
 			'username'   => '',
 			'password'   => '',
 			'persistent' => false,
+			'compress'	 => true,
 		));
 
 		// Prevent this information from showing up in traces
@@ -96,12 +97,32 @@ class Database_MySQLi_Connection extends \Database_Connection
 			if ($persistent)
 			{
 				// Create a persistent connection
-				$this->_connection = new \MySQLi('p:'.$hostname, $username, $password, $database, $port, $socket);
+				if ($compress)
+				{
+					$mysqli = mysqli_init();
+					$mysqli->real_connect('p:'.$hostname, $username, $password, $database, $port, $socket, MYSQLI_CLIENT_COMPRESS);
+
+					$this->_connection = $mysqli;
+				}
+				else
+				{
+					$this->_connection = new \MySQLi('p:'.$hostname, $username, $password, $database, $port, $socket);
+				}
 			}
 			else
 			{
 				// Create a connection and force it to be a new link
-				$this->_connection = new \MySQLi($hostname, $username, $password, $database, $port, $socket);
+				if ($compress)
+				{
+					$mysqli = mysqli_init();
+					$mysqli->real_connect($hostname, $username, $password, $database, $port, $socket, MYSQLI_CLIENT_COMPRESS);
+
+					$this->_connection = $mysqli;
+				}
+				else
+				{
+					$this->_connection = new \MySQLi($hostname, $username, $password, $database, $port, $socket);
+				}
 			}
 			if ($this->_connection->error)
 			{
@@ -185,12 +206,23 @@ class Database_MySQLi_Connection extends \Database_Connection
 	public function query($type, $sql, $as_object)
 	{
 		// Make sure the database is connected
-		$this->_connection or $this->connect();
+		if ($this->_connection)
+		{
+			// Make sure the connection is still alive
+			if ( ! $this->_connection->ping())
+			{
+				throw new \Database_Exception($this->_connection->error.' [ '.$sql.' ]', $this->_connection->errno);
+			}
+		}
+		else
+		{
+			$this->connect();
+		}
 
 		if ( ! empty($this->_config['profiling']))
 		{
 			// Benchmark this query for the current instance
-			$benchmark = Profiler::start("Database ({$this->_instance})", $sql);
+			$benchmark = \Profiler::start("Database ({$this->_instance})", $sql);
 		}
 
 		if ( ! empty($this->_config['connection']['persistent']) and $this->_config['connection']['database'] !== static::$_current_databases[$this->_connection_id])
@@ -205,7 +237,7 @@ class Database_MySQLi_Connection extends \Database_Connection
 			if (isset($benchmark))
 			{
 				// This benchmark is worthless
-				Profiler::delete($benchmark);
+				\Profiler::delete($benchmark);
 			}
 
 			throw new \Database_Exception($this->_connection->error.' [ '.$sql.' ]', $this->_connection->errno);
@@ -222,7 +254,7 @@ class Database_MySQLi_Connection extends \Database_Connection
 
 		if (isset($benchmark))
 		{
-			Profiler::stop($benchmark);
+			\Profiler::stop($benchmark);
 		}
 
 		// Set the last query
@@ -413,6 +445,12 @@ class Database_MySQLi_Connection extends \Database_Connection
 
 		// SQL standard is to use single-quotes for all values
 		return "'$value'";
+	}
+
+	public function error_info()
+	{
+		$errno = $this->_connection->errno;
+		return array($errno, empty($errno)? null : $errno, empty($errno) ? null : $this->_connection->error);
 	}
 
 	public function in_transaction()

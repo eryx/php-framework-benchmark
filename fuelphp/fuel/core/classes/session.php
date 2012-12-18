@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -66,17 +66,6 @@ class Session
 	}
 
 	// --------------------------------------------------------------------
-
-	/**
-	 * This method is deprecated...use forge() instead.
-	 *
-	 * @deprecated until 1.2
-	 */
-	public static function factory($custom = array())
-	{
-		logger(\Fuel::L_WARNING, 'This method is deprecated.  Please use a forge() instead.', __METHOD__);
-		return static::forge($custom);
-	}
 
 	/**
 	 * Factory
@@ -334,7 +323,7 @@ class Session
 	}
 
 	// --------------------------------------------------------------------
-	
+
 	/**
 	 * rotate the session id
 	 *
@@ -347,7 +336,7 @@ class Session
 	}
 
 	// --------------------------------------------------------------------
-	
+
 	/**
 	 * destroy the current session
 	 *

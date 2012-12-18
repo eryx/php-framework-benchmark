@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -37,16 +37,12 @@ class Fieldset
 	protected static $_instances = array();
 
 	/**
-	 * This method is deprecated...use forge() instead.
+	 * Create Fieldset object
 	 *
-	 * @deprecated until 1.2
+	 * @param   string    Identifier for this fieldset
+	 * @param   array     Configuration array
+	 * @return  Fieldset
 	 */
-	public static function factory($name = 'default', array $config = array())
-	{
-		logger(\Fuel::L_WARNING, 'This method is deprecated.  Please use a forge() instead.', __METHOD__);
-		return static::forge($name, $config);
-	}
-
 	public static function forge($name = 'default', array $config = array())
 	{
 		if ($exists = static::instance($name))
@@ -132,6 +128,11 @@ class Fieldset
 	protected $config = array();
 
 	/**
+	 * @var  array  disabled fields array
+	 */
+	protected $disabled = array();
+
+	/**
 	 * Object constructor
 	 *
 	 * @param  string
@@ -196,6 +197,16 @@ class Fieldset
 		}
 
 		return $this->form;
+	}
+
+	/**
+	 * Set the tag to be used for this fieldset
+	 *
+	 * @param  string  $tag
+	 */
+	public function set_fieldset_tag($tag)
+	{
+		$this->fieldset_tag = $tag;
 	}
 
 	/**
@@ -298,8 +309,56 @@ class Fieldset
 			return $field;
 		}
 
-		$field = new \Fieldset_Field($name, $label, $attributes, $rules, $this);
-		$this->fields[$name] = $field;
+		$this->fields[$name] = new \Fieldset_Field($name, $label, $attributes, $rules, $this);
+
+		return $this->fields[$name];
+	}
+
+	/**
+	 * Add a new Fieldset_Field before an existing field in a Fieldset
+	 *
+	 * @param   string  $name
+	 * @param   string  $label
+	 * @param   array   $attributes
+	 * @param   array   $rules
+	 * @param   string  $fieldname   fieldname before which the new field is inserted in the fieldset
+	 * @return  Fieldset_Field
+	 */
+	public function add_before($name, $label = '', array $attributes = array(), array $rules = array(), $fieldname = null)
+	{
+		$field = $this->add($name, $label, $attributes, $rules);
+
+		// Remove from tail and reinsert at correct location
+		unset($this->fields[$field->name]);
+
+		if ( ! \Arr::insert_before_key($this->fields, array($name => $field), $fieldname, true))
+		{
+			throw new \RuntimeException('Field "'.$fieldname.'" does not exist in this Fieldset. Field "'.$name.'" can not be added.');
+		}
+
+		return $field;
+	}
+
+	/**
+	 * Add a new Fieldset_Field after an existing field in a Fieldset
+	 *
+	 * @param   string  $name
+	 * @param   string  $label
+	 * @param   array   $attributes
+	 * @param   array   $rules
+	 * @param   string  $fieldname   fieldname after which the new field is inserted in the fieldset
+	 * @return  Fieldset_Field
+	 */
+	public function add_after($name, $label = '', array $attributes = array(), array $rules = array(), $fieldname = null)
+	{
+		$field = $this->add($name, $label, $attributes, $rules);
+
+		// Remove from tail and reinsert at correct location
+		unset($this->fields[$field->name]);
+		if ( ! \Arr::insert_after_key($this->fields, array($name => $field), $fieldname, true))
+		{
+			throw new \RuntimeException('Field "'.$fieldname.'" does not exist in this Fieldset. Field "'.$name.'" can not be added.');
+		}
 
 		return $field;
 	}
@@ -333,7 +392,7 @@ class Fieldset
 		{
 			foreach ($this->fieldset_children as $fieldset)
 			{
-				if (($field = $fieldset->field($name) !== false))
+				if (($field = $fieldset->field($name)) !== false)
 				{
 					return $field;
 				}
@@ -380,7 +439,14 @@ class Fieldset
 		$config = is_array($config) ? $config : array($config => $value);
 		foreach ($config as $key => $value)
 		{
-			$this->config[$key] = $value;
+			if (strpos($key, '.') === false)
+			{
+				$this->config[$key] = $value;
+			}
+			else
+			{
+				\Arr::set($this->config, $key, $value);
+			}
 		}
 
 		return $this;
@@ -405,12 +471,19 @@ class Fieldset
 			$output = array();
 			foreach ($key as $k)
 			{
-				$output[$k] = array_key_exists($k, $this->config) ? $this->config[$k] : $default;
+				$output[$k] = $this->get_config($k, $default);
 			}
 			return $output;
 		}
 
-		return array_key_exists($key, $this->config) ? $this->config[$key] : $default;
+		if (strpos($key, '.') === false)
+		{
+			return array_key_exists($key, $this->config) ? $this->config[$key] : $default;
+		}
+		else
+		{
+			return \Arr::get($this->config, $key, $default);
+		}
 	}
 
 	/**
@@ -450,17 +523,10 @@ class Fieldset
 	/**
 	 * Set all fields to the input from get or post (depends on the form method attribute)
 	 *
-	 * @param   array|object  input for initial population of fields, this is deprecated - you should use populate() instea
 	 * @return  Fieldset      this, to allow chaining
 	 */
-	public function repopulate($deprecated = null)
+	public function repopulate()
 	{
-		// The following usage will be deprecated in Fuel 1.1
-		if ( ! is_null($deprecated))
-		{
-			return $this->populate($deprecated, true);
-		}
-
 		$fields = $this->field(null, true);
 		foreach ($fields as $f)
 		{
@@ -499,7 +565,7 @@ class Fieldset
 		$fields_output = '';
 		foreach ($this->field() as $f)
 		{
-			$fields_output .= $f->build().PHP_EOL;
+			in_array($f->name, $this->disabled) or $fields_output .= $f->build().PHP_EOL;
 		}
 
 		$close = ($this->fieldset_tag == 'form' or empty($this->fieldset_tag))
@@ -513,6 +579,45 @@ class Fieldset
 			$template);
 
 		return $template;
+	}
+
+	/**
+	 * Enable a disabled field from being build
+	 *
+	 * @return  Fieldset      this, to allow chaining
+	 */
+	public function enable($name = null)
+	{
+		// Check if it exists. if not, bail out
+		if ( ! $this->field($name))
+		{
+			throw new \RuntimeException('Field "'.$name.'" does not exist in this Fieldset.');
+		}
+
+		if (isset($this->disabled[$name]))
+		{
+			unset($this->disabled[$name]);
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Disable a field from being build
+	 *
+	 * @return  Fieldset      this, to allow chaining
+	 */
+	public function disable($name = null)
+	{
+		// Check if it exists. if not, bail out
+		if ( ! $this->field($name))
+		{
+			throw new \RuntimeException('Field "'.$name.'" does not exist in this Fieldset.');
+		}
+
+		isset($this->disabled[$name]) or $this->disabled[$name] = $name;
+
+		return $this;
 	}
 
 	/**
@@ -566,17 +671,6 @@ class Fieldset
 	}
 
 	/**
-	 * Alias of $this->error() for backwards compatibility
-	 *
-	 * @depricated  Remove in v1.2
-	 */
-	public function errors($field = null)
-	{
-		logger(\Fuel::L_WARNING, 'This method is deprecated. Please use Fieldset::error() instead.', __METHOD__);
-		return $this->error($field);
-	}
-
-	/**
 	 * Alias for $this->validation()->error()
 	 *
 	 * @return  Validation_Error|array
@@ -594,6 +688,16 @@ class Fieldset
 	public function show_errors(array $config = array())
 	{
 		return $this->validation()->show_errors($config);
+	}
+
+	/**
+	 * Get instance id
+	 *
+	 * @return string
+	 */
+	public function get_name()
+	{
+		return $this->name;
 	}
 }
 

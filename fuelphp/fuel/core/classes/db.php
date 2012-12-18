@@ -325,21 +325,16 @@ class DB
 	}
 
 	/**
-	 * Sets the Database instance to use transactions
-	 * Transactions are OFF by default
+	 * Checks whether a connection is in transaction.
 	 *
-	 *     DB::transactional();
-	 *     DB::transactional(TRUE);
-	 *     DB::transactional(FALSE);
+	 *     DB::in_transaction();
 	 *
-	 * @param   bool   use tranactions TRUE/FALSE
 	 * @param   string  db connection
-	 * @return  void
-	 * @deprecated  remove in v1.2
+	 * @return  bool
 	 */
-	public static function transactional($use_trans = true, $db = null)
+	public static function in_transaction($db = null)
 	{
-		\Database_Connection::instance($db)->transactional($use_trans);
+		return \Database_Connection::instance($db)->in_transaction();
 	}
 
 	/**

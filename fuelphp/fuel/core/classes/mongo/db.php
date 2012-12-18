@@ -24,7 +24,7 @@ namespace Fuel\Core;
  */
 
 
-class Mongo_DbException extends FuelException {}
+class Mongo_DbException extends \FuelException {}
 
 
 class Mongo_Db
@@ -144,6 +144,11 @@ class Mongo_Db
 			$options['persist'] = 'fuel_mongo_persist';
 		}
 
+		if ( ! empty($config['replicaset']))
+		{
+			$options['replicaSet'] = $config['replicaset'];
+		}
+
 		$connection_string = "mongodb://";
 
 		if (empty($config['hostname']))
@@ -258,31 +263,31 @@ class Mongo_Db
 	 */
 	public function select($includes = array(), $excludes = array())
 	{
-	 	if ( ! is_array($includes))
-	 	{
-	 		$includes = array($includes);
-	 	}
+		if ( ! is_array($includes))
+		{
+			$includes = array($includes);
+		}
 
-	 	if ( ! is_array($excludes))
-	 	{
-	 		$excludes = array($excludes);
-	 	}
+		if ( ! is_array($excludes))
+		{
+			$excludes = array($excludes);
+		}
 
-	 	if ( ! empty($includes))
-	 	{
-	 		foreach ($includes as $col)
-	 		{
-	 			$this->selects[$col] = 1;
-	 		}
-	 	}
-	 	else
-	 	{
-	 		foreach ($excludes as $col)
-	 		{
-	 			$this->selects[$col] = 0;
-	 		}
-	 	}
-	 	return $this;
+		if ( ! empty($includes))
+		{
+			foreach ($includes as $col)
+			{
+				$this->selects[$col] = 1;
+			}
+		}
+		else
+		{
+			foreach ($excludes as $col)
+			{
+				$this->selects[$col] = 0;
+			}
+		}
+		return $this;
 	}
 
 	/**
@@ -639,10 +644,10 @@ class Mongo_Db
 	}
 
 	/**
-	* Get one document based upon the passwed parameters
+	 * Get one document based upon the passed parameters
 	 *
 	 *	@param	string	$collection		the collection name
-	 *	@usage	$mongodb->get('foo');
+	 *	@usage	$mongodb->get_one('foo');
 	 */
 	 public function get_one($collection = "")
 	{
@@ -663,7 +668,7 @@ class Mongo_Db
 	 *
 	 *	@param	string	$collection		the collection name
 	 *	@param	boolean	$foundonly		send cursor limit and skip information to the count function, if applicable.
-	 *	@usage	$mongodb->get('foo');
+	 *	@usage	$mongodb->count('foo');
 	 */
 
 	public function count($collection = '', $foundonly = false)
@@ -964,7 +969,17 @@ class Mongo_Db
 		return ($this->db->{$collection}->getIndexInfo());
 	}
 
-
+	/**
+	 *	Returns a collection object so you can perform advanced queries, upserts, pushes and addtosets
+	 *
+	 *	@param	string	$collection		the collection name
+	 *	@usage	$collection_name = $mongodb->get_collection('collection_name');
+	 */
+	public function get_collection($collection)
+	{
+		return ($this->db->{$collection});
+	}
+	
 	/**
 	 *	Resets the class variables to default settings
 	 */

@@ -6,7 +6,7 @@
  * @version    1.1
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -148,9 +148,9 @@ class Finder
 	 */
 	public function remove_path($path)
 	{
-		for ($i = 0, $count = count($this->paths); $i < $count; $i++)
+		foreach ($this->paths as $i => $p)
 		{
-			if ($this->paths[$i] === $path)
+			if ($p === $path)
 			{
 				unset($this->paths[$i]);
 				break;
@@ -257,7 +257,10 @@ class Finder
 		$found = array();
 		foreach ($paths as $path)
 		{
-			$found = array_merge(glob($path.$directory.'/'.$filter), $found);
+			if (($f = glob($path.$directory.DS.$filter)) !== false)
+			{
+				$found = array_merge($f, $found);
+			}
 		}
 
 		return $found;
@@ -327,7 +330,7 @@ class Finder
 		$file = $this->prep_path($dir).$file.$ext;
 		$cache_id .= $file;
 
-		if ($cached_path = $this->from_cache($cache_id))
+		if ($cache and $cached_path = $this->from_cache($cache_id))
 		{
 			return $cached_path;
 		}

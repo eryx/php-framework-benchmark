@@ -6,7 +6,7 @@
  * @version    1.1
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -35,7 +35,8 @@ class Package
 	protected static $packages = array();
 
 	/**
-	 * Loads the given package.  If a path is not given, then PKGPATH is used.
+	 * Loads the given package.  If a path is not given, if will search through
+	 * the defined package_paths. If not defined, then PKGPATH is used.
 	 * It also accepts an array of packages as the first parameter.
 	 *
 	 * @param   string|array  $package  The package name or array of packages.
@@ -47,28 +48,40 @@ class Package
 	{
 		if (is_array($package))
 		{
-			foreach ($package as $pkg)
+			foreach ($package as $pkg => $path)
 			{
-				$path = null;
-				if (is_array($pkg))
+				if (is_numeric($pkg))
 				{
-					list($pkg, $path) = $pkg;
+					$pkg = $path;
+					$path = null;
 				}
 				static::load($pkg, $path);
 			}
 			return false;
 		}
 
-
 		if (static::loaded($package))
 		{
 			return;
 		}
 
-		// Load it from PKGPATH if no path was given.
+		// if no path is given, try to locate the package
 		if ($path === null)
 		{
-			$path = PKGPATH.$package.DS;
+			$paths = \Config::get('package_paths', array());
+			empty($paths) and $paths = array(PKGPATH);
+
+			if ( ! empty($paths))
+			{
+				foreach ($paths as $modpath)
+				{
+					if (is_dir($path = $modpath.strtolower($package).DS))
+					{
+						break;
+					}
+				}
+			}
+
 		}
 
 		if ( ! is_dir($path))
@@ -112,4 +125,32 @@ class Package
 		return array_key_exists($package, static::$packages);
 	}
 
+	/**
+	 * Checks if the given package exists.
+	 *
+	 * @param   string  $package  The package name
+	 * @return  bool|string  Path to the package found, or false if not found
+	 */
+	public static function exists($package)
+	{
+		if (array_key_exists($package, static::$packages))
+		{
+			return static::$packages[$package];
+		}
+		else
+		{
+			$paths = \Config::get('package_paths', array());
+			empty($paths) and $paths = array(PKGPATH);
+
+			foreach ($paths as $path)
+			{
+				if (is_dir($path.$package))
+				{
+					return $path.$package.DS;
+				}
+			}
+		}
+
+		return false;
+	}
 }

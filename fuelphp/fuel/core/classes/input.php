@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -24,12 +24,15 @@ namespace Fuel\Core;
  */
 class Input
 {
-
-
 	/**
 	 * @var  $detected_uri  The URI that was detected automatically
 	 */
 	protected static $detected_uri = null;
+
+	/**
+	 * @var  $detected_ext  The URI extension that was detected automatically
+	 */
+	protected static $detected_ext = null;
 
 	/**
 	 * @var  $input  All of the input (GET, POST, PUT, DELETE)
@@ -40,6 +43,54 @@ class Input
 	 * @var  $put_delete  All of the put or delete vars
 	 */
 	protected static $put_delete = null;
+
+	/**
+	 * @var  $php_input  Cache for the php://input stream
+	 */
+	protected static $php_input = null;
+
+	/**
+	 * @var  $json  parsed request body as json
+	 */
+	protected static $json = null;
+
+	/**
+	 * @var  $xml  parsed request body as xml
+	 */
+	protected static $xml = null;
+
+	/**
+	 * Get the request body interpreted as JSON.
+	 *
+	 * @return  array  parsed request body content.
+	 */
+	public static function json($index = null, $default = null)
+	{
+		static::$json === null and static::hydrate_raw_input('json');
+		return (func_num_args() === 0) ? static::$json : \Arr::get(static::$json, $index, $default);
+	}
+
+	/**
+	 * Get the request body interpreted as XML.
+	 *
+	 * @return  array  parsed request body content.
+	 */
+	public static function xml($index = null, $default = null)
+	{
+		static::$xml === null and static::hydrate_raw_input('xml');
+		return (func_num_args() === 0) ? static::$xml : \Arr::get(static::$xml, $index, $default);
+	}
+
+	/**
+	 * Hydration from raw request (xml/json requests)
+	 *
+	 * @param  string  $type  input type
+	 */
+	protected static function hydrate_raw_input($type)
+	{
+		static::$php_input === null and static::$php_input = file_get_contents('php://input');
+		static::$$type = \Security::clean(\Format::forge(static::$php_input, $type)->to_array());
+	}
 
 	/**
 	 * Detects and returns the current URI based on a number of different server
@@ -125,14 +176,41 @@ class Input
 			}
 		}
 
+		// Deal with any trailing dots
+		$uri = rtrim($uri, '.');
+
 		// Strip the defined url suffix from the uri if needed
-		$ext = \Config::get('url_suffix');
-		strrchr($uri, '.') === $ext and $uri = substr($uri,0,-strlen($ext));
+		$uri_info = pathinfo($uri);
+
+		if ( ! empty($uri_info['extension']))
+		{
+			if (strpos($uri_info['extension'],'/') === false)
+			{
+				static::$detected_ext = $uri_info['extension'];
+
+				if (\Config::get('routing.strip_extension', true))
+				{
+					$uri = $uri_info['dirname'].'/'.$uri_info['filename'];
+				}
+			}
+		}
 
 		// Do some final clean up of the uri
 		static::$detected_uri = \Security::clean_uri($uri, true);
 
 		return static::$detected_uri;
+	}
+
+	/**
+	 * Detects and returns the current URI extension
+	 *
+	 * @return  string
+	 */
+	public static function extension()
+	{
+		static::$detected_ext === null and static::uri();
+
+		return static::$detected_ext;
 	}
 
 	/**
@@ -142,45 +220,42 @@ class Input
 	 */
 	public static function ip($default = '0.0.0.0')
 	{
-		if (static::server('REMOTE_ADDR') !== null)
-		{
-			return static::server('REMOTE_ADDR');
-		}
-		else
-		{
-			// detection failed, return the default
-			return \Fuel::value($default);
-		}
+		return static::server('REMOTE_ADDR', $default);
 	}
 
 	/**
 	 * Get the real ip address of the user.  Even if they are using a proxy.
 	 *
+	 * @param	string	the default to return on failure
+	 * @param	bool	exclude private and reserved IPs
 	 * @return  string  the real ip address of the user
 	 */
-	public static function real_ip($default = '0.0.0.0')
+	public static function real_ip($default = '0.0.0.0', $exclude_reserved = false)
 	{
-		if (static::server('HTTP_X_CLUSTER_CLIENT_IP') !== null)
+		$server_keys = array('HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_CLIENT_IP', 'REMOTE_ADDR');
+
+		foreach ($server_keys as $key)
 		{
-			return static::server('HTTP_X_CLUSTER_CLIENT_IP');
+			if ( ! static::server($key))
+			{
+				continue;
+			}
+
+			$ips = explode(',', static::server($key));
+			array_walk($ips, function (&$ip) {
+				$ip = trim($ip);
+			});
+
+			$ips = array_filter($ips, function($ip) use($exclude_reserved) {
+				return filter_var($ip, FILTER_VALIDATE_IP, $exclude_reserved ? FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE : null);
+			});
+
+			if ($ips)
+			{
+				return reset($ips);
+			}
 		}
 
-		if (static::server('HTTP_X_FORWARDED_FOR') !== null)
-		{
-			return static::server('HTTP_X_FORWARDED_FOR');
-		}
-
-		if (static::server('HTTP_CLIENT_IP') !== null)
-		{
-			return static::server('HTTP_CLIENT_IP');
-		}
-
-		if (static::server('REMOTE_ADDR') !== null)
-		{
-			return static::server('REMOTE_ADDR');
-		}
-
-		// detection failed, return the default
 		return \Fuel::value($default);
 	}
 
@@ -191,8 +266,7 @@ class Input
 	 */
 	public static function protocol()
 	{
-		if ((static::server('HTTPS') !== null and static::server('HTTPS') != 'off')
-			or (static::server('HTTPS') === null and static::server('SERVER_PORT') == 443))
+		if (static::server('HTTPS') == 'on' or static::server('HTTPS') == 1 or static::server('SERVER_PORT') == 443)
 		{
 			return 'https';
 		}
@@ -227,7 +301,14 @@ class Input
 	 */
 	public static function method($default = 'GET')
 	{
-		return static::server('REQUEST_METHOD', $default);
+		// get the method from the current active request
+		if ($request = \Request::active() and $method = $request->get_method())
+		{
+			return $method;
+		}
+
+		// if called before a request is active, fall back to the global server setting
+		return \Input::server('HTTP_X_HTTP_METHOD_OVERRIDE', \Input::server('REQUEST_METHOD', $default));
 	}
 
 	/**
@@ -247,11 +328,7 @@ class Input
 	 */
 	public static function all()
 	{
-		if (is_null(static::$input))
-		{
-			static::hydrate();
-		}
-
+		static::$input === null and static::hydrate();
 		return static::$input;
 	}
 
@@ -260,11 +337,11 @@ class Input
 	 *
 	 * @param   string  $index    The index to get
 	 * @param   string  $default  The default value
-	 * @return  void
+	 * @return  string|array
 	 */
 	public static function get($index = null, $default = null)
 	{
-		return (is_null($index) and func_num_args() === 0) ? $_GET : \Arr::get($_GET, $index, $default);
+		return (func_num_args() === 0) ? $_GET : \Arr::get($_GET, $index, $default);
 	}
 
 	/**
@@ -276,7 +353,7 @@ class Input
 	 */
 	public static function post($index = null, $default = null)
 	{
-		return (is_null($index) and func_num_args() === 0) ? $_POST : \Arr::get($_POST, $index, $default);
+		return (func_num_args() === 0) ? $_POST : \Arr::get($_POST, $index, $default);
 	}
 
 	/**
@@ -288,12 +365,8 @@ class Input
 	 */
 	public static function put($index = null, $default = null)
 	{
-		if (is_null(static::$put_delete))
-		{
-			static::hydrate();
-		}
-
-		return (is_null($index) and func_num_args() === 0) ? static::$put_delete : \Arr::get(static::$put_delete, $index, $default);
+		static::$put_delete === null and static::hydrate();
+		return (func_num_args() === 0) ? static::$put_delete : \Arr::get(static::$put_delete, $index, $default);
 	}
 
 	/**
@@ -305,11 +378,7 @@ class Input
 	 */
 	public static function delete($index = null, $default = null)
 	{
-		if (is_null(static::$put_delete))
-		{
-			static::hydrate();
-		}
-
+		static::$put_delete === null and static::hydrate();
 		return (is_null($index) and func_num_args() === 0) ? static::$put_delete : \Arr::get(static::$put_delete, $index, $default);
 	}
 
@@ -322,7 +391,7 @@ class Input
 	 */
 	public static function file($index = null, $default = null)
 	{
-		return (is_null($index) and func_num_args() === 0) ? $_FILES : \Arr::get($_FILES, $index, $default);
+		return (func_num_args() === 0) ? $_FILES : \Arr::get($_FILES, $index, $default);
 	}
 
 	/**
@@ -334,25 +403,8 @@ class Input
 	 */
 	public static function param($index = null, $default = null)
 	{
-		if (is_null(static::$input))
-		{
-			static::hydrate();
-		}
-
+		static::$input === null and static::hydrate();
 		return \Arr::get(static::$input, $index, $default);
-	}
-
-	/**
-	 * Fetch an item from either the GET array or the POST
-	 *
-	 * @param   string  The index key
-	 * @param   mixed   The default value
-	 * @return  string|array
-	 * @deprecated until 1.2
-	 */
-	public static function get_post($index = null, $default = null)
-	{
-		return static::param($index, $default);
 	}
 
 	/**
@@ -364,7 +416,7 @@ class Input
 	 */
 	public static function cookie($index = null, $default = null)
 	{
-		return (is_null($index) and func_num_args() === 0) ? $_COOKIE : \Arr::get($_COOKIE, $index, $default);
+		return (func_num_args() === 0) ? $_COOKIE : \Arr::get($_COOKIE, $index, $default);
 	}
 
 	/**
@@ -376,7 +428,7 @@ class Input
 	 */
 	public static function server($index = null, $default = null)
 	{
-		return (is_null($index) and func_num_args() === 0) ? $_SERVER : \Arr::get($_SERVER, strtoupper($index), $default);
+		return (func_num_args() === 0) ? $_SERVER : \Arr::get($_SERVER, strtoupper($index), $default);
 	}
 
 	/**
@@ -390,7 +442,8 @@ class Input
 
 		if (\Input::method() == 'PUT' or \Input::method() == 'DELETE')
 		{
-			parse_str(file_get_contents('php://input'), static::$put_delete);
+			static::$php_input === null and static::$php_input = file_get_contents('php://input');
+			parse_str(static::$php_input, static::$put_delete);
 			static::$input = array_merge(static::$input, static::$put_delete);
 		}
 	}

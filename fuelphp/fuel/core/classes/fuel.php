@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -15,12 +15,7 @@ namespace Fuel\Core;
 /**
  * General Fuel Exception class
  */
-class Fuel_Exception extends \Exception {}
-
-/**
- * @deprecated  Keep until v1.2
- */
-class FuelException extends \Fuel_Exception {}
+class FuelException extends \Exception {}
 
 /**
  * The core of the framework.
@@ -34,7 +29,7 @@ class Fuel
 	/**
 	 * @var  string  The version of Fuel
 	 */
-	const VERSION = '1.1';
+	const VERSION = '1.4';
 
 	/**
 	 * @var  string  constant used for when in testing mode
@@ -195,13 +190,6 @@ class Fuel
 
 		\Event::register('shutdown', 'Fuel::finish');
 
-		//Load in the packages
-		foreach (\Config::get('always_load.packages', array()) as $package => $path)
-		{
-			is_string($package) and $path = array($package => $path);
-			\Package::load($path);
-		}
-
 		// Always load classes, config & language set in always_load.php config
 		static::always_load();
 
@@ -217,6 +205,9 @@ class Fuel
 		}
 
 		static::$initialized = true;
+
+		// fire any app created events
+		\Event::instance()->has_events('app_created') and \Event::instance()->trigger('app_created', '', 'none');
 
 		if (static::$profiling)
 		{
@@ -275,41 +266,6 @@ class Fuel
 	}
 
 	/**
-	 * Finds a file in the given directory.  It allows for a cascading filesystem.
-	 *
-	 * @param   string   The directory to look in.
-	 * @param   string   The name of the file
-	 * @param   string   The file extension
-	 * @param   boolean  if true return an array of all files found
-	 * @param   boolean  if false do not cache the result
-	 * @return  string   the path to the file
-	 * @deprecated  Replaced by Finder::search()
-	 */
-	public static function find_file($directory, $file, $ext = '.php', $multiple = false, $cache = true)
-	{
-		logger(\Fuel::L_WARNING, 'This method is deprecated.  Please use a Finder::search() instead.', __METHOD__);
-
-		return \Finder::search($directory, $file, $ext, $multiple, $cache);
-	}
-
-	/**
-	 * Gets a list of all the files in a given directory inside all of the
-	 * loaded search paths (e.g. the cascading file system).  This is useful
-	 * for things like finding all the config files in all the search paths.
-	 *
-	 * @param   string  The directory to look in
-	 * @param   string  The file filter
-	 * @return  array   the array of files
-	 * @deprecated  Replaced by Finder::instance()->list_files()
-	 */
-	public static function list_files($directory = null, $filter = '*.php')
-	{
-		logger(\Fuel::L_WARNING, 'This method is deprecated.  Please use a Finder::instance()->list_files() instead.', __METHOD__);
-
-		return Finder::instance()->list_files($directory, $filter);
-	}
-
-	/**
 	 * Generates a base url.
 	 *
 	 * @return  string  the base url
@@ -324,36 +280,10 @@ class Fuel
 		if (\Input::server('script_name'))
 		{
 			$base_url .= str_replace('\\', '/', dirname(\Input::server('script_name')));
-
-			// Add a slash if it is missing
-			$base_url = rtrim($base_url, '/').'/';
 		}
-		return $base_url;
-	}
 
-	/**
-	 * Add to paths which are used by Fuel::find_file()
-	 *
-	 * @param  string  the new path
-	 * @param  bool    whether to add just behind the APPPATH or to prefix
-	 */
-	public static function add_path($path, $prefix = false)
-	{
-		logger(\Fuel::L_WARNING, 'This method is deprecated.  Please use a Finder::instance()->add_path() instead.', __METHOD__);
-
-		return \Finder::instance()->add_path($path, ($prefix ? -1 : null));
-	}
-
-	/**
-	 * Returns the array of currently loaded search paths.
-	 *
-	 * @return  array  the array of paths
-	 */
-	public static function get_paths()
-	{
-		logger(\Fuel::L_WARNING, 'This method is deprecated.  Please use a Finder::instance()->paths() instead.', __METHOD__);
-
-		return \Finder::instance()->paths();
+		// Add a slash if it is missing and return it
+		return rtrim($base_url, '/').'/';
 	}
 
 	/**
@@ -365,101 +295,6 @@ class Fuel
 	public static function load($file)
 	{
 		return include $file;
-	}
-
-	/**
-	 * Adds a package or multiple packages to the stack.
-	 *
-	 * Examples:
-	 *
-	 * static::add_package('foo');
-	 * static::add_package(array('foo' => PKGPATH.'bar/foo/'));
-	 *
-	 * @param   array|string  the package name or array of packages
-	 * @return  void
-	 */
-	public static function add_package($package)
-	{
-		logger(\Fuel::L_WARNING, 'This method is deprecated.  Please use a Package::load() instead.', __METHOD__);
-		\Package::load($package);
-	}
-
-	/**
-	 * Removes a package from the stack.
-	 *
-	 * @param   string  the package name
-	 * @return  void
-	 */
-	public static function remove_package($name)
-	{
-		logger(\Fuel::L_WARNING, 'This method is deprecated.  Please use a Package::unload() instead.', __METHOD__);
-		\Package::unload($name);
-	}
-
-	/**
-	 * Add module
-	 *
-	 * Registers a given module as a class prefix and returns the path to the
-	 * module. Won't register twice, will just return the path on a second call.
-	 *
-	 * @param   string  module name (lowercase prefix without underscore)
-	 * @return  string  the path that was loaded
-	 */
-	public static function add_module($name)
-	{
-		if ( ! $path = \Autoloader::namespace_path('\\'.ucfirst($name)))
-		{
-			$paths = \Config::get('module_paths', array());
-
-			if ( ! empty($paths))
-			{
-				foreach ($paths as $modpath)
-				{
-					if (is_dir($mod_check_path = $modpath.strtolower($name).DS))
-					{
-						$path = $mod_check_path;
-						$ns = '\\'.ucfirst($name);
-						\Autoloader::add_namespaces(array(
-							$ns  => $path.'classes'.DS,
-						), true);
-						break;
-					}
-				}
-			}
-
-			// throw an exception if a non-existent module has been added
-			if ( ! isset($ns))
-			{
-				throw new \FuelException('Trying to add a non-existent module "'.$name.'"');
-			}
-		}
-		else
-		{
-			// strip the classes directory, we need the module root
-			$path = substr($path, 0, -8);
-		}
-
-		return $path;
-	}
-
-	/**
-	 * Checks to see if a module exists or not.
-	 *
-	 * @param   string  the module name
-	 * @return  bool    whether it exists or not
-	 */
-	public static function module_exists($module)
-	{
-		$paths = \Config::get('module_paths', array());
-
-		foreach ($paths as $path)
-		{
-			if (is_dir($path.$module))
-			{
-				return $path.$module.DS;
-			}
-		}
-		return false;
 	}
 
 	/**
@@ -544,28 +379,11 @@ class Fuel
 	 */
 	public static function always_load($array = null)
 	{
-		if (is_null($array))
-		{
-			$array = \Config::get('always_load', array());
-			// packages were loaded by Fuel's init already
-			$array['packages'] = array();
-		}
+		is_null($array) and	$array = \Config::get('always_load', array());
 
-		if (isset($array['packages']))
-		{
-			foreach ($array['packages'] as $packages)
-			{
-				static::add_packages($packages);
-			}
-		}
+		isset($array['packages']) and \Package::load($array['packages']);
 
-		if (isset($array['modules']))
-		{
-			foreach ($array['modules'] as $module)
-			{
-				static::add_module($module, true);
-			}
-		}
+		isset($array['modules']) and \Module::load($array['modules']);
 
 		if (isset($array['classes']))
 		{

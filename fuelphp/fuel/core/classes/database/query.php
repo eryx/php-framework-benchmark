@@ -32,6 +32,11 @@ class Database_Query
 	protected $_cache_key = null;
 
 	/**
+	 * @var  boolean  Cache all results
+	 */
+	protected $_cache_all = true;
+
+	/**
 	 * @var  string  SQL statement
 	 */
 	protected $_sql;
@@ -91,11 +96,14 @@ class Database_Query
 	 * Enables the query to be cached for a specified amount of time.
 	 *
 	 * @param   integer  number of seconds to cache or null for default
+	 * @param   string   name of the cache key to be used or null for default
+	 * @param   boolean  if true, cache all results, even empty ones
 	 * @return  $this
 	 */
-	public function cached($lifetime = null, $cache_key = null)
+	public function cached($lifetime = null, $cache_key = null, $cache_all = true)
 	{
 		$this->_lifetime = $lifetime;
+		$this->_cache_all = (bool) $cache_all;
 		is_string($cache_key) and $this->_cache_key = $cache_key;
 
 		return $this;
@@ -194,7 +202,7 @@ class Database_Query
 			$values = array_map(array($db, 'quote'), $this->_parameters);
 
 			// Replace the values in the SQL
-			$sql = strtr($sql, $values);
+			$sql = \Str::tr($sql, $values);
 		}
 
 		return trim($sql);
@@ -219,7 +227,7 @@ class Database_Query
 		// Compile the SQL query
 		$sql = $this->compile($db);
 
-		switch(strtoupper(substr($sql, 0, 6)))
+		switch(strtoupper(substr(ltrim($sql,'('), 0, 6)))
 		{
 			case 'SELECT':
 				$this->_type = \DB::SELECT;
@@ -230,7 +238,7 @@ class Database_Query
 				break;
 		}
 
-		if ( ! empty($this->_lifetime) and $this->_type === DB::SELECT)
+		if ($db->caching() and ! empty($this->_lifetime) and $this->_type === DB::SELECT)
 		{
 			$cache_key = empty($this->_cache_key) ?
 				'db.'.md5('Database_Connection::query("'.$db.'", "'.$sql.'")') : $this->_cache_key;
@@ -243,11 +251,12 @@ class Database_Query
 			catch (CacheNotFoundException $e) {}
 		}
 
-		\DB::$query_count++;
 		// Execute the query
+		\DB::$query_count++;
 		$result = $db->query($this->_type, $sql, $this->_as_object);
 
-		if (isset($cache))
+		// Cache the result if needed
+		if (isset($cache) and ($this->_cache_all or $result->count()))
 		{
 			$cache->set_expiration($this->_lifetime)->set_contents($result->as_array())->set();
 		}

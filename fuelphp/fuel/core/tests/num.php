@@ -5,7 +5,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -17,8 +17,11 @@ namespace Fuel\Core;
  * @package		Fuel
  * @category	Core
  * @author      Chase "Syntaqx" Hutchins
+ *
+ * @group Core
+ * @group Num
  */
-class Tests_Num extends TestCase
+class Test_Num extends TestCase
 {
 
 	/**
@@ -53,8 +56,23 @@ class Tests_Num extends TestCase
 
 		$this->assertEquals($expected, $output);
 
+		$output = Num::quantity('1500000');
+		$expected = '2M';
+
+		$this->assertEquals($expected, $output);
+		
+		
+		$output = Num::quantity('1000000000');
+		$expected = '1B';
+
+		$this->assertEquals($expected, $output);
+
+		// Get current localized decimal separator
+		$locale_conv = localeconv();
+		$decimal_point = isset($locale_conv['decimal_point']) ? $locale_conv['decimal_point'] : '.';
+
 		$output = Num::quantity('7500', 1);
-		$expected = '7.5K';
+		$expected = '7'.$decimal_point.'5K';
 
 		$this->assertEquals($expected, $output);
 	}
@@ -66,6 +84,14 @@ class Tests_Num extends TestCase
 	{
 		$output = Num::format('1234567890', '(000) 000-0000');
 		$expected = '(123) 456-7890';
+
+		$this->assertEquals($expected, $output);
+		
+		$output = Num::format(null, '(000) 000-0000');
+		$this->assertNull($output);
+		
+		$output = Num::format('1234567890', null);
+		$expected = '1234567890';
 
 		$this->assertEquals($expected, $output);
 	}

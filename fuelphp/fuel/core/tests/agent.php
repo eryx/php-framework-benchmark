@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -173,13 +173,13 @@ class Test_Agent extends TestCase
 	}
 
 	/**
-	 * Tests Agent::is_mobile()
+	 * Tests Agent::is_mobiledevice()
 	 *
 	 * @test
 	 */
-	public function test_is_mobile()
+	public function test_is_mobiledevice()
  	{
-		$output = Agent::is_mobile();
+		$output = Agent::is_mobiledevice();
 		$this->assertFalse($output);
 	}
 

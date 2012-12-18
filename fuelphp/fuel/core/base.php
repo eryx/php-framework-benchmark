@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -36,7 +36,31 @@ if ( ! function_exists('logger'))
 {
 	function logger($level, $msg, $method = null)
 	{
-		if ($level > \Config::get('log_threshold'))
+		// defined default error labels
+		static $labels = array(
+			1  => 'Error',
+			2  => 'Warning',
+			3  => 'Debug',
+			4  => 'Info',
+		);
+
+		// get the levels defined to be logged
+		$loglabels = \Config::get('log_threshold');
+
+		// bail out if we don't need logging at all
+		if ($loglabels == \Fuel::L_NONE)
+		{
+			return false;
+		}
+
+		// if it's not an array, assume it's an "up to" level
+		if ( ! is_array($loglabels))
+		{
+			$loglabels = array_keys(array_slice($labels, 0, $loglabels, true));
+		}
+
+		// do we need to log the message with this level?
+		if ( ! in_array($level, $loglabels))
 		{
 			return false;
 		}
@@ -61,15 +85,10 @@ if ( ! function_exists('array_to_attr'))
 	{
 		$attr_str = '';
 
-		if ( ! is_array($attr))
+		foreach ((array) $attr as $property => $value)
 		{
-			$attr = (array) $attr;
-		}
-
-		foreach ($attr as $property => $value)
-		{
-			// Ignore null values
-			if (is_null($value))
+			// Ignore empty values (null/false/[empty string])
+			if (empty($value))
 			{
 				continue;
 			}
@@ -337,13 +356,14 @@ if ( ! function_exists('load_error_classes'))
 {
 	function load_error_classes()
 	{
-		! class_exists('Fuel\\Core\\Error') and import('error');
-		! class_exists('Error') and class_alias('Fuel\\Core\\Error', 'Error');
+		class_exists('Fuel\\Core\\Error') or import('error');
+		class_exists('Error') or class_alias('Fuel\\Core\\Error', 'Error');
+		class_exists('PhpErrorException') or class_alias('Fuel\\Core\\PhpErrorException', 'PhpErrorException');
 
-		! class_exists('Fuel\\Core\\Debug') and import('debug');
-		! class_exists('Debug') and class_alias('Fuel\\Core\\Debug', 'Debug');
+		class_exists('Fuel\\Core\\Debug') or import('debug');
+		class_exists('Debug') or class_alias('Fuel\\Core\\Debug', 'Debug');
 
-		! class_exists('Fuel\\Core\\View') and import('view');
-		! class_exists('View') and class_alias('Fuel\\Core\\View', 'View');
+		class_exists('Fuel\\Core\\View') or import('view');
+		class_exists('View') or class_alias('Fuel\\Core\\View', 'View');
 	}
 }

@@ -28,14 +28,14 @@ abstract class Image_Driver
 
 	public function __construct($config)
 	{
-		Config::load('image', 'image');
+		\Config::load('image', true);
 		if (is_array($config))
 		{
-			$this->config = array_merge(Config::get('image'), $config);
+			$this->config = array_merge(\Config::get('image'), $config);
 		}
 		else
 		{
-			$this->config = Config::get('image');
+			$this->config = \Config::get('image');
 		}
 		$this->debug("Image Class was initialized using the " . $this->config['driver'] . " driver.");
 	}
@@ -106,11 +106,12 @@ abstract class Image_Driver
 	/**
 	 * Loads the image and checks if its compatible.
 	 *
-	 * @param   string  $filename     The file to load
-	 * @param   string  $return_data  Decides if it should return the images data, or just "$this".
+	 * @param   string  $filename								The file to load
+	 * @param   string  $return_data						Decides if it should return the images data, or just "$this".
+	 * @param   mixed   $force_extension				Decides if it should force the extension witht this (or false)
 	 * @return  Image_Driver
 	 */
-	public function load($filename, $return_data = false)
+	public function load($filename, $return_data = false, $force_extension = false)
 	{
 		// First check if the filename exists
 		$filename = realpath($filename);
@@ -121,7 +122,7 @@ abstract class Image_Driver
 		if (file_exists($filename))
 		{
 			// Check the extension
-			$ext = $this->check_extension($filename);
+			$ext = $this->check_extension($filename, false, $force_extension);
 			if ($ext !== false)
 			{
 				$return = array_merge($return, array(
@@ -332,7 +333,6 @@ abstract class Image_Driver
 		$sizes   = $this->sizes();
 		$width   = $this->convert_number($width, true);
 		$height  = $this->convert_number($height, false);
-		$x = $y = 0;
 
 		if (function_exists('bcdiv'))
 		{
@@ -358,8 +358,8 @@ abstract class Image_Driver
 		}
 
 		$sizes = $this->sizes();
-		$y = floor(($sizes->height - $height) / 2);
-		$x = floor(($sizes->width - $width) / 2);
+		$y = floor(max(0, $sizes->height - $height) / 2);
+		$x = floor(max(0, $sizes->width - $width) / 2);
 		$this->_crop($x, $y, $x + $width, $y + $height);
 	}
 
@@ -667,7 +667,8 @@ abstract class Image_Driver
 		{
 			if ( ! $this->config['debug'])
 			{
-				header('Content-Type: image/' . $filetype);
+				$mimetype = $filetype === 'jpg' ? 'jpeg' : $filetype;
+				header('Content-Type: image/' . $mimetype);
 			}
 			$this->new_extension = $filetype;
 		}
@@ -731,7 +732,7 @@ abstract class Image_Driver
 				$blue  = hexdec(substr($hex, 2, 1).substr($hex, 2, 1));
 			}
 		}
-		
+
 		return array(
 			'red' => $red,
 			'green' => $green,
@@ -743,13 +744,20 @@ abstract class Image_Driver
 	 * Checks if the extension is accepted by this library, and if its valid sets the $this->image_extension variable.
 	 *
 	 * @param   string   $filename
-	 * @param   boolean  $writevar  Decides if the extension should be written to $this->image_extension
+	 * @param   boolean  $writevar					Decides if the extension should be written to $this->image_extension
+	 * @param   mixed		 $force_extension		Decides if the extension should be overridden with this (or false)
 	 * @return  boolean
 	 */
-	protected function check_extension($filename, $writevar = true)
+	protected function check_extension($filename, $writevar = true, $force_extension = false)
 	{
 		$return = false;
-		foreach ($this->accepted_extensions AS $ext)
+
+		if ($force_extension !== false and in_array($force_extension, $this->accepted_extensions))
+		{
+			return $force_extension;
+		}
+
+		foreach ($this->accepted_extensions as $ext)
 		{
 			if (strtolower(substr($filename, strlen($ext) * -1)) == strtolower($ext))
 			{
@@ -813,7 +821,7 @@ abstract class Image_Driver
 	 */
 	public function run_queue($clear = null)
 	{
-		foreach ($this->queued_actions AS $action)
+		foreach ($this->queued_actions as $action)
 		{
 			$tmpfunc = array();
 			for ($i = 0; $i < count($action); $i++)
@@ -837,7 +845,7 @@ abstract class Image_Driver
 	public function reload()
 	{
 		$this->debug("Reloading was called!");
-		$this->load($this->image_fullpath);
+		$this->load($this->image_fullpath, false, $this->image_extension);
 		return $this;
 	}
 

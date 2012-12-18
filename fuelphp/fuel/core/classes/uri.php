@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -56,8 +56,43 @@ class Uri
 	}
 
 	/**
+	 * Replace all * wildcards in a URI by the current segment in that location
+	 *
+	 * @return  string
+	 */
+	public static function segment_replace($url)
+	{
+		// get the path from the url
+		$parts = parse_url($url);
+
+		// explode it in it's segments
+		$segments = explode('/', trim($parts['path'], '/'));
+
+		// fetch any segments needed
+		$wildcards = 0;
+		foreach ($segments as $index => &$segment)
+		{
+			if (strpos($segment, '*') !== false)
+			{
+				$wildcards++;
+				if (($new = static::segment($index)) === null)
+				{
+					throw new \OutofBoundsException('Segment replace on "'.$url.'" failed. No segment exists for wildcard '.$wildcards.'.');
+				}
+				$segment = str_replace('*', $new, $segment);
+			}
+		}
+
+		// re-assemble the path
+		$parts['path'] = implode('/', $segments);
+		$url = implode('/', $parts);
+
+		return $url;
+	}
+
+	/**
 	 * Converts the current URI segments to an associative array.  If
-	 * the URI has an odd number of segments, null will be returned.
+	 * the URI has an odd number of segments, an exception will be thrown.
 	 *
 	 * @return  array|null  the array or null
 	 */
@@ -69,7 +104,7 @@ class Uri
 	/**
 	 * Returns the full uri as a string
 	 *
-	 * @return	string
+	 * @return  string
 	 */
 	public static function string()
 	{
@@ -126,9 +161,13 @@ class Uri
 			}
 		}
 
-		array_walk($variables, function ($val, $key) use (&$url) {
-			$url = str_replace(':'.$key, $val, $url);
-		});
+		array_walk(
+			$variables,
+			function ($val, $key) use (&$url)
+			{
+				$url = str_replace(':'.$key, $val, $url);
+			}
+		);
 
 		is_bool($secure) and $url = http_build_url($url, array('scheme' => $secure ? 'https' : 'http'));
 
@@ -175,16 +214,14 @@ class Uri
 
 
 	/**
-	 * @deprecated  Make protected in 1.2
 	 * @var  string  The URI string
 	 */
-	public $uri = '';
+	protected $uri = '';
 
 	/**
-	 * @deprecated  Make protected in 1.2
 	 * @var  array  The URI segments
 	 */
-	public $segments = '';
+	protected $segments = '';
 
 	/**
 	 * Construct takes a URI or detects it if none is given and generates
@@ -200,8 +237,19 @@ class Uri
 			\Profiler::mark(__METHOD__.' Start');
 		}
 
+		// if the route is a closure, an object will be passed here
+		is_object($uri) and $uri = null;
+
 		$this->uri = trim($uri ?: \Input::uri(), '/');
-		$this->segments = $this->uri === '' ? array() : explode('/', $this->uri);
+
+		if (empty($this->uri))
+		{
+			$this->segments = array();
+		}
+		else
+		{
+			$this->segments = explode('/', $this->uri);
+		}
 
 		if (\Fuel::$profiling)
 		{

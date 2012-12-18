@@ -18,7 +18,7 @@ abstract class Config_File implements Config_Interface
 	 * @param   array   $vars  Variables to parse in the file
 	 * @return  void
 	 */
-	public function __construct($file, $vars = array())
+	public function __construct($file = null, $vars = array())
 	{
 		$this->file = $file;
 
@@ -36,16 +36,16 @@ abstract class Config_File implements Config_Interface
 	 * @param   bool  $overwrite  Whether to overwrite existing values
 	 * @return  array  the config array
 	 */
-	public function load($overwrite = false)
+	public function load($overwrite = false, $cache = true)
 	{
-		$paths = $this->find_file();
+		$paths = $this->find_file($cache);
 		$config = array();
 
 		foreach ($paths as $path)
 		{
 			$config = $overwrite ?
-			              array_merge($config, $this->load_file($path)) :
-			              \Arr::merge($config, $this->load_file($path));
+				array_merge($config, $this->load_file($path)) :
+				\Arr::merge($config, $this->load_file($path));
 		}
 
 		return $config;
@@ -79,26 +79,130 @@ abstract class Config_File implements Config_Interface
 	}
 
 	/**
+	 * Replaces FuelPHP's path constants to their string counterparts.
+	 *
+	 * @param   array  $array  array to be prepped
+	 * @return  array  prepped array
+	 */
+	protected function prep_vars(&$array)
+	{
+		static $replacements = false;
+
+		if ($replacements === false)
+		{
+			foreach ($this->vars as $i => $v)
+			{
+				$replacements['#^('.preg_quote($v).'){1}(.*)?#'] = "%".$i."%$2";
+			}
+		}
+
+		foreach ($array as $i => $value)
+		{
+			if (is_string($value))
+			{
+				$array[$i] = preg_replace(array_keys($replacements), array_values($replacements), $value);
+			}
+			elseif(is_array($value))
+			{
+				$this->prep_vars($array[$i]);
+			}
+		}
+	}
+
+	/**
 	 * Finds the given config files
 	 *
 	 * @param   bool  $multiple  Whether to load multiple files or not
 	 * @return  array
 	 */
-	protected function find_file()
+	protected function find_file($cache = true)
 	{
-		$paths = \Finder::search('config', $this->file, $this->ext, true);
-		$paths = array_merge(\Finder::search('config/'.\Fuel::$env, $this->file, $this->ext, true), $paths);
-
-		if (count($paths) > 0)
+		if (($this->file[0] === '/' or (isset($this->file[1]) and $this->file[1] === ':')) and is_file($this->file))
 		{
-			return array_reverse($paths);
+			$paths = array($this->file);
+		}
+		else
+		{
+			$paths = array_merge(
+				\Finder::search('config/'.\Fuel::$env, $this->file, $this->ext, true, $cache),
+				\Finder::search('config', $this->file, $this->ext, true, $cache)
+			);
 		}
 
-		throw new \ConfigException(sprintf('File "%s" does not exist.', $this->file));
+		if (empty($paths))
+		{
+			throw new \ConfigException(sprintf('File "%s" does not exist.', $this->file));
+		}
+
+		return array_reverse($paths);
 	}
 
 	/**
-	 * Must be implemented by child class.  Gets called for each file to load.
+	 * Formats the output and saved it to disc.
+	 *
+	 * @param   string     $identifier  filename
+	 * @param   $contents  $contents    config array to save
+	 * @return  bool       \File::update result
+	 */
+	public function save($identifier, $contents)
+	{
+		// get the formatted output
+		$output = $this->export_format($contents);
+
+		if ( ! $output)
+		{
+			return false;
+		}
+
+		if ( ! $path = \Finder::search('config', $identifier))
+		{
+			if ($pos = strripos($identifier, '::'))
+			{
+				// get the namespace path
+				if ($path = \Autoloader::namespace_path('\\'.ucfirst(substr($identifier, 0, $pos))))
+				{
+					// strip the namespace from the filename
+					$identifier = substr($identifier, $pos+2);
+
+					// strip the classes directory as we need the module root
+					$path = substr($path,0, -8).'config'.DS.$identifier;
+				}
+				else
+				{
+					// invalid namespace requested
+					return false;
+				}
+			}
+		}
+
+		// absolute path requested?
+		if ($identifier[0] === '/' or (isset($identifier[1]) and $identifier[1] === ':'))
+		{
+			$path = $identifier;
+		}
+
+		// make sure we have a fallback
+		$path or $path = APPPATH.'config'.DS.$identifier;
+
+		$path = pathinfo($path);
+		if ( ! is_dir($path['dirname']))
+		{
+			mkdir($path['dirname'], 0777, true);
+		}
+
+		return \File::update($path['dirname'], $path['basename'], $output);
+	}
+
+	/**
+	 * Must be implemented by child class. Gets called for each file to load.
 	 */
 	abstract protected function load_file($file);
+
+	/**
+	 * Must be impletmented by child class. Gets called when saving a config file.
+	 *
+	 * @param   array   $contents  config array to save
+	 * @return  string  formatted output
+	 */
+	abstract protected function export_format($contents);
 }

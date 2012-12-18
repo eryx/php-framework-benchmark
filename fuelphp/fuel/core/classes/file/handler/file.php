@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -41,17 +41,6 @@ class File_Handler_File
 	{
 		$this->path = $path;
 		$this->area = $area;
-	}
-
-	/**
-	 * This method is deprecated...use forge() instead.
-	 * 
-	 * @deprecated until 1.2
-	 */
-	public static function factory($path, array $config = array(), File_Area $area = null, $content = array())
-	{
-		logger(\Fuel::L_WARNING, 'This method is deprecated.  Please use a forge() instead.', __METHOD__);
-		return static::forge($path, $config, $area, $content);
 	}
 
 	public static function forge($path, array $config = array(), File_Area $area = null, $content = array())
@@ -96,14 +85,14 @@ class File_Handler_File
 		$new_name = str_replace(array('..', '/', '\\'), array('', '', ''), $new_name);
 		$extension = $new_extension === false
 			? $info['extension']
-			: ltrim(str_replace(array('/', '\\'), array('', '', ''), $new_name), '.');
+			: ltrim($new_extension, '.');
 		$extension = ! empty($extension) ? '.'.$extension : '';
 
 		$new_path = $info['dirname'].DS.$new_name.$extension;
 
 		$return =  $this->area->rename($this->path, $new_path);
 		$return and $this->path = $new_path;
-		
+
 		return $return;
 	}
 
@@ -116,13 +105,13 @@ class File_Handler_File
 	public function move($new_path)
 	{
 		$info = pathinfo($this->path);
-		$new_path = $this->area->get_path($new_path);
 
+		$new_path = $this->area->get_path($new_path);
 		$new_path = rtrim($new_path, '\\/').DS.$info['basename'];
 
 		$return = $this->area->rename($this->path, $new_path);
 		$return and $this->path = $new_path;
-		
+
 		return $return;
 	}
 
@@ -164,7 +153,7 @@ class File_Handler_File
 		// should also destroy object but not possible in PHP right?
 		return $this->area->delete($this->path);
 	}
-	
+
 	/**
 	 * Get the url.
 	 *
@@ -174,7 +163,7 @@ class File_Handler_File
 	{
 		return $this->area->get_url($this->path);
 	}
-	
+
 	/**
 	 * Get the file's permissions.
 	 *
@@ -184,7 +173,7 @@ class File_Handler_File
 	{
 		return $this->area->get_permissions($this->path);
 	}
-	
+
 	/**
 	 * Get the file's created or modified timestamp.
 	 *
@@ -195,7 +184,7 @@ class File_Handler_File
 	{
 		return $this->area->get_time($this->path, $type);
 	}
-	
+
 	/**
 	 * Get the file's size.
 	 *

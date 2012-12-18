@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -20,7 +20,7 @@ namespace Fuel\Core;
  * @package    Fuel
  * @category   Core
  * @author     Fuel Development Team
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://docs.fuelphp.com/classes/format.html
  */
 class Format
@@ -30,17 +30,6 @@ class Format
 	 * @var  array|mixed  input to convert
 	 */
 	protected $_data = array();
-
-	/**
-	 * This method is deprecated...use forge() instead.
-	 *
-	 * @deprecated until 1.2
-	 */
-	public static function factory($data = null, $from_type = null)
-	{
-		logger(\Fuel::L_WARNING, 'This method is deprecated.  Please use a forge() instead.', __METHOD__);
-		return static::forge($data, $from_type);
-	}
 
 	/**
 	 * Returns an instance of the Format object.
@@ -71,7 +60,7 @@ class Format
 
 			else
 			{
-				throw new FuelException('Format class does not support conversion from "' . $from_type . '".');
+				throw new \FuelException('Format class does not support conversion from "' . $from_type . '".');
 			}
 		}
 
@@ -100,6 +89,11 @@ class Format
 		if (is_object($data) and ! $data instanceof \Iterator)
 		{
 			$data = get_object_vars($data);
+		}
+
+		if (empty($data))
+		{
+			return array();
 		}
 
 		foreach ($data as $key => $value)
@@ -144,7 +138,7 @@ class Format
 		}
 
 		// Force it to be something useful
-		if ( ! is_array($data) AND ! is_object($data))
+		if ( ! is_array($data) and ! is_object($data))
 		{
 			$data = (array) $data;
 		}
@@ -155,14 +149,14 @@ class Format
 			if (is_numeric($key))
 			{
 				// make string key...
-				$key = (Inflector::singularize($basenode) != $basenode) ? Inflector::singularize($basenode) : 'item';
+				$key = (\Inflector::singularize($basenode) != $basenode) ? \Inflector::singularize($basenode) : 'item';
 			}
 
 			// replace anything not alpha numeric
 			$key = preg_replace('/[^a-z_\-0-9]/i', '', $key);
 
 			// if there is another array found recrusively call this function
-			if (is_array($value) || is_object($value))
+			if (is_array($value) or is_object($value))
 			{
 				$node = $structure->addChild($key);
 
@@ -190,21 +184,48 @@ class Format
 	 * To CSV conversion
 	 *
 	 * @param   mixed   $data
+	 * @param   mixed   $delimiter
 	 * @return  string
 	 */
-	public function to_csv($data = null)
+	public function to_csv($data = null, $delimiter = null)
 	{
-		if ($data == null)
+		// csv format settings
+		$newline = \Config::get('format.csv.newline', "\n");
+		$delimiter or $delimiter = \Config::get('format.csv.delimiter', ',');
+		$enclosure = \Config::get('format.csv.enclosure', '"');
+		$escape = \Config::get('format.csv.escape', '\\');
+
+		// escape function
+		$escaper = function($items) use($enclosure, $escape) {
+			return array_map(function($item) use($enclosure, $escape){
+				return str_replace($enclosure, $escape.$enclosure, $item);
+			}, $items);
+		};
+
+		if ($data === null)
 		{
 			$data = $this->_data;
 		}
 
-		// Multi-dimentional array
-		if (is_array($data) and isset($data[0]))
+		if (is_object($data) and ! $data instanceof \Iterator)
 		{
-			$headings = array_keys($data[0]);
+			$data = $this->to_array($data);
 		}
 
+		// Multi-dimensional array
+		if (is_array($data) and \Arr::is_multi($data))
+		{
+			$data = array_values($data);
+
+			if (\Arr::is_assoc($data[0]))
+			{
+				$headings = array_keys($data[0]);
+			}
+			else
+			{
+				$headings = array_shift($data);
+			}
+		}
 		// Single array
 		else
 		{
@@ -212,22 +233,24 @@ class Format
 			$data = array($data);
 		}
 
-		$output = implode(',', $headings) . "\n";
-		foreach ($data as &$row)
+		$output = $enclosure.implode($enclosure.$delimiter.$enclosure, $escaper($headings)).$enclosure.$newline;
+
+		foreach ($data as $row)
 		{
-			$output .= '"' . implode('","', (array) $row) . "\"\n";
+			$output .= $enclosure.implode($enclosure.$delimiter.$enclosure, $escaper((array) $row)).$enclosure.$newline;
 		}
 
-		return rtrim($output, "\n");
+		return rtrim($output, $newline);
 	}
 
 	/**
 	 * To JSON conversion
 	 *
 	 * @param   mixed  $data
+	 * @param   bool   wether to make the json pretty
 	 * @return  string
 	 */
-	public function to_json($data = null)
+	public function to_json($data = null, $pretty = false)
 	{
 		if ($data == null)
 		{
@@ -237,21 +260,23 @@ class Format
 		// To allow exporting ArrayAccess objects like Orm\Model instances they need to be
 		// converted to an array first
 		$data = (is_array($data) or is_object($data)) ? $this->to_array($data) : $data;
-		return json_encode($data);
+		return $pretty ? static::pretty_json($data) : json_encode($data);
 	}
 
 	/**
 	 * To JSONP conversion
 	 *
-	 * @param mixed $data
-	 * @return string
+	 * @param   mixed   $data
+	 * @param   bool    $pretty    wether to make the json pretty
+	 * @param   string  $callback  JSONP callback
+	 * @return  string  formatted JSONP
 	 */
-	public function to_jsonp($data = null)
+	public function to_jsonp($data = null, $pretty = false, $callback = null)
 	{
-		 $callback = \Input::param('callback');
-		 is_null($callback) and $callback = 'response';
+		$callback or $callback = \Input::param('callback');
+		is_null($callback) and $callback = 'response';
 
-		 return $callback.'('.$this->to_json($data).')';
+		return $callback.'('.$this->to_json($data, $pretty).')';
 	}
 
 	/**
@@ -353,53 +378,19 @@ class Format
 	{
 		$data = array();
 
-		// Splits
-		$rows = explode("\n", trim($string));
+		$rows = preg_split('/(?<='.preg_quote(\Config::get('format.csv.enclosure', '"')).')'.\Config::get('format.csv.regex_newline', '\n').'/', trim($string));
 
-		// TODO: This means any headers with , will be split, but this is less likley thay a value containing it
-		$headings = array_map(function($value) {
-				return trim($value, '"');
-			}, explode(',', array_shift($rows)));
+		// csv config
+		$delimiter = \Config::get('format.csv.delimiter', ',');
+		$enclosure = \Config::get('format.csv.enclosure', '"');
+		$escape = \Config::get('format.csv.escape', '\\');
 
-		$join_row = null;
+		// Get the headings
+		$headings = str_replace($escape.$enclosure, $enclosure, str_getcsv(array_shift($rows), $delimiter, $enclosure, $escape));
 
 		foreach ($rows as $row)
 		{
-			// Check for odd numer of double quotes
-			while (substr_count($row, '"') % 2)
-			{
-				// They have a line start to join onto
-				if ($join_row !== null)
-				{
-					// Lets stick this row onto a new line after the existing row, and see what happens
-					$row = $join_row."\n".$row;
-
-					// Did that fix it?
-					if (substr_count($row, '"') % 2)
-					{
-						// Nope, lets try adding the next line
-						continue 2;
-					}
-
-					else
-					{
-						// Yep, lets kill the join row.
-						$join_row = null;
-					}
-				}
-
-				// Lets start a new "join line"
-				else
-				{
-					$join_row = $row;
-
-					// Lets bust outta this join, and go to the next row (foreach)
-					continue 2;
-				}
-			}
-
-			// The substr removes " from start and end
-			$data_fields = explode('","', trim($row, '"'));
+			$data_fields = str_replace($escape.$enclosure, $enclosure, str_getcsv($row, $delimiter, $enclosure, $escape));
 
 			if (count($data_fields) == count($headings))
 			{
@@ -433,5 +424,97 @@ class Format
 		return unserialize(trim($string));
 	}
 
-}
+	/**
+	 * Makes json pretty the json output.
+	 * Barrowed from http://www.php.net/manual/en/function.json-encode.php#80339
+	 *
+	 * @param   string  $json  json encoded array
+	 * @return  string|false  pretty json output or false when the input was not valid
+	 */
+	protected static function pretty_json($data)
+	{
+		$json = json_encode($data);
 
+		if ( ! $json)
+		{
+			return false;
+		}
+
+		$tab = "\t";
+		$newline = "\n";
+		$new_json = "";
+		$indent_level = 0;
+		$in_string = false;
+		$len = strlen($json);
+
+		for ($c = 0; $c < $len; $c++)
+		{
+			$char = $json[$c];
+			switch($char)
+			{
+				case '{':
+				case '[':
+					if ( ! $in_string)
+					{
+						$new_json .= $char.$newline.str_repeat($tab, $indent_level+1);
+						$indent_level++;
+					}
+					else
+					{
+						$new_json .= $char;
+					}
+					break;
+				case '}':
+				case ']':
+					if ( ! $in_string)
+					{
+						$indent_level--;
+						$new_json .= $newline.str_repeat($tab, $indent_level).$char;
+					}
+					else
+					{
+						$new_json .= $char;
+					}
+					break;
+				case ',':
+					if ( ! $in_string)
+					{
+						$new_json .= ','.$newline.str_repeat($tab, $indent_level);
+					}
+					else
+					{
+						$new_json .= $char;
+					}
+					break;
+				case ':':
+					if ( ! $in_string)
+					{
+						$new_json .= ': ';
+					}
+					else
+					{
+						$new_json .= $char;
+					}
+					break;
+				case '"':
+					if ($c > 0 and $json[$c-1] !== '\\')
+					{
+						$in_string = ! $in_string;
+					}
+				default:
+					$new_json .= $char;
+					break;
+			}
+		}
+
+		return $new_json;
+	}
+
+	/**
+	 * Loads Format config.
+	 */
+	public static function _init()
+	{
+		\Config::load('format', true);
+	}
+}

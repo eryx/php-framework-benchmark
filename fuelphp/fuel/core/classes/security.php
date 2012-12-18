@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -53,14 +53,11 @@ class Security
 			static::check_token();
 		}
 
-		// set a default output filter if none is defined in the config
-		// this code is deprecated and will be removed in v1.2
+		// throw an exception if no the output filter setting is missing from the app config
 		if (\Config::get('security.output_filter', null) === null)
 		{
-			\Config::set('security.output_filter', '\\Security::htmlentities');
-			logger(\Fuel::L_WARNING, 'There is no security.output_filter defined in your application config file.', __METHOD__);
+			throw new \FuelException('There is no security.output_filter defined in your application config file');
 		}
-
 	}
 
 	/**
@@ -177,9 +174,13 @@ class Security
 		return $value;
 	}
 
-	public static function htmlentities($value)
+	public static function htmlentities($value, $flags = null, $encoding = null, $double_encode = null)
 	{
 		static $already_cleaned = array();
+
+		is_null($flags) and $flags = \Config::get('security.htmlentities_flags', ENT_QUOTES);
+		is_null($encoding) and $encoding = \Fuel::$encoding;
+		is_null($double_encode) and $double_encode = \Config::get('security.htmlentities_double_encode', false);
 
 		// Nothing to escape for non-string scalars, or for already processed values
 		if (is_bool($value) or is_int($value) or is_float($value) or in_array($value, $already_cleaned, true))
@@ -189,7 +190,7 @@ class Security
 
 		if (is_string($value))
 		{
-			$value = htmlentities($value, ENT_COMPAT, \Fuel::$encoding, false);
+			$value = htmlentities($value, $flags, $encoding, $double_encode);
 		}
 		elseif (is_array($value) or ($value instanceof \Iterator and $value instanceof \ArrayAccess))
 		{
@@ -198,7 +199,7 @@ class Security
 
 			foreach ($value as $k => $v)
 			{
-				$value[$k] = static::htmlentities($v);
+				$value[$k] = static::htmlentities($v, $flags, $encoding, $double_encode);
 			}
 		}
 		elseif ($value instanceof \Iterator or get_class($value) == 'stdClass')
@@ -208,7 +209,7 @@ class Security
 
 			foreach ($value as $k => $v)
 			{
-				$value->{$k} = static::htmlentities($v);
+				$value->{$k} = static::htmlentities($v, $flags, $encoding, $double_encode);
 			}
 		}
 		elseif (is_object($value))
@@ -229,11 +230,11 @@ class Security
 			if ( ! method_exists($value, '__toString'))
 			{
 				throw new \RuntimeException('Object class "'.get_class($value).'" could not be converted to string or '.
-					'sanitized as ArrayAcces. Whitelist it in security.whitelisted_classes in app/config/config.php '.
+					'sanitized as ArrayAccess. Whitelist it in security.whitelisted_classes in app/config/config.php '.
 					'to allow it to be passed unchecked.');
 			}
 
-			$value = static::htmlentities((string) $value);
+			$value = static::htmlentities((string) $value, $flags, $encoding, $double_encode);
 		}
 
 		return $value;
@@ -372,5 +373,3 @@ class Security
 		return $output;
 	}
 }
-
-

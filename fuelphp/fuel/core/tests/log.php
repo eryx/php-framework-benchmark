@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -21,10 +21,16 @@ namespace Fuel\Core;
 class Test_Log extends TestCase
 {
 
-	public function __construct()
+	public function setUp()
 	{
+		$this->log_threshold = \Config::get('log_threshold');
 		// set the log threshold to a known value
 		\Config::set('log_threshold', Fuel::L_DEBUG);
+	}
+
+	public function tearDown()
+	{
+		\Config::set('log_threshold', $this->log_threshold);
 	}
 
 	/**
@@ -90,6 +96,17 @@ class Test_Log extends TestCase
 	public function test_error_method()
 	{
 		$output = Log::error('testing log error', 'Log::error');
+		$this->assertTrue($output);
+	}
+
+	/**
+	 * Test for Log::write()
+	 *
+	 * @test
+	 */
+	public function test_write_custom_level()
+	{
+		$output = Log::write('Custom', 'testing custom level log', 'Log::write');
 		$this->assertTrue($output);
 	}
 }

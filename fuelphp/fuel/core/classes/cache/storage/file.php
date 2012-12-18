@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -151,9 +151,11 @@ class Cache_Storage_File extends \Cache_Storage_Driver
 	 */
 	public function delete()
 	{
-		$file = static::$path.$this->identifier_to_path($this->identifier).'.cache';
-		@unlink($file);
-		$this->reset();
+		if (file_exists($file = static::$path.$this->identifier_to_path($this->identifier).'.cache'))
+		{
+			unlink($file);
+			$this->reset();
+		}
 	}
 
 	// ---------------------------------------------------------------------
@@ -169,7 +171,32 @@ class Cache_Storage_File extends \Cache_Storage_Driver
 		$path = rtrim(static::$path, '\\/').DS;
 		$section = static::identifier_to_path($section);
 
-		return \File::delete_dir($path.$section, true, false);
+		$files = \File::read_dir($path.$section, -1, array('\.cache$' => 'file'));
+
+		$delete = function($path, $files) use(&$delete)
+		{
+			foreach ($files as $dir => $file)
+			{
+				if (is_numeric($dir))
+				{
+					if ( ! $result = \File::delete($path.$file))
+					{
+						return $result;
+					}
+				}
+				else
+				{
+					if ( ! $result = ($delete($path.$dir, $file) and rmdir($path.$dir)))
+					{
+						return $result;
+					}
+				}
+			}
+
+			return true;
+		};
+
+		return $delete($path.$section, $files);
 	}
 
 	/**
@@ -212,6 +239,9 @@ class Cache_Storage_File extends \Cache_Storage_Driver
 		// wait for a lock
 		while ( ! flock($handle, LOCK_EX));
 
+		// truncate the file
+		ftruncate($handle, 0);
+
 		// write the session data
 		fwrite($handle, $payload);
 
@@ -245,7 +275,7 @@ class Cache_Storage_File extends \Cache_Storage_Driver
 		}
 
 		// wait for a lock
-		while( ! flock($handle, LOCK_EX));
+		while( ! flock($handle, LOCK_SH));
 
 		// read the session data
 		$payload = fread($handle, filesize($file));

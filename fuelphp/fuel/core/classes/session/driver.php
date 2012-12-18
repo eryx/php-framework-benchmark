@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -76,12 +76,19 @@ abstract class Session_Driver
 	 */
 	public function read()
 	{
-		// auto expire flash variables if needed
-		if ($this->config['flash_auto_expire'] === true)
+		// do we need to create a new session?
+		empty($this->keys) and $this->create();
+
+		// mark the loaded flash data, auto-expire if configured
+		foreach($this->flash as $key => $value)
 		{
-			foreach($this->flash as $key => $value)
+			if ($this->config['flash_auto_expire'] === true)
 			{
-				$this->flash[$key]['state'] = 'old';
+				$this->flash[$key]['state'] = 'expire';
+			}
+			else
+			{
+				$this->flash[$key]['state'] = 'loaded';
 			}
 		}
 
@@ -129,7 +136,7 @@ abstract class Session_Driver
 	 */
 	public function set($name, $value = null)
 	{
-		\Arr::set($this->data, $name, $value);
+		is_null($name) or \Arr::set($this->data, $name, $value);
 
 		return $this;
 	}
@@ -195,14 +202,18 @@ abstract class Session_Driver
 	 */
 	public function rotate($force = true)
 	{
-		// existing session. need to rotate the session id?
-		if ($force or ($this->config['rotation_time'] and $this->keys['created'] + $this->config['rotation_time'] <= $this->time->get_timestamp()))
+		// do we have a session?
+		if ( ! empty($this->keys))
 		{
-			// generate a new session id, and update the create timestamp
-			$this->keys['previous_id']	= $this->keys['session_id'];
-			$this->keys['session_id']	= $this->_new_session_id();
-			$this->keys['created'] 		= $this->time->get_timestamp();
-			$this->keys['updated']		= $this->keys['created'];
+			// existing session. need to rotate the session id?
+			if ($force or ($this->config['rotation_time'] and $this->keys['created'] + $this->config['rotation_time'] <= $this->time->get_timestamp()))
+			{
+				// generate a new session id, and update the create timestamp
+				$this->keys['previous_id']	= $this->keys['session_id'];
+				$this->keys['session_id']	= $this->_new_session_id();
+				$this->keys['created'] 		= $this->time->get_timestamp();
+				$this->keys['updated']		= $this->keys['created'];
+			}
 		}
 
 		return $this;
@@ -246,10 +257,36 @@ abstract class Session_Driver
 				$default[$key] = $value;
 			}
 		}
-		elseif (isset($this->flash[$this->config['flash_id'].'::'.$name]))
+		else
 		{
-			$this->flash[$this->config['flash_id'].'::'.$name]['state'] = 'old';
-			$default = $this->flash[$this->config['flash_id'].'::'.$name]['value'];
+			// check if we need to run an Arr:get()
+			if (strpos($name, '.') !== false)
+			{
+				$keys = explode('.', $name, 2);
+				$name = array_shift($keys);
+			}
+			else
+			{
+				$keys = false;
+			}
+
+			if (isset($this->flash[$this->config['flash_id'].'::'.$name]))
+			{
+				// if it's not a var set in this request, mark it for expiration
+				if ($this->flash[$this->config['flash_id'].'::'.$name]['state'] !== 'new')
+				{
+					$this->flash[$this->config['flash_id'].'::'.$name]['state'] = 'expire';
+				}
+
+				if ($keys)
+				{
+					$default = \Arr::get($this->flash[$this->config['flash_id'].'::'.$name]['value'], $keys[0], $default);
+				}
+				else
+				{
+					$default = $this->flash[$this->config['flash_id'].'::'.$name]['value'];
+				}
+			}
 		}
 
 		return ($default instanceof \Closure) ? $default() : $default;
@@ -360,7 +397,7 @@ abstract class Session_Driver
 	public function set_config($name, $value = null)
 	{
 		if (isset($this->config[$name])) $this->config[$name] = $value;
-		
+
 		return $this;
 	}
 
@@ -376,7 +413,7 @@ abstract class Session_Driver
 	{
 		foreach($this->flash as $key => $value)
 		{
-			if ($value['state'] === 'old')
+			if ($value['state'] === 'expire')
 			{
 				unset($this->flash[$key]);
 			}
@@ -449,7 +486,7 @@ abstract class Session_Driver
 	 protected function _get_cookie()
 	 {
 		// was the cookie posted?
-		$cookie = \Input::param($this->config['post_cookie_name'], false);
+		$cookie = \Input::post($this->config['post_cookie_name'], false);
 
 		// if not found, fetch the regular cookie
 		if ($cookie === false)

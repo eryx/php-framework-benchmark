@@ -58,6 +58,7 @@ class Database_PDO_Connection extends \Database_Connection
 			'username'   => null,
 			'password'   => null,
 			'persistent' => false,
+			'compress'   => false,
 		));
 
 		// Clear the connection parameters for security
@@ -73,7 +74,13 @@ class Database_PDO_Connection extends \Database_Connection
 		if ( ! empty($persistent))
 		{
 			// Make the connection persistent
-			$attrs[\PDO::ATTR_PERSISTENT] = TRUE;
+			$attrs[\PDO::ATTR_PERSISTENT] = true;
+		}
+
+		if (in_array(strtolower($this->_db_type), array('mysql', 'mysqli')) and $compress)
+		{
+			// Use client compression with mysql or mysqli (doesn't work with mysqlnd)
+			$attrs[\PDO::MYSQL_ATTR_COMPRESS] = true;
 		}
 
 		try
@@ -83,13 +90,22 @@ class Database_PDO_Connection extends \Database_Connection
 		}
 		catch (\PDOException $e)
 		{
-			throw new \Database_Exception($e->getMessage(), $e->getCode(), $e);
+			$error_code = is_numeric($e->getCode()) ? $e->getCode() : 0;
+			throw new \Database_Exception($e->getMessage(), $error_code, $e);
 		}
 
 		if ( ! empty($this->_config['charset']))
 		{
-			// Set the character set
-			$this->set_charset($this->_config['charset']);
+			// Set Charset for SQL Server connection
+			if (strtolower($this->driver_name()) == 'sqlsrv')
+			{
+				$this->_connection->setAttribute(\PDO::SQLSRV_ATTR_ENCODING, \PDO::SQLSRV_ENCODING_SYSTEM);
+			}
+			else
+			{
+				// Set the character set
+				$this->set_charset($this->_config['charset']);
+			}
 		}
 	}
 
@@ -98,7 +114,16 @@ class Database_PDO_Connection extends \Database_Connection
 		// Destroy the PDO object
 		$this->_connection = null;
 
-		return TRUE;
+		return true;
+	}
+
+	/**
+	 * Get the current PDO Driver name
+	 * @return string
+	 */
+	public function driver_name()
+	{
+		return $this->_connection->getAttribute(\PDO::ATTR_DRIVER_NAME);
 	}
 
 	public function set_charset($charset)
@@ -118,28 +143,44 @@ class Database_PDO_Connection extends \Database_Connection
 		if ( ! empty($this->_config['profiling']))
 		{
 			// Benchmark this query for the current instance
-			$benchmark = Profiler::start("Database ({$this->_instance})", $sql);
+			$benchmark = \Profiler::start("Database ({$this->_instance})", $sql);
 		}
 
-		try
+		// run the query. if the connection is lost, try 3 times to reconnect
+		$attempts = 3;
+
+		do
 		{
-			$result = $this->_connection->query($sql);
-		}
-		catch (\Exception $e)
-		{
-			if (isset($benchmark))
+			try
 			{
-				// This benchmark is worthless
-				Profiler::delete($benchmark);
+				$result = $this->_connection->query($sql);
+				break;
 			}
+			catch (\Exception $e)
+			{
+				if (strpos($e->getMessage(), '2006 MySQL') !== false)
+				{
+					$this->connect();
+				}
+				else
+				{
+					if (isset($benchmark))
+					{
+						// This benchmark is worthless
+						\Profiler::delete($benchmark);
+					}
 
-			// Convert the exception in a database exception
-			throw new \Database_Exception($e->getMessage().' with query: "'.$sql.'"');
+					// Convert the exception in a database exception
+					$error_code = is_numeric($e->getCode()) ? $e->getCode() : 0;
+					throw new \Database_Exception($e->getMessage().' with query: "'.$sql.'"', $error_code, $e);
+				}
+			}
 		}
+		while ($attempts-- > 0);
 
 		if (isset($benchmark))
 		{
-			Profiler::stop($benchmark);
+			\Profiler::stop($benchmark);
 		}
 
 		// Set the last query
@@ -148,20 +189,19 @@ class Database_PDO_Connection extends \Database_Connection
 		if ($type === \DB::SELECT)
 		{
 			// Convert the result into an array, as PDOStatement::rowCount is not reliable
-			if ($as_object === FALSE)
+			if ($as_object === false)
 			{
-				$result->setFetchMode(\PDO::FETCH_ASSOC);
+				$result = $result->fetchAll(\PDO::FETCH_ASSOC);
 			}
 			elseif (is_string($as_object))
 			{
-				$result->setFetchMode(\PDO::FETCH_CLASS, $as_object);
+				$result = $result->fetchAll(\PDO::FETCH_CLASS, $as_object);
 			}
 			else
 			{
-				$result->setFetchMode(\PDO::FETCH_CLASS, 'stdClass');
+				$result = $result->fetchAll(\PDO::FETCH_CLASS, 'stdClass');
 			}
 
-			$result = $result->fetchAll();
 
 			// Return an iterator of results
 			return new \Database_Result_Cached($result, $sql, $as_object);
@@ -188,7 +228,86 @@ class Database_PDO_Connection extends \Database_Connection
 
 	public function list_columns($table, $like = null)
 	{
-		throw new \FuelException('Database method '.__METHOD__.' is not supported by '.__CLASS__);
+		$this->_connection or $this->connect();
+		$q = $this->_connection->prepare("DESCRIBE ".$table);
+		$q->execute();
+		$result  = $q->fetchAll();
+		$count   = 0;
+		$columns = array();
+		! is_null($like) and $like = str_replace('%', '.*', $like);
+		foreach ($result as $row)
+		{
+			if ( ! is_null($like) and ! preg_match('#'.$like.'#', $row['Field'])) continue;
+			list($type, $length) = $this->_parse_type($row['Type']);
+
+			$column = $this->datatype($type);
+
+			$column['name']             = $row['Field'];
+			$column['default']          = $row['Default'];
+			$column['data_type']        = $type;
+			$column['null']             = ($row['Null'] == 'YES');
+			$column['ordinal_position'] = ++$count;
+			switch ($column['type'])
+			{
+				case 'float':
+					if (isset($length))
+					{
+						list($column['numeric_precision'], $column['numeric_scale']) = explode(',', $length);
+					}
+					break;
+				case 'int':
+					if (isset($length))
+					{
+						// MySQL attribute
+						$column['display'] = $length;
+					}
+					break;
+				case 'string':
+					switch ($column['data_type'])
+					{
+						case 'binary':
+						case 'varbinary':
+							$column['character_maximum_length'] = $length;
+							break;
+
+						case 'char':
+						case 'varchar':
+							$column['character_maximum_length'] = $length;
+						case 'text':
+						case 'tinytext':
+						case 'mediumtext':
+						case 'longtext':
+							$column['collation_name'] = isset($row['Collation']) ? $row['Collation'] : null;
+							break;
+
+						case 'enum':
+						case 'set':
+							$column['collation_name'] = isset($row['Collation']) ? $row['Collation'] : null;
+							$column['options']        = explode('\',\'', substr($length, 1, - 1));
+							break;
+					}
+					break;
+			}
+
+			// MySQL attributes
+			$column['comment']    = isset($row['Comment']) ? $row['Comment'] : null;
+			$column['extra']      = $row['Extra'];
+			$column['key']        = $row['Key'];
+			$column['privileges'] = isset($row['Privileges']) ? $row['Privileges'] : null;
+
+			$columns[$row['Field']] = $column;
+		}
+
+		return $columns;
+	}
+
+	public function datatype($type)
+	{
+		// try to determine the datatype
+		$datatype = parent::datatype($type);
+
+		// if not an ANSI database, assume it's string
+		return empty($datatype) ? array('type' => 'string') : $datatype;
 	}
 
 	public function escape($value)
@@ -197,6 +316,11 @@ class Database_PDO_Connection extends \Database_Connection
 		$this->_connection or $this->connect();
 
 		return $this->_connection->quote($value);
+	}
+
+	public function error_info()
+	{
+		return $this->_connection->errorInfo();
 	}
 
 	public function in_transaction()

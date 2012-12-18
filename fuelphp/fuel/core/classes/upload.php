@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -81,6 +81,7 @@ class Upload
 		'overwrite'       => false,
 		'randomize'       => false,
 		'normalize'       => false,
+		'normalize_separator' => '_',
 		'change_case'     => false,
 		'ftp_mode'        => 'auto',
 		'ftp_permissions' => null
@@ -109,7 +110,7 @@ class Upload
 	 * @var bool indicator of valid uploads
 	 */
 	protected static $valid = false;
-	
+
 	/**
 	 * @var object Ftp object
 	 */
@@ -159,16 +160,29 @@ class Upload
 	 */
 	public static function get_files($index = null)
 	{
+		// if no parameters were passed, return all files successfully uploaded
 		if (func_num_args() == 0)
 		{
 			return array_filter(static::$files, function($file) { return $file['error'] === false; } );
 		}
+
+		// if an index number was given, return that file only (if that was successful)
 		elseif (isset(static::$files[$index]) and static::$files[$index]['error'] === false)
 		{
 			return static::$files[$index];
 		}
+
+		// if an field name was given, return that file only (if that was successful)
 		else
 		{
+			foreach (static::$files as $file)
+			{
+				if ($file['field'] == $index and $file['error'] === false)
+				{
+					return $file;
+				}
+			}
+
 			throw new \FuelException('No valid uploaded file exists with index "'.$index.'"');
 		}
 	}
@@ -182,16 +196,29 @@ class Upload
 	 */
 	public static function get_errors($index = null)
 	{
+		// if no parameters were passed, return all files in error
 		if (func_num_args() == 0)
 		{
 			return array_filter(static::$files, function($file) { return $file['error'] === true; } );
 		}
+
+		// if an index number was given, return that file only (if it is in error)
 		elseif (isset(static::$files[$index]) and static::$files[$index]['error'] === true)
 		{
 			return static::$files[$index];
 		}
+
+		// if an field name was given, return that file only (if it is in error)
 		else
 		{
+			foreach (static::$files as $file)
+			{
+				if ($file['field'] == $index and $file['error'] === true)
+				{
+					return $file;
+				}
+			}
+
 			throw new \FuelException('No invalid uploaded file exists with index "'.$index.'"');
 		}
 	}
@@ -245,54 +272,49 @@ class Upload
 			static::$config = array_merge(static::$config, $config);
 		}
 
-		// processed files array
-		static::$files = $files = array();
+		// processed files array's
+		static::$files = array();
+		$files = array();
+
+		// any files uploaded?
+		if ( empty($_FILES))
+		{
+			throw new \FuelException('No file upload was initiated. Did you specify "enctype" in your &lt;form&gt; tag?');
+		}
+
+		// normalize the multidimensional fields in the $_FILES array
+		foreach($_FILES as $name => $value)
+		{
+			if (is_array($value['name']))
+			{
+				foreach($value as $field => $content)
+				{
+					foreach(\Arr::flatten($content) as $element => $data)
+					{
+						$_FILES[$name.':'.$element][$field] = $data;
+					}
+				}
+				unset($_FILES[$name]);
+			}
+		}
 
 		// normalize the $_FILES array
 		foreach($_FILES as $name => $value)
 		{
-			// if the variable is an array, flatten it
-			if (is_array($value['name']))
+			// store the file data
+			$file = array('field' => $name, 'file' => $value['tmp_name']);
+			if ($value['error'])
 			{
-				$keys = array_keys($value['name']);
-				foreach ($keys as $key)
-				{
-					// store the file data
-					$file = array('field' => $name, 'key' => $key);
-					$file['name'] = $value['name'][$key];
-					$file['type'] = $value['type'][$key];
-					$file['file'] = $value['tmp_name'][$key];
-					if ($value['error'][$key])
-					{
-						$file['error'] = true;
-						$file['errors'][] = array('error' => $value['error'][$key]);
-					}
-					else
-					{
-						$file['error'] = false;
-						$file['errors'] = array();
-					}
-					$file['size'] = $value['size'][$key];
-					$files[] = $file;
-				}
+				$file['error'] = true;
+				$file['errors'][] = array('error' => $value['error']);
 			}
 			else
 			{
-				// store the file data
-				$file = array('field' => $name, 'key' => false, 'file' => $value['tmp_name']);
-				if ($value['error'])
-				{
-					$file['error'] = true;
-					$file['errors'][] = array('error' => $value['error']);
-				}
-				else
-				{
-					$file['error'] = false;
-					$file['errors'] = array();
-				}
-				unset($value['tmp_name']);
-				$files[] = array_merge($value, $file);
+				$file['error'] = false;
+				$file['errors'] = array();
 			}
+			unset($value['tmp_name']);
+			$files[] = array_merge($value, $file);
 		}
 
 		// verify and augment the files data
@@ -402,11 +424,10 @@ class Upload
 					}
 				}
 			}
-
 			// and add the message texts
 			foreach (static::$files[$key]['errors'] as $e => $error)
 			{
-				static::$files[$key]['errors'][$e]['message'] = \Lang::get('upload.'.$error['error']);
+				empty(static::$files[$key]['errors'][$e]['message']) and static::$files[$key]['errors'][$e]['message'] = \Lang::get('upload.error_'.$error['error']);
 			}
 		}
 
@@ -539,7 +560,7 @@ class Upload
 				$filename  = $file['filename'];
 				if ( (bool) static::$config['normalize'])
 				{
-					$filename = \Inflector::friendly_title($filename, '_');
+					$filename = \Inflector::friendly_title($filename, static::$config['normalize_separator']);
 				}
 			}
 
@@ -672,13 +693,13 @@ class Upload
 						{
 							@chmod(static::$files[$key]['saved_to'].static::$files[$key]['saved_as'], static::$config['file_chmod']);
 						}
-	
+
 						// after callback defined?
 						if (array_key_exists('after', static::$callbacks) and ! is_null(static::$callbacks['after']))
 						{
 							// get the callback method
 							$callback = static::$callbacks['after'][0];
-	
+
 							// call the callback
 							if (is_callable($callback))
 							{
@@ -693,12 +714,12 @@ class Upload
 					}
 				}
 			}
+		}
 
-			// and add the message texts
-			foreach (static::$files[$key]['errors'] as $e => $error)
-			{
-				empty(static::$files[$key]['errors'][$e]['message']) and static::$files[$key]['errors'][$e]['message'] = \Lang::get('upload.'.$error['error']);
-			}
+		// and add the message texts
+		foreach (static::$files[$key]['errors'] as $e => $error)
+		{
+			empty(static::$files[$key]['errors'][$e]['message']) and static::$files[$key]['errors'][$e]['message'] = \Lang::get('upload.error_'.$error['error']);
 		}
 
 		// reset the umask

@@ -6,31 +6,11 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
 namespace Fuel\Core;
-
-/**
- * @deprecated  Replaced by HttpNotFoundException
- */
-class Request404Exception extends \FuelException
-{
-
-	/**
-	 * When this type of exception isn't caught this method is called by
-	 * Error::exception_handler() to deal with the problem.
-	 */
-	public function handle()
-	{
-		$response = new \Response(\View::forge('404'), 404);
-		\Event::shutdown();
-		$response->send(true);
-		return;
-	}
-}
-
 
 /**
  * The Request class is used to create and manage new and existing requests.  There
@@ -63,17 +43,6 @@ class Request
 	protected static $active = false;
 
 	/**
-	 * This method is deprecated...use forge() instead.
-	 *
-	 * @deprecated until 1.2
-	 */
-	public static function factory($uri = null, $route = true)
-	{
-		logger(\Fuel::L_WARNING, 'This method is deprecated.  Please use a forge() instead.', __METHOD__);
-		return static::forge($uri, $route);
-	}
-
-	/**
 	 * Generates a new request.  The request is then set to be the active
 	 * request.  If this is the first request, then save that as the main
 	 * request for the app.
@@ -84,9 +53,10 @@ class Request
 	 *
 	 * @param   string   The URI of the request
 	 * @param   mixed    Internal: whether to use the routes; external: driver type or array with settings (driver key must be set)
+	 * @param   string   request method
 	 * @return  Request  The new request object
 	 */
-	public static function forge($uri = null, $options = true)
+	public static function forge($uri = null, $options = true, $method = null)
 	{
 		is_bool($options) and $options = array('route' => $options);
 		is_string($options) and $options = array('driver' => $options);
@@ -94,15 +64,18 @@ class Request
 		if ( ! empty($options['driver']))
 		{
 			$class = \Inflector::words_to_upper('Request_'.$options['driver']);
-			return $class::forge($uri, $options);
+			return $class::forge($uri, $options, $method);
 		}
 
-		$request = new static($uri, isset($options['route']) ? $options['route'] : true);
+		$request = new static($uri, isset($options['route']) ? $options['route'] : true, $method);
 		if (static::$active)
 		{
 			$request->parent = static::$active;
 			static::$active->children[] = $request;
 		}
+
+		// fire any request created events
+		\Event::instance()->has_events('request_created') and \Event::instance()->trigger('request_created', '', 'none');
 
 		return $request;
 	}
@@ -157,20 +130,7 @@ class Request
 	 */
 	public static function is_hmvc()
 	{
-		return static::active() !== static::main();
-	}
-
-	/**
-	 * Shows a 404.  Checks to see if a 404_override route is set, if not show
-	 * a default 404.
-	 *
-	 * @deprecated  Remove in v1.2
-	 * @throws  HttpNotFoundException
-	 */
-	public static function show_404()
-	{
-		logger(\Fuel::L_WARNING, 'This method is deprecated.  Please use a HttpNotFoundException instead.', __METHOD__);
-		throw new \HttpNotFoundException();
+		return ((\Fuel::$is_cli and static::main()) or static::active() !== static::main());
 	}
 
 	/**
@@ -210,6 +170,11 @@ class Request
 	 * @var  Route
 	 */
 	public $route = null;
+
+	/**
+	 * @var  string  $method  request method
+	 */
+	protected $method = null;
 
 	/**
 	 * The current module
@@ -291,21 +256,23 @@ class Request
 	 *
 	 * @param   string  the uri string
 	 * @param   bool    whether or not to route the URI
+	 * @param   string  request method
 	 * @return  void
 	 */
-	public function __construct($uri, $route = true)
+	public function __construct($uri, $route = true, $method = null)
 	{
 		$this->uri = new \Uri($uri);
+		$this->method = $method ?: \Input::method();
 
-		logger(\Fuel::L_INFO, 'Creating a new Request with URI = "'.$this->uri->uri.'"', __METHOD__);
+		logger(\Fuel::L_INFO, 'Creating a new Request with URI = "'.$this->uri->get().'"', __METHOD__);
 
 		// check if a module was requested
-		if (count($this->uri->segments) and $module_path = \Fuel::module_exists($this->uri->segments[0]))
+		if (count($this->uri->get_segments()) and $module_path = \Module::exists($this->uri->get_segment(1)))
 		{
 			// check if the module has routes
 			if (is_file($module_path .= 'config/routes.php'))
 			{
-				$module = $this->uri->segments[0];
+				$module = $this->uri->get_segment(1);
 
 				// load and add the module routes
 				$module_routes = \Fuel::load($module_path);
@@ -345,7 +312,7 @@ class Request
 
 		if ($this->route->module !== null)
 		{
-			$this->add_path(\Fuel::module_exists($this->module));
+			$this->add_path(\Module::exists($this->module));
 		}
 	}
 
@@ -361,6 +328,9 @@ class Request
 	 */
 	public function execute($method_params = null)
 	{
+		// fire any request started events
+		\Event::instance()->has_events('request_started') and \Event::instance()->trigger('request_started', '', 'none');
+
 		if (\Fuel::$profiling)
 		{
 			\Profiler::mark(__METHOD__.' Start');
@@ -384,6 +354,9 @@ class Request
 			throw new \HttpNotFoundException();
 		}
 
+		// save the current language so we can restore it after the call
+		$current_language = \Config::get('language', 'en');
+
 		try
 		{
 			if ($this->route->callable !== null)
@@ -392,7 +365,7 @@ class Request
 			}
 			else
 			{
-				$method_prefix = 'action_';
+				$method_prefix = $this->method.'_';
 				$class = $this->controller;
 
 				// Allow override of method params from execute
@@ -416,7 +389,7 @@ class Request
 				}
 
 				// Create a new instance of the controller
-				$this->controller_instance = $class->newInstance($this, new \Response);
+				$this->controller_instance = $class->newInstance($this);
 
 				$this->action = $this->action ?: ($class->hasProperty('default_action') ? $class->getProperty('default_action')->getValue($this->controller_instance) : 'index');
 				$method = $method_prefix.$this->action;
@@ -428,6 +401,11 @@ class Request
 					$this->method_params = array($this->action, $this->method_params);
 				}
 
+				if ( ! $class->hasMethod($method))
+				{
+					$method = 'action_'.$this->action;
+				}
+
 				if ($class->hasMethod($method))
 				{
 					$action = $class->getMethod($method);
@@ -437,59 +415,80 @@ class Request
 						throw new \HttpNotFoundException();
 					}
 
-					$class->getMethod('before')->invoke($this->controller_instance);
+					// fire any controller started events
+					\Event::instance()->has_events('controller_started') and \Event::instance()->trigger('controller_started', '', 'none');
+
+					$class->hasMethod('before') and $class->getMethod('before')->invoke($this->controller_instance);
 
 					$response = $action->invokeArgs($this->controller_instance, $this->method_params);
 
-					$response_after = $class->getMethod('after')->invoke($this->controller_instance, $response);
+					$class->hasMethod('after') and $response = $class->getMethod('after')->invoke($this->controller_instance, $response);
 
-					// @TODO let the after method set the response directly
-					if (is_null($response_after))
-					{
-						logger(\Fuel::L_WARNING, 'The '.$class->getName().'::after() method should accept and return the Controller\'s response, empty return for the after() method is deprecated.', __METHOD__);
-					}
-					else
-					{
-						$response = $response_after;
-					}
+					// fire any controller finished events
+					\Event::instance()->has_events('controller_finished') and \Event::instance()->trigger('controller_finished', '', 'none');
 				}
 				else
 				{
 					throw new \HttpNotFoundException();
 				}
 			}
+
+			// restore the language setting
+			\Config::set('language', $current_language);
 		}
 		catch (\Exception $e)
 		{
 			static::reset_request();
+
+			// restore the language setting
+			\Config::set('language', $current_language);
+
 			throw $e;
 		}
 
-
 		// Get the controller's output
-		if (is_null($response))
-		{
-			// @TODO remove this in a future version as we will get rid of it.
-			logger(\Fuel::L_WARNING, 'The '.$class->getName().' controller should return a string or a Response object, support for the $controller->response object is deprecated.', __METHOD__);
-			$this->response = $this->controller_instance->response;
-		}
-		elseif ($response instanceof \Response)
+		if ($response instanceof Response)
 		{
 			$this->response = $response;
 		}
 		else
 		{
-			$this->response = \Response::forge($response, 200);
+			throw new \FuelException(get_class($this->controller_instance).'::'.$method.'() or the controller after() method must return a Response object.');
 		}
 
-		static::reset_request();
+		// fire any request finished events
+		\Event::instance()->has_events('request_finished') and \Event::instance()->trigger('request_finished', '', 'none');
 
 		if (\Fuel::$profiling)
 		{
 			\Profiler::mark(__METHOD__.' End');
 		}
 
+		static::reset_request();
+
 		return $this;
+	}
+
+	/**
+	 * Sets the request method.
+	 *
+	 * @param   string  $method  request method
+	 * @return  object  current instance
+	 */
+	public function set_method($method)
+	{
+		$this->method = strtoupper($method);
+		return $this;
+	}
+
+	/**
+	 * Returns the request method.
+	 *
+	 * @return  string  request method
+	 */
+	public function get_method()
+	{
+		return $this->method;
 	}
 
 	/**
@@ -527,7 +526,7 @@ class Request
 	}
 
 	/**
-	 * Add to paths which are used by Fuel::find_file()
+	 * Add to paths which are used by Finder::search()
 	 *
 	 * @param   string  the new path
 	 * @param   bool    whether to add to the front or the back of the array

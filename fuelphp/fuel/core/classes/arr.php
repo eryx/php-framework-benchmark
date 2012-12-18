@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -89,25 +89,61 @@ class Arr
 		{
 			foreach ($key as $k => $v)
 			{
-				static::set($array, $k, $value);
+				static::set($array, $k, $v);
 			}
 		}
-
-		$keys = explode('.', $key);
-
-		while (count($keys) > 1)
+		else
 		{
-			$key = array_shift($keys);
+			$keys = explode('.', $key);
 
-			if ( ! isset($array[$key]) or ! is_array($array[$key]))
+			while (count($keys) > 1)
 			{
-				$array[$key] = array();
+				$key = array_shift($keys);
+
+				if ( ! isset($array[$key]) or ! is_array($array[$key]))
+				{
+					$array[$key] = array();
+				}
+
+				$array =& $array[$key];
 			}
 
-			$array =& $array[$key];
+			$array[array_shift($keys)] = $value;
+		}
+	}
+
+	/**
+	 * Pluck an array of values from an array.
+	 *
+	 * @param  array   $array  collection of arrays to pluck from
+	 * @param  string  $key    key of the value to pluck
+	 * @param  string  $index  optional return array index key, true for original index
+	 * @return array   array of plucked values
+	 */
+	public static function pluck($array, $key, $index = null)
+	{
+		$return = array();
+		$get_deep = strpos($key, '.') !== false;
+
+		if ( ! $index)
+		{
+			foreach ($array as $i => $a)
+			{
+				$return[] = (is_object($a) and ! ($a instanceof \ArrayAccess)) ? $a->{$key} :
+					($get_deep ? static::get($a, $key) : $a[$key]);
+			}
+		}
+		else
+		{
+			foreach ($array as $i => $a)
+			{
+				$index !== true and $i = (is_object($a) and ! ($a instanceof \ArrayAccess)) ? $a->{$index} : $a[$index];
+				$return[$i] = (is_object($a) and ! ($a instanceof \ArrayAccess)) ? $a->{$key} :
+					($get_deep ? static::get($a, $key) : $a[$key]);
+			}
 		}
 
-		$array[array_shift($keys)] = $value;
+		return $return;
 	}
 
 	/**
@@ -181,22 +217,23 @@ class Arr
 	/**
 	 * Converts a multi-dimensional associative array into an array of key => values with the provided field names
 	 *
-	 * @param   array   the array to convert
-	 * @param   string	the field name of the key field
-	 * @param   string	the field name of the value field
+	 * @param   array   $assoc      the array to convert
+	 * @param   string  $key_field  the field name of the key field
+	 * @param   string  $val_field  the field name of the value field
 	 * @return  array
+	 * @throws  \InvalidArgumentException
 	 */
-	public static function assoc_to_keyval($assoc = null, $key_field = null, $val_field = null)
+	public static function assoc_to_keyval($assoc, $key_field, $val_field)
 	{
-		if(empty($assoc) OR empty($key_field) OR empty($val_field))
+		if ( ! is_array($assoc) and ! $assoc instanceof \Iterator)
 		{
-			return null;
+			throw new \InvalidArgumentException('The first parameter must be an array.');
 		}
 
 		$output = array();
-		foreach($assoc as $row)
+		foreach ($assoc as $row)
 		{
-			if(isset($row[$key_field]) AND isset($row[$val_field]))
+			if (isset($row[$key_field]) and isset($row[$val_field]))
 			{
 				$output[$row[$key_field]] = $row[$val_field];
 			}
@@ -215,12 +252,13 @@ class Arr
 	 *
 	 * @param   string      $arr  the array to change
 	 * @return  array|null  the new array or null
+	 * @throws  \BadMethodCallException
 	 */
 	public static function to_assoc($arr)
 	{
 		if (($count = count($arr)) % 2 > 0)
 		{
-			return null;
+			throw new \BadMethodCallException('Number of values in to_assoc must be even.');
 		}
 		$keys = $vals = array();
 
@@ -230,6 +268,30 @@ class Arr
 			$vals[] = array_shift($arr);
 		}
 		return array_combine($keys, $vals);
+	}
+
+	/**
+	 * Checks if the given array is an assoc array.
+	 *
+	 * @param   array  $arr  the array to check
+	 * @return  bool   true if its an assoc array, false if not
+	 */
+	public static function is_assoc($arr)
+	{
+		if ( ! is_array($arr))
+		{
+			throw new \InvalidArgumentException('The parameter must be an array.');
+		}
+
+		$counter = 0;
+		foreach ($arr as $key => $unused)
+		{
+			if ( ! is_int($key) or $key !== $counter++)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -284,6 +346,48 @@ class Arr
 	}
 
 	/**
+	 * Reverse a flattened array in its original form.
+	 *
+	 * @param   array   $array  flattened array
+	 * @param   string  $glue   glue used in flattening
+	 * @return  array   the unflattened array
+	 */
+	public static function reverse_flatten($array, $glue = ':')
+	{
+		$return = array();
+
+		foreach ($array as $key => $value)
+		{
+			if (stripos($key, $glue) !== false)
+			{
+				$keys = explode($glue, $key);
+				$temp =& $return;
+				while (count($keys) > 1)
+				{
+					$key = array_shift($keys);
+					$key = is_numeric($key) ? (int) $key : $key;
+					if ( ! isset($temp[$key]) or ! is_array($temp[$key]))
+					{
+						$temp[$key] = array();
+					}
+					$temp =& $temp[$key];
+				}
+
+				$key = array_shift($keys);
+				$key = is_numeric($key) ? (int) $key : $key;
+				$temp[$key] = $value;
+			}
+			else
+			{
+				$key = is_numeric($key) ? (int) $key : $key;
+				$return[$key] = $value;
+			}
+		}
+
+		return $return;
+	}
+
+	/**
 	 * Filters an array on prefixed associative keys.
 	 *
 	 * @param   array   the array to filter.
@@ -291,14 +395,14 @@ class Arr
 	 * @param   bool    whether to remove the prefix.
 	 * @return  array
 	 */
-	public static function filter_prefixed($array, $prefix = 'prefix_', $remove_prefix = true)
+	public static function filter_prefixed($array, $prefix, $remove_prefix = true)
 	{
 		$return = array();
 		foreach ($array as $key => $val)
 		{
-			if(preg_match('/^'.$prefix.'/', $key))
+			if (preg_match('/^'.$prefix.'/', $key))
 			{
-				if($remove_prefix === true)
+				if ($remove_prefix === true)
 				{
 					$key = preg_replace('/^'.$prefix.'/','',$key);
 				}
@@ -306,6 +410,69 @@ class Arr
 			}
 		}
 		return $return;
+	}
+
+	/**
+	 * Removes items from an array that match a key prefix.
+	 *
+	 * @param   array   the array to remove from
+	 * @param   string  prefix to filter on
+	 * @return  array
+	 */
+	public static function remove_prefixed($array, $prefix)
+	{
+		foreach ($array as $key => $val)
+		{
+			if (preg_match('/^'.$prefix.'/', $key))
+			{
+				unset($array[$key]);
+			}
+		}
+		return $array;
+	}
+
+	/**
+	 * Filters an array on suffixed associative keys.
+	 *
+	 * @param   array   the array to filter.
+	 * @param   string  suffix to filter on.
+	 * @param   bool    whether to remove the suffix.
+	 * @return  array
+	 */
+	public static function filter_suffixed($array, $suffix, $remove_suffix = true)
+	{
+		$return = array();
+		foreach ($array as $key => $val)
+		{
+			if (preg_match('/'.$suffix.'$/', $key))
+			{
+				if ($remove_suffix === true)
+				{
+					$key = preg_replace('/'.$suffix.'$/','',$key);
+				}
+				$return[$key] = $val;
+			}
+		}
+		return $return;
+	}
+
+	/**
+	 * Removes items from an array that match a key suffix.
+	 *
+	 * @param   array   the array to remove from
+	 * @param   string  suffix to filter on
+	 * @return  array
+	 */
+	public static function remove_suffixed($array, $suffix)
+	{
+		foreach ($array as $key => $val)
+		{
+			if (preg_match('/'.$suffix.'$/', $key))
+			{
+				unset($array[$key]);
+			}
+		}
+		return $array;
 	}
 
 	/**
@@ -321,44 +488,16 @@ class Arr
 		$return = array();
 		foreach ($keys as $key)
 		{
-			if (isset($array[$key]) and  ! $remove)
+			if (array_key_exists($key, $array))
 			{
-				$return[$key] = $array[$key];
-			}
-			elseif (isset($array[$key]) and $remove)
-			{
-				unset($array[$key]);
+				$remove or $return[$key] = $array[$key];
+				if($remove)
+				{
+					unset($array[$key]);
+				}
 			}
 		}
 		return $remove ? $array : $return;
-	}
-
-	/**
-	 * Returns the element of the given array or a default if it is not set.
-	 *
-	 * @param   array  the array to fetch from
-	 * @param   mixed  the key to fetch from the array
-	 * @param   mixed  the value returned when not an array or invalid key
-	 * @return  mixed
-	 * @deprecated until 1.2
-	 */
-	public static function element($array, $key, $default = false)
-	{
-		return static::get($array, $key, $default);
-	}
-
-	/**
-	 * Returns the elements of the given array or a default if it is not set.
-	 *
-	 * @param   array  the array to fetch from
-	 * @param   array  the keys to fetch from the array
-	 * @param   mixed  the value returned when not an array or invalid key
-	 * @return  mixed
-	 * @deprecated until 1.2
-	 */
-	public static function elements($array, $keys, $default = false)
-	{
-		return static::get($array, $keys, $default);
 	}
 
 	/**
@@ -379,7 +518,52 @@ class Arr
 		}
 
 		array_splice($original, $pos, 0, $value);
+
 		return true;
+	}
+
+	/**
+	 * Insert value(s) into an array, mostly an array_splice alias
+	 * WARNING: original array is edited by reference, only boolean success is returned
+	 *
+	 * @param   array        the original array (by reference)
+	 * @param   array|mixed  the value(s) to insert, if you want to insert an array it needs to be in an array itself
+	 * @param   int          the numeric position at which to insert, negative to count from the end backwards
+	 * @return  bool         false when array shorter then $pos, otherwise true
+	 */
+	public static function insert_assoc(array &$original, array $values, $pos)
+	{
+		if (count($original) < abs($pos))
+		{
+			return false;
+		}
+
+		$original = array_slice($original, 0, $pos, true) + $values + array_slice($original, $pos, null, true);
+
+		return true;
+	}
+
+	/**
+	 * Insert value(s) into an array before a specific key
+	 * WARNING: original array is edited by reference, only boolean success is returned
+	 *
+	 * @param   array        the original array (by reference)
+	 * @param   array|mixed  the value(s) to insert, if you want to insert an array it needs to be in an array itself
+	 * @param   string|int   the key before which to insert
+	 * @param   bool         wether the input is an associative array
+	 * @return  bool         false when key isn't found in the array, otherwise true
+	 */
+	public static function insert_before_key(array &$original, $value, $key, $is_assoc = false)
+	{
+		$pos = array_search($key, array_keys($original));
+
+		if ($pos === false)
+		{
+			\Error::notice('Unknown key before which to insert the new value into the array.');
+			return false;
+		}
+
+		return $is_assoc ? static::insert_assoc($original, $value, $pos) : static::insert($original, $value, $pos);
 	}
 
 	/**
@@ -389,18 +573,20 @@ class Arr
 	 * @param   array        the original array (by reference)
 	 * @param   array|mixed  the value(s) to insert, if you want to insert an array it needs to be in an array itself
 	 * @param   string|int   the key after which to insert
+	 * @param   bool         wether the input is an associative array
 	 * @return  bool         false when key isn't found in the array, otherwise true
 	 */
-	public static function insert_after_key(array &$original, $value, $key)
+	public static function insert_after_key(array &$original, $value, $key, $is_assoc = false)
 	{
 		$pos = array_search($key, array_keys($original));
+
 		if ($pos === false)
 		{
 			\Error::notice('Unknown key after which to insert the new value into the array.');
 			return false;
 		}
 
-		return static::insert($original, $value, $pos + 1);
+		return $is_assoc ? static::insert_assoc($original, $value, $pos + 1) : static::insert($original, $value, $pos + 1);
 	}
 
 	/**
@@ -409,18 +595,42 @@ class Arr
 	 * @param   array        the original array (by reference)
 	 * @param   array|mixed  the value(s) to insert, if you want to insert an array it needs to be in an array itself
 	 * @param   string|int   the value after which to insert
+	 * @param   bool         wether the input is an associative array
 	 * @return  bool         false when value isn't found in the array, otherwise true
 	 */
-	public static function insert_after_value(array &$original, $value, $search)
+	public static function insert_after_value(array &$original, $value, $search, $is_assoc = false)
 	{
 		$key = array_search($search, $original);
+
 		if ($key === false)
 		{
 			\Error::notice('Unknown value after which to insert the new value into the array.');
 			return false;
 		}
 
-		return static::insert_after_key($original, $value, $key);
+		return static::insert_after_key($original, $value, $key, $is_assoc);
+	}
+
+	/**
+	 * Insert value(s) into an array before a specific value (first found in array)
+	 *
+	 * @param   array        the original array (by reference)
+	 * @param   array|mixed  the value(s) to insert, if you want to insert an array it needs to be in an array itself
+	 * @param   string|int   the value after which to insert
+	 * @param   bool         wether the input is an associative array
+	 * @return  bool         false when value isn't found in the array, otherwise true
+	 */
+	public static function insert_before_value(array &$original, $value, $search, $is_assoc = false)
+	{
+		$key = array_search($search, $original);
+
+		if ($key === false)
+		{
+			\Error::notice('Unknown value before which to insert the new value into the array.');
+			return false;
+		}
+
+		return static::insert_before_key($original, $value, $key, $is_assoc);
 	}
 
 	/**
@@ -440,7 +650,12 @@ class Arr
 			throw new \InvalidArgumentException('Arr::sort() - $array must be an array.');
 		}
 
-		foreach ($array as $k=>$v)
+		if (empty($array))
+		{
+			return $array;
+		}
+
+		foreach ($array as $k => $v)
 		{
 			$b[$k] = static::get($v, $key);
 		}
@@ -460,12 +675,46 @@ class Arr
 			break;
 		}
 
-		foreach ($b as $key=>$val)
+		foreach ($b as $key => $val)
 		{
 			$c[] = $array[$key];
 		}
 
 		return $c;
+	}
+
+	/**
+	 * Sorts an array on multitiple values, with deep sorting support.
+	 *
+	 * @param   array  $array        collection of arrays/objects to sort
+	 * @param   array  $conditions   sorting conditions
+	 * @param   bool   @ignore_case  wether to sort case insensitive
+	 */
+	public static function multisort($array, $conditions, $ignore_case = false)
+	{
+		$temp = array();
+		$keys = array_keys($conditions);
+
+		foreach($keys as $key)
+		{
+			$temp[$key] = static::pluck($array, $key, true);
+			is_array($conditions[$key]) or $conditions[$key] = array($conditions[$key]);
+		}
+
+		$args = array();
+		foreach ($keys as $key)
+		{
+			$args[] = $ignore_case ? array_map('strtolower', $temp[$key]) : $temp[$key];
+			foreach($conditions[$key] as $flag)
+			{
+				$args[] = $flag;
+			}
+		}
+
+		$args[] = &$array;
+
+		call_user_func_array('array_multisort', $args);
+		return $array;
 	}
 
 	/**
@@ -486,15 +735,6 @@ class Arr
 	}
 
 	/**
-	 * Alias for replace_key for backwards compatibility.
-	 */
-	public static function replace_keys($source, $replace, $new_key = null)
-	{
-		logger(\Fuel::L_WARNING, 'This method is deprecated.  Please use a replace_key() instead.', __METHOD__);
-		return static::replace_key($source, $replace, $new_key);
-	}
-
-	/**
 	 * Replaces key names in an array by names in $replace
 	 *
 	 * @param   array			the array containing the key/value combinations
@@ -511,7 +751,7 @@ class Arr
 
 		if ( ! is_array($source) or ! is_array($replace))
 		{
-			throw new \InvalidArgumentException('Arr::replace_keys() - $source must an array. $replace must be an array or string.');
+			throw new \InvalidArgumentException('Arr::replace_key() - $source must an array. $replace must be an array or string.');
 		}
 
 		$result = array();
@@ -593,6 +833,44 @@ class Arr
 		$arr = (is_array($key) ? $key : array($key => $value)) + $arr;
 	}
 
+	/**
+	 * Recursive in_array
+	 *
+	 * @param   mixed  $needle    what to search for
+	 * @param   array  $haystack  array to search in
+	 * @return  bool   wether the needle is found in the haystack.
+	 */
+	public static function in_array_recursive($needle, $haystack, $strict = false)
+	{
+		foreach ($haystack as $value)
+		{
+			if ( ! $strict and $needle == $value)
+			{
+				return true;
+			}
+			elseif ($needle === $value)
+			{
+				return true;
+			}
+			elseif (is_array($value) and static::in_array_recursive($needle, $value, $strict))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Checks if the given array is a multidimensional array.
+	 *
+	 * @param   array  $arr       the array to check
+	 * @param   array  $all_keys  if true, check that all elements are arrays
+	 * @return  bool   true if its a multidimensional array, false if not
+	 */
+	public static function is_multi($arr, $all_keys = false)
+	{
+		$values = array_filter($arr, 'is_array');
+		return $all_keys ? count($arr) === count($values) : count($values) > 0;
+	}
 }
-
-

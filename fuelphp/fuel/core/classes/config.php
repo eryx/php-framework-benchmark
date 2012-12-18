@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -27,10 +27,21 @@ class Config
 	public static $items = array();
 
 	/**
+	 * @var    string    $default_check_value          random value used as a not-found check in get()
+	 */
+	public static $default_check_value;
+
+	/**
+	 * @var    array    $itemcache       the dot-notated item cache
+	 */
+	protected static $itemcache = array();
+
+	/**
 	 * Loads a config file.
 	 *
 	 * @param    mixed    $file         string file | config array | Config_Interface instance
 	 * @param    mixed    $group        null for no group, true for group is filename, false for not storing in the master config
+	 * @param    bool     $reload       true to force a reload even if the file is already loaded
 	 * @param    bool     $overwrite    true for array_merge, false for \Arr::merge
 	 * @return   array                  the (loaded) config array
 	 */
@@ -41,7 +52,12 @@ class Config
 		     ! is_object($file) and
 		    array_key_exists($file, static::$loaded_files))
 		{
-			return false;
+			$group === true and $group = $file;
+			if ($group === null or $group === false or ! isset(static::$items[$group]))
+			{
+				return false;
+			}
+			return static::$items[$group];
 		}
 
 		$config = array();
@@ -79,7 +95,7 @@ class Config
 		{
 			try
 			{
-				$config = $file->load($overwrite);
+				$config = $file->load($overwrite, ! $reload);
 			}
 			catch (\ConfigException $e)
 			{
@@ -91,6 +107,7 @@ class Config
 		if ($group === null)
 		{
 			static::$items = $reload ? $config : ($overwrite ? array_merge(static::$items, $config) : \Arr::merge(static::$items, $config));
+			static::$itemcache = array();
 		}
 		else
 		{
@@ -100,6 +117,14 @@ class Config
 				static::$items[$group] = array();
 			}
 			static::$items[$group] = $overwrite ? array_merge(static::$items[$group],$config) : \Arr::merge(static::$items[$group],$config);
+			$group .= '.';
+			foreach (static::$itemcache as $key => $value)
+			{
+				if (strpos($key, $group) === 0)
+				{
+					unset(static::$itemcache[$key]);
+				}
+			}
 		}
 
 		return $config;
@@ -122,42 +147,23 @@ class Config
 			}
 			$config = static::$items[$config];
 		}
-		$content = <<<CONF
-<?php
 
-CONF;
-		$content .= 'return '.str_replace(array('  ', 'array ('), array("\t", 'array('), var_export($config, true)).";\n";
-
-		if ( ! $path = \Finder::search('config', $file, '.php'))
+		$type = pathinfo($file, PATHINFO_EXTENSION);
+		if( ! $type)
 		{
-			if ($pos = strripos($file, '::'))
-			{
-				// get the namespace path
-				if ($path = \Autoloader::namespace_path('\\'.ucfirst(substr($file, 0, $pos))))
-				{
-					// strip the namespace from the filename
-					$file = substr($file, $pos+2);
-
-					// strip the classes directory as we need the module root
-					// and construct the filename
-					$path = substr($path,0, -8).'config'.DS.$file.'.php';
-
-				}
-				else
-				{
-					// invalid namespace requested
-					return false;
-				}
-			}
-
+			$type = 'php';
+			$file .= '.'.$type;
 		}
 
-		// make sure we have a fallback
-		$path or $path = APPPATH.'config'.DS.$file.'.php';
+		$class = '\\Config_'.ucfirst($type);
 
-		$path = pathinfo($path);
+		if( ! class_exists($class, true))
+		{
+			throw new \ConfigException('Cannot save a config file of type: '.$type);
+		}
 
-		return \File::update($path['dirname'], $path['basename'], $content);
+		$driver = new $class;
+		return $driver->save($file, $config);
 	}
 
 	/**
@@ -169,11 +175,25 @@ CONF;
 	 */
 	public static function get($item, $default = null)
 	{
+		is_null(static::$default_check_value) and static::$default_check_value = pack('H*', 'DEADBEEFCAFE');
+
 		if (isset(static::$items[$item]))
 		{
 			return static::$items[$item];
 		}
-		return \Fuel::value(\Arr::get(static::$items, $item, $default));
+		elseif ( ! isset(static::$itemcache[$item]))
+		{
+			$val = \Fuel::value(\Arr::get(static::$items, $item, static::$default_check_value));
+
+			if ($val === static::$default_check_value)
+			{
+				return $default;
+			}
+
+			static::$itemcache[$item] = $val;
+		}
+
+		return static::$itemcache[$item];
 	}
 
 	/**
@@ -185,6 +205,7 @@ CONF;
 	 */
 	public static function set($item, $value)
 	{
+		strpos($item, '.') === false or static::$itemcache[$item] = $value;
 		return \Arr::set(static::$items, $item, \Fuel::value($value));
 	}
 
@@ -196,6 +217,10 @@ CONF;
 	 */
 	public static function delete($item)
 	{
+		if (isset(static::$itemcache[$item]))
+		{
+			unset(static::$itemcache[$item]);
+		}
 		return \Arr::delete(static::$items, $item);
 	}
 }

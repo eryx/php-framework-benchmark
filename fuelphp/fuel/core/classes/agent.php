@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -282,19 +282,6 @@ class Agent
 	 * check if the current browser is mobile device
 	 *
 	 * @return	bool
-	 * @deprecated until 1.2
-	 */
-	public static function is_mobile()
-	{
-		return static::is_mobiledevice();
-	}
-
-	// --------------------------------------------------------------------
-
-	/**
-	 * check if the current browser is mobile device
-	 *
-	 * @return	bool
 	 */
 	public static function is_mobiledevice()
 	{
@@ -362,7 +349,7 @@ class Agent
 	 */
 	protected static function get_from_browscap()
 	{
-		$cache = \Cache::forge(static::$config['cache']['identifier'].'.browscap');
+		$cache = \Cache::forge(static::$config['cache']['identifier'].'.browscap', static::$config['cache']['driver']);
 
 		// load the cached browscap data
 		try
@@ -533,7 +520,7 @@ class Agent
 		// save the result to the cache
 		if ( ! empty($result))
 		{
-			$cache = \Cache::forge(static::$config['cache']['identifier'].'.browscap');
+			$cache = \Cache::forge(static::$config['cache']['identifier'].'.browscap', static::$config['cache']['driver']);
 			$cache->set($result, static::$config['cache']['expiry']);
 		}
 

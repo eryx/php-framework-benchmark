@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -54,9 +54,6 @@ class Session_Cookie extends \Session_Driver
 		$this->keys['updated'] 		= $this->keys['created'];
 		$this->keys['payload'] 		= '';
 
-		// and set the session cookie
-		$this->_set_cookie();
-
 		return $this;
 	}
 
@@ -74,14 +71,17 @@ class Session_Cookie extends \Session_Driver
 		// get the session cookie
 		$payload = $this->_get_cookie();
 
-		// if no session cookie was present, create it
+		// if no session cookie was present, initialize a new session
 		if ($payload === false or $force)
 		{
-			$this->create();
+			$this->data = array();
+			$this->keys = array();
 		}
-
-		if (isset($payload[0])) $this->data  = $payload[0];
-		if (isset($payload[1])) $this->flash = $payload[1];
+		else
+		{
+			if (isset($payload[0])) $this->data  = $payload[0];
+			if (isset($payload[1])) $this->flash = $payload[1];
+		}
 
 		return parent::read();
 	}
@@ -99,8 +99,11 @@ class Session_Cookie extends \Session_Driver
 		parent::write();
 
 		// do we have something to write?
-		if ( ! empty($this->keys))
+		if ( ! empty($this->keys) or ! empty($this->data) or ! empty($this->flash))
 		{
+			// create the session if it doesn't exist
+			empty($this->keys) and $this->create();
+
 			// rotate the session id if needed
 			$this->rotate(false);
 

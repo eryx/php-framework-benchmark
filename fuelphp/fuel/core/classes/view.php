@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -73,17 +73,6 @@ class View
 	protected $active_request;
 
 	/**
-	 * This method is deprecated...use forge() instead.
-	 *
-	 * @deprecated until 1.2
-	 */
-	public static function factory($file = null, $data = null, $auto_filter = null)
-	{
-		logger(\Fuel::L_WARNING, 'This method is deprecated.  Please use a forge() instead.', __METHOD__);
-		return static::forge($file, $data, $auto_filter);
-	}
-
-	/**
 	 * Returns a new View object. If you do not define the "file" parameter,
 	 * you must call [static::set_filename].
 	 *
@@ -119,8 +108,7 @@ class View
 			throw new \InvalidArgumentException('The data parameter only accepts objects and arrays.');
 		}
 
-		// @TODO in v1.2 remove the auto_encode_view_data reference.
-		$this->auto_filter = is_null($filter) ? \Config::get('security.auto_filter_output', \Config::get('security.auto_encode_view_data', true)) : $filter;
+		$this->auto_filter = is_null($filter) ? \Config::get('security.auto_filter_output', true) : $filter;
 
 		if ($file !== null)
 		{
@@ -231,7 +219,8 @@ class View
 	 */
 	protected function process_file($file_override = false)
 	{
-		$clean_room = function($__file_name, array $__data) {
+		$clean_room = function($__file_name, array $__data)
+		{
 			extract($__data, EXTR_REFS);
 
 			// Capture the view output
@@ -263,17 +252,19 @@ class View
 	 *
 	 *     $data = $this->get_data();
 	 *
-	 * @return  array
+	 * @param   string  $scope  local/glocal/all
+	 * @return  array   view data
 	 */
-	protected function get_data()
+	protected function get_data($scope = 'all')
 	{
-		$clean_it = function ($data, $rules, $auto_filter) {
-			foreach ($data as $key => $value)
+		$clean_it = function ($data, $rules, $auto_filter)
+		{
+			foreach ($data as $key => &$value)
 			{
 				$filter = array_key_exists($key, $rules) ? $rules[$key] : null;
 				$filter = is_null($filter) ? $auto_filter : $filter;
 
-				$data[$key] = $filter ? \Security::clean($value, null, 'security.output_filter') : $value;
+				$value = $filter ? \Security::clean($value, null, 'security.output_filter') : $value;
 			}
 
 			return $data;
@@ -281,12 +272,12 @@ class View
 
 		$data = array();
 
-		if ( ! empty($this->data))
+		if ( ! empty($this->data)  and ($scope === 'all' or $scope === 'local'))
 		{
 			$data += $clean_it($this->data, $this->local_filter, $this->auto_filter);
 		}
 
-		if ( ! empty(static::$global_data))
+		if ( ! empty(static::$global_data)  and ($scope === 'all' or $scope === 'global'))
 		{
 			$data += $clean_it(static::$global_data, static::$global_filter, $this->auto_filter);
 		}
@@ -401,6 +392,8 @@ class View
 	 *
 	 *     $value = $view->get('foo', 'bar');
 	 *
+	 * If the key is not given or null, the entire data array is returned.
+	 *
 	 * If a default parameter is not given and the variable does not
 	 * exist, it will throw an OutOfBoundsException.
 	 *
@@ -409,9 +402,13 @@ class View
 	 * @return  mixed
 	 * @throws  OutOfBoundsException
 	 */
-	public function &get($key, $default = null)
+	public function &get($key = null, $default = null)
 	{
-		if (array_key_exists($key, $this->data))
+		if (func_num_args() === 0 or $key === null)
+		{
+			return $this->data;
+		}
+		elseif (array_key_exists($key, $this->data))
 		{
 			return $this->data[$key];
 		}
@@ -426,7 +423,9 @@ class View
 		}
 		else
 		{
-			return \Fuel::value($default);
+			// assign it first, you can't return a return value by reference directly!
+			$default = \Fuel::value($default);
+			return $default;
 		}
 	}
 
@@ -530,8 +529,8 @@ class View
 	{
 		if (class_exists('Request', false))
 		{
-			$current_request = Request::active();
-			Request::active($this->active_request);
+			$current_request = \Request::active();
+			\Request::active($this->active_request);
 		}
 
 		if ($file !== null)
@@ -549,7 +548,7 @@ class View
 
 		if (class_exists('Request', false))
 		{
-			Request::active($current_request);
+			\Request::active($current_request);
 		}
 
 		return $return;

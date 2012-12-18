@@ -6,7 +6,7 @@
  * @version    1.0
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2012 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -18,7 +18,7 @@ namespace Fuel\Core;
  * @group Core
  * @group Inflector
  */
-class Tests_Inflector extends TestCase
+class Test_Inflector extends TestCase
 {
 
 	public function ordinalize_provider()
