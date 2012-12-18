@@ -20,18 +20,20 @@ use Monolog\Logger;
  * @author Christophe Coevoet <stof@notk.org>
  * @author Kirill chEbba Chebunin <iam@chebba.org>
  */
-class WildfireFormatter implements FormatterInterface
+class WildfireFormatter extends NormalizerFormatter
 {
     /**
      * Translates Monolog log levels to Wildfire levels.
      */
     private $logLevels = array(
-        Logger::DEBUG    => 'LOG',
-        Logger::INFO     => 'INFO',
-        Logger::WARNING  => 'WARN',
-        Logger::ERROR    => 'ERROR',
-        Logger::CRITICAL => 'ERROR',
-        Logger::ALERT    => 'ERROR',
+        Logger::DEBUG     => 'LOG',
+        Logger::INFO      => 'INFO',
+        Logger::NOTICE    => 'INFO',
+        Logger::WARNING   => 'WARN',
+        Logger::ERROR     => 'ERROR',
+        Logger::CRITICAL  => 'ERROR',
+        Logger::ALERT     => 'ERROR',
+        Logger::EMERGENCY => 'ERROR',
     );
 
     /**
@@ -50,6 +52,7 @@ class WildfireFormatter implements FormatterInterface
             unset($record['extra']['line']);
         }
 
+        $record = $this->normalize($record);
         $message = array('message' => $record['message']);
         if ($record['context']) {
             $message['context'] = $record['context'];
@@ -83,5 +86,14 @@ class WildfireFormatter implements FormatterInterface
     public function formatBatch(array $records)
     {
         throw new \BadMethodCallException('Batch formatting does not make sense for the WildfireFormatter');
+    }
+
+    protected function normalize($data)
+    {
+        if (is_object($data) && !$data instanceof \DateTime) {
+            return $data;
+        }
+
+        return parent::normalize($data);
     }
 }

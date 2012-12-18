@@ -36,8 +36,8 @@ class MethodMetadata extends BaseMethodMetadata
     /**
      * Adds a parameter restriction
      *
-     * @param integer $index 0-based
-     * @param array $permissions
+     * @param integer $index       0-based
+     * @param array   $permissions
      */
     public function addParamPermissions($index, array $permissions)
     {
@@ -58,7 +58,7 @@ class MethodMetadata extends BaseMethodMetadata
     /**
      * This allows to merge in metadata from an interface
      *
-     * @param MethodMetadata $method
+     * @param  MethodMetadata $method
      * @return void
      */
     public function merge(MethodMetadata $method)
@@ -80,5 +80,24 @@ class MethodMetadata extends BaseMethodMetadata
                 $this->paramPermissions[$index] = $permissions;
             }
         }
+    }
+
+    public function serialize()
+    {
+        return serialize(array(
+            parent::serialize(),
+            $this->roles, $this->paramPermissions, $this->returnPermissions,
+            $this->runAsRoles, $this->satisfiesParentSecurityPolicy,
+        ));
+    }
+
+    public function unserialize($str)
+    {
+        list($parentStr,
+            $this->roles, $this->paramPermissions, $this->returnPermissions,
+            $this->runAsRoles, $this->satisfiesParentSecurityPolicy
+        ) = unserialize($str);
+
+        parent::unserialize($parentStr);
     }
 }

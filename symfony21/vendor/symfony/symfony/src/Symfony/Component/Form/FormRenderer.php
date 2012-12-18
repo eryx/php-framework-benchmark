@@ -11,7 +11,6 @@
 
 namespace Symfony\Component\Form;
 
-use Symfony\Component\Form\Extension\Core\View\ChoiceView;
 use Symfony\Component\Form\Exception\FormException;
 use Symfony\Component\Form\Extension\Csrf\CsrfProvider\CsrfProviderInterface;
 
@@ -181,7 +180,7 @@ class FormRenderer implements FormRendererInterface
             $hierarchyInit = true;
         } else {
             // RECURSIVE CALL
-            // If a block recursively calls renderSection() again, resume rendering
+            // If a block recursively calls searchAndRenderBlock() again, resume rendering
             // using the parent type in the hierarchy.
             $blockNameHierarchy = $this->blockNameHierarchyMap[$viewAndSuffixCacheKey];
             $hierarchyLevel = $this->hierarchyLevelMap[$viewAndSuffixCacheKey] - 1;

@@ -30,6 +30,9 @@ class AssetWriter
      * Constructor.
      *
      * @param string $dir The base web directory
+     * @param array  $varValues
+     *
+     * @throws \InvalidArgumentException if a variable value is not a string
      */
     public function __construct($dir, array $varValues = array())
     {
@@ -94,7 +97,7 @@ class AssetWriter
         return $combinations;
     }
 
-    static protected function write($path, $contents)
+    protected static function write($path, $contents)
     {
         if (!is_dir($dir = dirname($path)) && false === @mkdir($dir, 0777, true)) {
             throw new \RuntimeException('Unable to create directory '.$dir);

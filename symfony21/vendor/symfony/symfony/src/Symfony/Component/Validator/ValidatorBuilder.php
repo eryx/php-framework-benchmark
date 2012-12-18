@@ -13,7 +13,6 @@ namespace Symfony\Component\Validator;
 
 use Symfony\Component\Validator\Mapping\ClassMetadataFactory;
 use Symfony\Component\Validator\Exception\ValidatorException;
-use Symfony\Component\Validator\Mapping\BlackholeMetadataFactory;
 use Symfony\Component\Validator\Mapping\Loader\LoaderChain;
 use Symfony\Component\Validator\Mapping\ClassMetadataFactoryInterface;
 use Symfony\Component\Validator\Mapping\Cache\CacheInterface;
@@ -81,6 +80,8 @@ class ValidatorBuilder implements ValidatorBuilderInterface
     public function addObjectInitializer(ObjectInitializerInterface $initializer)
     {
         $this->initializers[] = $initializer;
+
+        return $this;
     }
 
     /**
@@ -89,6 +90,8 @@ class ValidatorBuilder implements ValidatorBuilderInterface
     public function addObjectInitializers(array $initializers)
     {
         $this->initializers = array_merge($this->initializers, $initializers);
+
+        return $this;
     }
 
     /**
@@ -101,6 +104,8 @@ class ValidatorBuilder implements ValidatorBuilderInterface
         }
 
         $this->xmlMappings[] = $path;
+
+        return $this;
     }
 
     /**
@@ -113,6 +118,8 @@ class ValidatorBuilder implements ValidatorBuilderInterface
         }
 
         $this->xmlMappings = array_merge($this->xmlMappings, $paths);
+
+        return $this;
     }
 
     /**
@@ -125,6 +132,8 @@ class ValidatorBuilder implements ValidatorBuilderInterface
         }
 
         $this->yamlMappings[] = $path;
+
+        return $this;
     }
 
     /**
@@ -137,6 +146,8 @@ class ValidatorBuilder implements ValidatorBuilderInterface
         }
 
         $this->yamlMappings = array_merge($this->yamlMappings, $paths);
+
+        return $this;
     }
 
     /**
@@ -149,6 +160,8 @@ class ValidatorBuilder implements ValidatorBuilderInterface
         }
 
         $this->methodMappings[] = $methodName;
+
+        return $this;
     }
 
     /**
@@ -161,6 +174,8 @@ class ValidatorBuilder implements ValidatorBuilderInterface
         }
 
         $this->methodMappings = array_merge($this->methodMappings, $methodNames);
+
+        return $this;
     }
 
     /**
@@ -181,6 +196,8 @@ class ValidatorBuilder implements ValidatorBuilderInterface
         }
 
         $this->annotationReader = $annotationReader;
+
+        return $this;
     }
 
     /**
@@ -189,6 +206,8 @@ class ValidatorBuilder implements ValidatorBuilderInterface
     public function disableAnnotationMapping()
     {
         $this->annotationReader = null;
+
+        return $this;
     }
 
     /**
@@ -201,6 +220,8 @@ class ValidatorBuilder implements ValidatorBuilderInterface
         }
 
         $this->metadataFactory = $metadataFactory;
+
+        return $this;
     }
 
     /**
@@ -211,8 +232,10 @@ class ValidatorBuilder implements ValidatorBuilderInterface
         if (null !== $this->metadataFactory) {
             throw new ValidatorException('You cannot set a custom metadata cache after setting a custom metadata factory. Configure your metadata factory instead.');
         }
-        
+
         $this->metadataCache = $cache;
+
+        return $this;
     }
 
     /**
@@ -221,6 +244,8 @@ class ValidatorBuilder implements ValidatorBuilderInterface
     public function setConstraintValidatorFactory(ConstraintValidatorFactoryInterface $validatorFactory)
     {
         $this->validatorFactory = $validatorFactory;
+
+        return $this;
     }
 
     /**

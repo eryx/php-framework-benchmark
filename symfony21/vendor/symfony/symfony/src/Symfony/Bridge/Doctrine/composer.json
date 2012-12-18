@@ -20,8 +20,8 @@
         "doctrine/common": ">=2.2,<2.4-dev"
     },
     "suggest": {
-        "symfony/form": "self.version",
-        "symfony/validator": "self.version",
+        "symfony/form": "2.1.*",
+        "symfony/validator": "2.1.*",
         "doctrine/data-fixtures": "1.0.*",
         "doctrine/dbal": ">=2.2,<2.4-dev",
         "doctrine/orm": ">=2.2.3,<2.4-dev"
@@ -30,6 +30,7 @@
         "psr-0": { "Symfony\\Bridge\\Doctrine": "" }
     },
     "target-dir": "Symfony/Bridge/Doctrine",
+    "minimum-stability": "dev",
     "extra": {
         "branch-alias": {
             "dev-master": "2.1-dev"

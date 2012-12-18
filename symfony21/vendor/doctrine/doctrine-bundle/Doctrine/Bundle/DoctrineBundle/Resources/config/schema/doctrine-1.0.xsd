@@ -18,6 +18,7 @@
         <xsd:attribute name="driver" type="xsd:string" />
         <xsd:attribute name="driver-class" type="xsd:string" />
         <xsd:attribute name="wrapper-class" type="xsd:string" />
+        <xsd:attribute name="keep-slave" type="xsd:string" />
         <xsd:attribute name="platform-service" type="xsd:string" />
         <xsd:attribute name="schema-filter" type="xsd:string" />
         <xsd:attribute name="logging" type="xsd:string" default="false" />
@@ -28,19 +29,19 @@
     <xsd:attributeGroup name="driver-config">
         <xsd:attribute name="dbname" type="xsd:string" />
         <xsd:attribute name="host" type="xsd:string" />
-        <xsd:attribute name="port" type="xsd:integer" />
+        <xsd:attribute name="port" type="xsd:string" />
         <xsd:attribute name="user" type="xsd:string" />
         <xsd:attribute name="password" type="xsd:string" />
         <xsd:attribute name="path" type="xsd:string" />
         <xsd:attribute name="unix-socket" type="xsd:string" />
-        <xsd:attribute name="memory" type="xsd:boolean" />
+        <xsd:attribute name="memory" type="xsd:string" />
         <xsd:attribute name="charset" type="xsd:string" />
-        <xsd:attribute name="persistent" type="xsd:boolean" />
+        <xsd:attribute name="persistent" type="xsd:string" />
         <xsd:attribute name="protocol" type="xsd:string" />
-        <xsd:attribute name="service" type="xsd:boolean" />
+        <xsd:attribute name="service" type="xsd:string" />
         <xsd:attribute name="session-mode" type="xsd:string" />
-        <xsd:attribute name="pooled" type="xsd:boolean" />
-        <xsd:attribute name="multiple-active-result-sets" type="xsd:boolean" />
+        <xsd:attribute name="pooled" type="xsd:string" />
+        <xsd:attribute name="multiple-active-result-sets" type="xsd:string" />
     </xsd:attributeGroup>
 
     <xsd:complexType name="dbal">
@@ -101,14 +102,16 @@
         <xsd:attribute name="dir" type="xsd:string" />
         <xsd:attribute name="alias" type="xsd:string" />
         <xsd:attribute name="prefix" type="xsd:string" />
-        <xsd:attribute name="is-bundle" type="xsd:boolean" />
+        <xsd:attribute name="is-bundle" type="xsd:string" />
     </xsd:complexType>
 
     <xsd:complexType name="orm">
         <xsd:choice minOccurs="0" maxOccurs="unbounded">
             <xsd:element name="entity-manager" type="entity_manager" />
             <xsd:element name="mapping" type="mapping" />
-            <xsd:element name="metadata-cache-driver" type="metadata_cache_driver" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="metadata-cache-driver" type="cache_driver" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="result-cache-driver" type="cache_driver" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="query-cache-driver" type="cache_driver" minOccurs="0" maxOccurs="1" />
             <xsd:element name="dql" type="dql" minOccurs="0" maxOccurs="1" />
             <xsd:element name="filter" type="filter" minOccurs="0" maxOccurs="unbounded" />
             <xsd:element name="resolve-target-entity" type="resolve_target_entity" minOccurs="0" maxOccurs="unbounded" />
@@ -135,7 +138,7 @@
         </xsd:simpleContent>
     </xsd:complexType>
 
-    <xsd:complexType name="metadata_cache_driver">
+    <xsd:complexType name="cache_driver">
         <xsd:all>
             <xsd:element name="class" type="xsd:string" minOccurs="0" maxOccurs="1" />
             <xsd:element name="host" type="xsd:string" minOccurs="0" maxOccurs="1" />
@@ -149,7 +152,9 @@
     <xsd:complexType name="entity_manager">
         <xsd:choice minOccurs="0" maxOccurs="unbounded">
             <xsd:element name="mapping" type="mapping" />
-            <xsd:element name="metadata-cache-driver" type="metadata_cache_driver" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="metadata-cache-driver" type="cache_driver" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="result-cache-driver" type="cache_driver" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="query-cache-driver" type="cache_driver" minOccurs="0" maxOccurs="1" />
             <xsd:element name="dql" type="dql" minOccurs="0" maxOccurs="1" />
             <xsd:element name="hydrator" type="type" minOccurs="0" maxOccurs="unbounded" />
             <xsd:element name="filter" type="filter" minOccurs="0" maxOccurs="unbounded" />

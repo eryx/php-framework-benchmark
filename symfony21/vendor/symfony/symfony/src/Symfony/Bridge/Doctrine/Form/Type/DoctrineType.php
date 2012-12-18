@@ -81,6 +81,14 @@ abstract class DoctrineType extends AbstractType
                 });
             }
 
+            $preferredChoiceHashes = $options['preferred_choices'];
+
+            if (is_array($preferredChoiceHashes)) {
+                array_walk_recursive($preferredChoiceHashes, function ($value) {
+                    return spl_object_hash($value);
+                });
+            }
+
             // Support for custom loaders (with query builders)
             $loaderHash = is_object($options['loader'])
                 ? spl_object_hash($options['loader'])
@@ -97,6 +105,7 @@ abstract class DoctrineType extends AbstractType
                 $propertyHash,
                 $loaderHash,
                 $choiceHashes,
+                $preferredChoiceHashes,
                 $groupByHash
             )));
 
@@ -107,6 +116,7 @@ abstract class DoctrineType extends AbstractType
                     $options['property'],
                     $options['loader'],
                     $options['choices'],
+                    $options['preferred_choices'],
                     $options['group_by']
                 );
             }
@@ -125,7 +135,6 @@ abstract class DoctrineType extends AbstractType
 
         $resolver->setDefaults(array(
             'em'                => null,
-            'class'             => null,
             'property'          => null,
             'query_builder'     => null,
             'loader'            => $loader,
@@ -134,8 +143,14 @@ abstract class DoctrineType extends AbstractType
             'group_by'          => null,
         ));
 
+        $resolver->setRequired(array('class'));
+
         $resolver->setNormalizers(array(
             'em' => $emNormalizer,
+        ));
+
+        $resolver->setAllowedTypes(array(
+            'loader' => array('null', 'Symfony\Bridge\Doctrine\Form\ChoiceList\EntityLoaderInterface'),
         ));
     }
 
@@ -145,6 +160,7 @@ abstract class DoctrineType extends AbstractType
      * @param ObjectManager $manager
      * @param mixed         $queryBuilder
      * @param string        $class
+     *
      * @return EntityLoaderInterface
      */
     abstract public function getLoader(ObjectManager $manager, $queryBuilder, $class);

@@ -53,7 +53,7 @@ class FormValidator extends ConstraintValidator
             // Validate the form data only if transformation succeeded
             $path = $this->context->getPropertyPath();
             $graphWalker = $this->context->getGraphWalker();
-            $groups = $this->getValidationGroups($form);
+            $groups = self::getValidationGroups($form);
 
             if (!empty($path)) {
                 $path .= '.';
@@ -80,18 +80,35 @@ class FormValidator extends ConstraintValidator
                 }
             }
         } else {
-            $clientDataAsString = is_scalar($form->getViewData())
-                ? (string) $form->getViewData()
-                : gettype($form->getViewData());
+            $childrenSynchronized = true;
 
-            // Mark the form with an error if it is not synchronized
-            $this->context->addViolation(
-                $config->getOption('invalid_message'),
-                array('{{ value }}' => $clientDataAsString),
-                $form->getViewData(),
-                null,
-                Form::ERR_INVALID
-            );
+            foreach ($form as $child) {
+                if (!$child->isSynchronized()) {
+                    $childrenSynchronized = false;
+                    break;
+                }
+            }
+
+            // Mark the form with an error if it is not synchronized BUT all
+            // of its children are synchronized. If any child is not
+            // synchronized, an error is displayed there already and showing
+            // a second error in its parent form is pointless, or worse, may
+            // lead to duplicate errors if error bubbling is enabled on the
+            // child.
+            // See also https://github.com/symfony/symfony/issues/4359
+            if ($childrenSynchronized) {
+                $clientDataAsString = is_scalar($form->getViewData())
+                    ? (string) $form->getViewData()
+                    : gettype($form->getViewData());
+
+                $this->context->addViolation(
+                    $config->getOption('invalid_message'),
+                    array_replace(array('{{ value }}' => $clientDataAsString), $config->getOption('invalid_message_parameters')),
+                    $form->getViewData(),
+                    null,
+                    Form::ERR_INVALID
+                );
+            }
         }
 
         // Mark the form with an error if it contains extra fields
@@ -126,7 +143,7 @@ class FormValidator extends ConstraintValidator
      *
      * @return Boolean Whether the graph walker may walk the data.
      */
-    private function allowDataWalking(FormInterface $form)
+    private static function allowDataWalking(FormInterface $form)
     {
         $data = $form->getData();
 
@@ -158,7 +175,7 @@ class FormValidator extends ConstraintValidator
      *
      * @return array The validation groups.
      */
-    private function getValidationGroups(FormInterface $form)
+    private static function getValidationGroups(FormInterface $form)
     {
         do {
             $groups = $form->getConfig()->getOption('validation_groups');

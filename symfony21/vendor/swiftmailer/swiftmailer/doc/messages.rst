@@ -202,7 +202,7 @@ be included ``addPart()`` can be used.
 The body of a message is the main part that is read by the user. Often people
 want to send a message in HTML format (``text/html``), other
 times people want to send in plain text (``text/plain``), or
-sometimes people want to send both versions and allow the recipient to chose
+sometimes people want to send both versions and allow the recipient to choose
 how they view the message.
 
 As a rule of thumb, if you're going to send a HTML email, always include a
@@ -836,7 +836,7 @@ To set the ``Return-Path:`` address:
 
 * Call the ``setReturnPath()`` method on the Message.
 
-Bouce notifications will be sent to this address.
+Bounce notifications will be sent to this address.
 
 .. code-block:: php
 
@@ -903,7 +903,7 @@ To set the character set of your Message:
     $message = Swift_Message::newInstance()
       ->setCharset('iso-8859-2');
 
-    // Apprach 3: Specify the charset when setting the body
+    // Approach 3: Specify the charset when setting the body
     $message->setBody('My body', 'text/html', 'iso-8859-2');
 
     // Approach 4: Specify the charset for each part added

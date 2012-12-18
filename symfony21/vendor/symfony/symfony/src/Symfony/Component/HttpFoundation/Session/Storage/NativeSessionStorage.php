@@ -55,7 +55,7 @@ class NativeSessionStorage implements SessionStorageInterface
      * Constructor.
      *
      * Depending on how you want the storage driver to behave you probably
-     * want top override this constructor entirely.
+     * want to override this constructor entirely.
      *
      * List of options for $options array with their defaults.
      * @see http://php.net/session.configuration for options
@@ -349,7 +349,7 @@ class NativeSessionStorage implements SessionStorageInterface
         if (!$saveHandler instanceof AbstractProxy && $saveHandler instanceof \SessionHandlerInterface) {
             $saveHandler = new SessionHandlerProxy($saveHandler);
         } elseif (!$saveHandler instanceof AbstractProxy) {
-            $saveHandler = new NativeProxy($saveHandler);
+            $saveHandler = new NativeProxy();
         }
 
         $this->saveHandler = $saveHandler;

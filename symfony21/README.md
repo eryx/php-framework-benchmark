@@ -22,11 +22,13 @@ to create a new project is to use it.
 If you don't have Composer yet, download it following the instructions on
 http://getcomposer.org/ or just run the following command:
 
-    curl -s http://getcomposer.org/installer | php
+    curl -s https://getcomposer.org/installer | php
 
 Then, use the `create-project` command to generate a new Symfony application:
 
-    php composer.phar create-project symfony/framework-standard-edition path/to/install
+    php composer.phar create-project symfony/framework-standard-edition path/to/install 2.1.x-dev
+
+For an exact version, replace 2.1.x-dev with the latest Symfony version (e.g. 2.1.1).
 
 Composer will install Symfony and all its dependencies under the
 `path/to/install` directory.

@@ -42,14 +42,17 @@ class CompassFilter implements FilterInterface
     private $noLineComments;
     private $imagesDir;
     private $javascriptsDir;
+    private $fontsDir;
 
     // compass configuration file options
     private $plugins = array();
     private $loadPaths = array();
     private $httpPath;
     private $httpImagesPath;
+    private $httpGeneratedImagesPath;
     private $generatedImagesPath;
     private $httpJavascriptsPath;
+    private $homeEnv = true;
 
     public function __construct($compassPath = '/usr/bin/compass', $rubyPath = null)
     {
@@ -124,6 +127,11 @@ class CompassFilter implements FilterInterface
         $this->javascriptsDir = $javascriptsDir;
     }
 
+    public function setFontsDir($fontsDir)
+    {
+        $this->fontsDir = $fontsDir;
+    }
+
     // compass configuration file options setters
     public function setPlugins(array $plugins)
     {
@@ -155,6 +163,11 @@ class CompassFilter implements FilterInterface
         $this->httpImagesPath = $httpImagesPath;
     }
 
+    public function setHttpGeneratedImagesPath($httpGeneratedImagesPath)
+    {
+        $this->httpGeneratedImagesPath = $httpGeneratedImagesPath;
+    }
+
     public function setGeneratedImagesPath($generatedImagesPath)
     {
         $this->generatedImagesPath = $generatedImagesPath;
@@ -163,6 +176,11 @@ class CompassFilter implements FilterInterface
     public function setHttpJavascriptsPath($httpJavascriptsPath)
     {
         $this->httpJavascriptsPath = $httpJavascriptsPath;
+    }
+
+    public function setHomeEnv($homeEnv)
+    {
+        $this->homeEnv = $homeEnv;
     }
 
     public function filterLoad(AssetInterface $asset)
@@ -184,7 +202,7 @@ class CompassFilter implements FilterInterface
             $tempDir,
         );
         if (null !== $this->rubyPath) {
-            array_unshift($compassProcessArgs, $this->rubyPath);
+            $compassProcessArgs = array_merge(explode(' ', $this->rubyPath), $compassProcessArgs);
         }
 
         $pb = new ProcessBuilder($compassProcessArgs);
@@ -252,12 +270,20 @@ class CompassFilter implements FilterInterface
             $optionsConfig['http_images_path'] = $this->httpImagesPath;
         }
 
+        if ($this->httpGeneratedImagesPath) {
+            $optionsConfig['http_generated_images_path'] = $this->httpGeneratedImagesPath;
+        }
+
         if ($this->generatedImagesPath) {
             $optionsConfig['generated_images_path'] = $this->generatedImagesPath;
         }
 
         if ($this->httpJavascriptsPath) {
             $optionsConfig['http_javascripts_path'] = $this->httpJavascriptsPath;
+        }
+
+        if ($this->fontsDir) {
+            $optionsConfig['fonts_dir'] = $this->fontsDir;
         }
 
         // options in configuration file
@@ -308,8 +334,10 @@ class CompassFilter implements FilterInterface
         // output
         $output = $tempName.'.css';
 
-        // it's not really usefull but... https://github.com/chriseppstein/compass/issues/376
-        $pb->setEnv('HOME', sys_get_temp_dir());
+        if ($this->homeEnv) {
+            // it's not really usefull but... https://github.com/chriseppstein/compass/issues/376
+            $pb->setEnv('HOME', sys_get_temp_dir());
+        }
 
         $proc = $pb->getProcess();
         $code = $proc->run();

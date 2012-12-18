@@ -17,12 +17,13 @@
     ],
     "require": {
         "php": ">=5.3.3",
-        "symfony/twig-bridge": "self.version"
+        "symfony/twig-bridge": "2.1.*"
     },
     "autoload": {
         "psr-0": { "Symfony\\Bundle\\TwigBundle": "" }
     },
     "target-dir": "Symfony/Bundle/TwigBundle",
+    "minimum-stability": "dev",
     "extra": {
         "branch-alias": {
             "dev-master": "2.1-dev"

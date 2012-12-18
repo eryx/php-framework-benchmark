@@ -15,7 +15,8 @@ use Monolog\Logger;
 use Gelf\Message;
 
 /**
- * Serializes a log message according to Wildfire's header requirements
+ * Serializes a log message to GELF
+ * @see http://www.graylog2.org/about/gelf
  *
  * @author Matt Lehner <mlehner@gmail.com>
  */
@@ -40,12 +41,14 @@ class GelfMessageFormatter extends NormalizerFormatter
      * Translates Monolog log levels to Graylog2 log priorities.
      */
     private $logLevels = array(
-        Logger::DEBUG    => LOG_DEBUG,
-        Logger::INFO     => LOG_INFO,
-        Logger::WARNING  => LOG_WARNING,
-        Logger::ERROR    => LOG_ERR,
-        Logger::CRITICAL => LOG_CRIT,
-        Logger::ALERT    => LOG_ALERT,
+        Logger::DEBUG     => LOG_DEBUG,
+        Logger::INFO      => LOG_INFO,
+        Logger::NOTICE    => LOG_NOTICE,
+        Logger::WARNING   => LOG_WARNING,
+        Logger::ERROR     => LOG_ERR,
+        Logger::CRITICAL  => LOG_CRIT,
+        Logger::ALERT     => LOG_ALERT,
+        Logger::EMERGENCY => LOG_EMERG,
     );
 
     public function __construct($systemName = null, $extraPrefix = null, $contextPrefix = 'ctxt_')

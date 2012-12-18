@@ -40,7 +40,6 @@ class AssetFactory
      * Constructor.
      *
      * @param string  $root   The default root directory
-     * @param string  $output The default output string
      * @param Boolean $debug  Filters prefixed with a "?" will be omitted in debug mode
      */
     public function __construct($root, $debug = false)
@@ -286,11 +285,12 @@ class AssetFactory
             $path  = $input;
             $input = $this->root.'/'.$path;
         }
+
         if (false !== strpos($input, '*')) {
             return $this->createGlobAsset($input, $root, $options['vars']);
-        } else {
-            return $this->createFileAsset($input, $root, $path, $options['vars']);
         }
+
+        return $this->createFileAsset($input, $root, $path, $options['vars']);
     }
 
     protected function createAssetCollection(array $assets = array(), array $options = array())
@@ -338,6 +338,8 @@ class AssetFactory
      * collection itself.
      *
      * @param AssetCollectionInterface $asset An asset collection
+     *
+     * @return AssetCollectionInterface
      */
     private function applyWorkers(AssetCollectionInterface $asset)
     {
@@ -362,7 +364,7 @@ class AssetFactory
         return $asset instanceof AssetCollectionInterface ? $asset : $this->createAssetCollection(array($asset));
     }
 
-    static private function isAbsolutePath($path)
+    private static function isAbsolutePath($path)
     {
         return '/' == $path[0] || '\\' == $path[0] || (3 < strlen($path) && ctype_alpha($path[0]) && $path[1] == ':' && ('\\' == $path[2] || '/' == $path[2]));
     }
@@ -375,7 +377,7 @@ class AssetFactory
      *
      * @return string|null The matching root directory, if found
      */
-    static private function findRootDir($path, array $roots)
+    private static function findRootDir($path, array $roots)
     {
         foreach ($roots as $root) {
             if (0 === strpos($path, $root)) {

@@ -78,7 +78,7 @@ class XmlFileLoader extends FileLoader
     /**
      * Parses a collection of "constraint" XML nodes.
      *
-     * @param SimpleXMLElement $nodes The XML nodes
+     * @param \SimpleXMLElement $nodes The XML nodes
      *
      * @return array The Constraint instances
      */
@@ -112,7 +112,7 @@ class XmlFileLoader extends FileLoader
     /**
      * Parses a collection of "value" XML nodes.
      *
-     * @param SimpleXMLElement $nodes The XML nodes
+     * @param \SimpleXMLElement $nodes The XML nodes
      *
      * @return array The values
      */
@@ -146,7 +146,7 @@ class XmlFileLoader extends FileLoader
     /**
      * Parses a collection of "option" XML nodes.
      *
-     * @param SimpleXMLElement $nodes The XML nodes
+     * @param \SimpleXMLElement $nodes The XML nodes
      *
      * @return array The options
      */
@@ -184,22 +184,38 @@ class XmlFileLoader extends FileLoader
      */
     protected function parseFile($file)
     {
+        $internalErrors = libxml_use_internal_errors(true);
+        $disableEntities = libxml_disable_entity_loader(true);
+        libxml_clear_errors();
+
         $dom = new \DOMDocument();
-        libxml_use_internal_errors(true);
-        if (!$dom->load($file, defined('LIBXML_COMPACT') ? LIBXML_COMPACT : 0)) {
-            throw new MappingException(implode("\n", $this->getXmlErrors()));
-        }
-        if (!$dom->schemaValidate(__DIR__.'/schema/dic/constraint-mapping/constraint-mapping-1.0.xsd')) {
-            throw new MappingException(implode("\n", $this->getXmlErrors()));
-        }
         $dom->validateOnParse = true;
+        if (!$dom->loadXML(file_get_contents($file), LIBXML_NONET | (defined('LIBXML_COMPACT') ? LIBXML_COMPACT : 0))) {
+            libxml_disable_entity_loader($disableEntities);
+
+            throw new MappingException(implode("\n", $this->getXmlErrors($internalErrors)));
+        }
+
+        libxml_disable_entity_loader($disableEntities);
+
+        if (!$dom->schemaValidate(__DIR__.'/schema/dic/constraint-mapping/constraint-mapping-1.0.xsd')) {
+            throw new MappingException(implode("\n", $this->getXmlErrors($internalErrors)));
+        }
+
         $dom->normalizeDocument();
-        libxml_use_internal_errors(false);
+
+        libxml_use_internal_errors($internalErrors);
+
+        foreach ($dom->childNodes as $child) {
+            if ($child->nodeType === XML_DOCUMENT_TYPE_NODE) {
+                throw new MappingException('Document types are not allowed.');
+            }
+        }
 
         return simplexml_import_dom($dom);
     }
 
-    protected function getXmlErrors()
+    protected function getXmlErrors($internalErrors)
     {
         $errors = array();
         foreach (libxml_get_errors() as $error) {
@@ -214,7 +230,7 @@ class XmlFileLoader extends FileLoader
         }
 
         libxml_clear_errors();
-        libxml_use_internal_errors(false);
+        libxml_use_internal_errors($internalErrors);
 
         return $errors;
     }

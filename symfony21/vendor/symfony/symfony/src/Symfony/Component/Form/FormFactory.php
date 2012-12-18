@@ -11,10 +11,7 @@
 
 namespace Symfony\Component\Form;
 
-use Symfony\Component\Form\Exception\FormException;
 use Symfony\Component\Form\Exception\UnexpectedTypeException;
-use Symfony\Component\Form\Exception\TypeDefinitionException;
-use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class FormFactory implements FormFactoryInterface
 {
@@ -80,16 +77,7 @@ class FormFactory implements FormFactoryInterface
         }
 
         if ($type instanceof FormTypeInterface) {
-            // An unresolved type instance was passed. Type extensions
-            // are not supported for these. If you want to use type
-            // extensions, you should create form extensions or register
-            // your type in the Dependency Injection configuration instead.
-            $parentType = $type->getParent();
-            $type = $this->resolvedTypeFactory->createResolvedType(
-                $type,
-                array(),
-                $parentType ? $this->registry->getType($parentType) : null
-            );
+            $type = $this->resolveType($type);
         } elseif (is_string($type)) {
             $type = $this->registry->getType($type);
         } elseif (!$type instanceof ResolvedFormTypeInterface) {
@@ -104,7 +92,10 @@ class FormFactory implements FormFactoryInterface
      */
     public function createBuilderForProperty($class, $property, $data = null, array $options = array(), FormBuilderInterface $parent = null)
     {
-        $guesser = $this->registry->getTypeGuesser();
+        if (null === $guesser = $this->registry->getTypeGuesser()) {
+            return $this->createNamedBuilder($property, 'text', $data, $options, $parent);
+        }
+
         $typeGuess = $guesser->guessType($class, $property);
         $maxLengthGuess = $guesser->guessMaxLength($class, $property);
         // Keep $minLengthGuess for BC until Symfony 2.3
@@ -195,5 +186,33 @@ class FormFactory implements FormFactoryInterface
     public function getType($name)
     {
         return $this->registry->getType($name)->getInnerType();
+    }
+
+    /**
+     * Wraps a type into a ResolvedFormTypeInterface implementation and connects
+     * it with its parent type.
+     *
+     * @param FormTypeInterface $type The type to resolve.
+     *
+     * @return ResolvedFormTypeInterface The resolved type.
+     */
+    private function resolveType(FormTypeInterface $type)
+    {
+        $parentType = $type->getParent();
+
+        if ($parentType instanceof FormTypeInterface) {
+            $parentType = $this->resolveType($parentType);
+        } elseif (null !== $parentType) {
+            $parentType = $this->registry->getType($parentType);
+        }
+
+        return $this->resolvedTypeFactory->createResolvedType(
+            $type,
+            // Type extensions are not supported for unregistered type instances,
+            // i.e. type instances that are passed to the FormFactory directly,
+            // nor for their parents, if getParent() also returns a type instance.
+            array(),
+            $parentType
+        );
     }
 }
