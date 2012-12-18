@@ -1,16 +1,12 @@
 <?php
 /**
- * Convenience class for handling directories.
- *
- * PHP 5
- *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.Utility
  * @since         CakePHP(tm) v 0.2.9
@@ -83,7 +79,7 @@ class Folder {
  *
  * @param string $path Path to folder
  * @param boolean $create Create folder if not found
- * @param mixed $mode Mode (CHMOD) to apply to created folder, false to ignore
+ * @param string|boolean $mode Mode (CHMOD) to apply to created folder, false to ignore
  * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#Folder
  */
 	public function __construct($path = false, $create = false, $mode = false) {
@@ -136,7 +132,7 @@ class Folder {
  *
  * @param boolean $sort Whether you want the results sorted, set this and the sort property
  *   to false to get unsorted results.
- * @param mixed $exceptions Either an array or boolean true will not grab dot files
+ * @param array|boolean $exceptions Either an array or boolean true will not grab dot files
  * @param boolean $fullPath True returns the full path
  * @return mixed Contents of current directory as an array, an empty array on failure
  * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#Folder::read
@@ -154,7 +150,7 @@ class Folder {
 
 		try {
 			$iterator = new DirectoryIterator($this->path);
-		} catch (UnexpectedValueException $e) {
+		} catch (Exception $e) {
 			return array($dirs, $files);
 		}
 
@@ -192,7 +188,7 @@ class Folder {
  */
 	public function find($regexpPattern = '.*', $sort = false) {
 		list($dirs, $files) = $this->read($sort);
-		return array_values(preg_grep('/^' . $regexpPattern . '$/i', $files)); ;
+		return array_values(preg_grep('/^' . $regexpPattern . '$/i', $files));
 	}
 
 /**
@@ -326,7 +322,7 @@ class Folder {
  * Returns true if the File is in given path.
  *
  * @param string $path The path to check that the current pwd() resides with in.
- * @param boolean $reverse
+ * @param boolean $reverse Reverse the search, check that pwd() resides within $path.
  * @return boolean
  * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#Folder::inPath
  */
@@ -358,7 +354,9 @@ class Folder {
 		}
 
 		if ($recursive === false && is_dir($path)) {
+			//@codingStandardsIgnoreStart
 			if (@chmod($path, intval($mode, 8))) {
+				//@codingStandardsIgnoreEnd
 				$this->_messages[] = __d('cake_dev', '%s changed to %s', $path, $mode);
 				return true;
 			}
@@ -371,7 +369,7 @@ class Folder {
 			$paths = $this->tree($path);
 
 			foreach ($paths as $type) {
-				foreach ($type as $key => $fullpath) {
+				foreach ($type as $fullpath) {
 					$check = explode(DS, $fullpath);
 					$count = count($check);
 
@@ -379,7 +377,9 @@ class Folder {
 						continue;
 					}
 
+					//@codingStandardsIgnoreStart
 					if (@chmod($fullpath, intval($mode, 8))) {
+						//@codingStandardsIgnoreEnd
 						$this->_messages[] = __d('cake_dev', '%s changed to %s', $fullpath, $mode);
 					} else {
 						$this->_errors[] = __d('cake_dev', '%s NOT changed to %s', $fullpath, $mode);
@@ -398,44 +398,56 @@ class Folder {
  * Returns an array of nested directories and files in each directory
  *
  * @param string $path the directory path to build the tree from
- * @param mixed $exceptions Array of files to exclude, defaults to excluding hidden files.
- * @param string $type either file or dir. null returns both files and directories
+ * @param array|boolean $exceptions Either an array of files/folder to exclude
+ *   or boolean true to not grab dot files/folders
+ * @param string $type either 'file' or 'dir'. null returns both files and directories
  * @return mixed array of nested directories and files in each directory
  * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#Folder::tree
  */
-	public function tree($path = null, $exceptions = true, $type = null) {
+	public function tree($path = null, $exceptions = false, $type = null) {
 		if ($path == null) {
 			$path = $this->path;
 		}
 		$files = array();
 		$directories = array($path);
-		$skipHidden = false;
 
-		if ($exceptions === false) {
-			$skipHidden = true;
-		}
 		if (is_array($exceptions)) {
 			$exceptions = array_flip($exceptions);
 		}
+		$skipHidden = false;
+		if ($exceptions === true) {
+			$skipHidden = true;
+		} elseif (isset($exceptions['.'])) {
+			$skipHidden = true;
+			unset($exceptions['.']);
+		}
 
 		try {
-			$directory = new RecursiveDirectoryIterator($path);
+			$directory = new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::KEY_AS_PATHNAME | RecursiveDirectoryIterator::CURRENT_AS_SELF);
 			$iterator = new RecursiveIteratorIterator($directory, RecursiveIteratorIterator::SELF_FIRST);
-		} catch (UnexpectedValueException $e) {
+		} catch (Exception $e) {
 			if ($type === null) {
 				return array(array(), array());
 			}
 			return array();
 		}
-		foreach ($iterator as $item) {
-			$name = $item->getFileName();
-			if ($skipHidden && $name[0] === '.' || isset($exceptions[$name])) {
+
+		foreach ($iterator as $itemPath => $fsIterator) {
+			if ($skipHidden) {
+				$subPathName = $fsIterator->getSubPathname();
+				if ($subPathName{0} == '.' || strpos($subPathName, DS . '.') !== false) {
+					continue;
+				}
+			}
+			$item = $fsIterator->current();
+			if (!empty($exceptions) && isset($exceptions[$item->getFilename()])) {
 				continue;
 			}
+
 			if ($item->isFile()) {
-				$files[] = $item->getPathName();
-			} else if ($item->isDir() && !in_array($name, array('.', '..'))) {
-				$directories[] = $item->getPathName();
+				$files[] = $itemPath;
+			} elseif ($item->isDir() && !$item->isDot()) {
+				$directories[] = $itemPath;
 			}
 		}
 		if ($type === null) {
@@ -445,20 +457,6 @@ class Folder {
 			return $directories;
 		}
 		return $files;
-	}
-
-/**
- * Private method to list directories and files in each directory
- *
- * @param string $path The Path to read.
- * @param mixed $exceptions Array of files to exclude from the read that will be performed.
- * @return void
- */
-	protected function _tree($path, $exceptions) {
-		$this->path = $path;
-		list($dirs, $files) = $this->read(false, $exceptions, true);
-		$this->_directories = array_merge($this->_directories, $dirs);
-		$this->_files = array_merge($this->_files, $files);
 	}
 
 /**
@@ -554,36 +552,44 @@ class Folder {
 			return null;
 		}
 		$path = Folder::slashTerm($path);
-		if (is_dir($path) === true) {
-			$normalFiles = glob($path . '*');
-			$hiddenFiles = glob($path . '\.?*');
+		if (is_dir($path)) {
+			try {
+				$directory = new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::CURRENT_AS_SELF);
+				$iterator = new RecursiveIteratorIterator($directory, RecursiveIteratorIterator::CHILD_FIRST);
+			} catch (Exception $e) {
+				return false;
+			}
 
-			$normalFiles = $normalFiles ? $normalFiles : array();
-			$hiddenFiles = $hiddenFiles ? $hiddenFiles : array();
-
-			$files = array_merge($normalFiles, $hiddenFiles);
-			if (is_array($files)) {
-				foreach ($files as $file) {
-					if (preg_match('/(\.|\.\.)$/', $file)) {
-						continue;
+			foreach ($iterator as $item) {
+				$filePath = $item->getPathname();
+				if ($item->isFile() || $item->isLink()) {
+					//@codingStandardsIgnoreStart
+					if (@unlink($filePath)) {
+						//@codingStandardsIgnoreEnd
+						$this->_messages[] = __d('cake_dev', '%s removed', $filePath);
+					} else {
+						$this->_errors[] = __d('cake_dev', '%s NOT removed', $filePath);
 					}
-					if (is_file($file) === true) {
-						if (@unlink($file)) {
-							$this->_messages[] = __d('cake_dev', '%s removed', $file);
-						} else {
-							$this->_errors[] = __d('cake_dev', '%s NOT removed', $file);
-						}
-					} elseif (is_dir($file) === true && $this->delete($file) === false) {
+				} elseif ($item->isDir() && !$item->isDot()) {
+					//@codingStandardsIgnoreStart
+					if (@rmdir($filePath)) {
+						//@codingStandardsIgnoreEnd
+						$this->_messages[] = __d('cake_dev', '%s removed', $filePath);
+					} else {
+						$this->_errors[] = __d('cake_dev', '%s NOT removed', $filePath);
 						return false;
 					}
 				}
 			}
-			$path = substr($path, 0, strlen($path) - 1);
-			if (rmdir($path) === false) {
+
+			$path = rtrim($path, DS);
+			//@codingStandardsIgnoreStart
+			if (@rmdir($path)) {
+				//@codingStandardsIgnoreEnd
+				$this->_messages[] = __d('cake_dev', '%s removed', $path);
+			} else {
 				$this->_errors[] = __d('cake_dev', '%s NOT removed', $path);
 				return false;
-			} else {
-				$this->_messages[] = __d('cake_dev', '%s removed', $path);
 			}
 		}
 		return true;
@@ -599,7 +605,7 @@ class Folder {
  * - `mode` The mode to copy the files/directories with.
  * - `skip` Files/directories to skip.
  *
- * @param mixed $options Either an array of options (see above) or a string of the destination directory.
+ * @param array|string $options Either an array of options (see above) or a string of the destination directory.
  * @return boolean Success
  * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#Folder::copy
  */
@@ -633,7 +639,9 @@ class Folder {
 		}
 
 		$exceptions = array_merge(array('.', '..', '.svn'), $options['skip']);
+		//@codingStandardsIgnoreStart
 		if ($handle = @opendir($fromDir)) {
+			//@codingStandardsIgnoreEnd
 			while (false !== ($item = readdir($handle))) {
 				if (!in_array($item, $exceptions)) {
 					$from = Folder::addPathElement($fromDir, $item);
@@ -656,7 +664,7 @@ class Folder {
 							chmod($to, $mode);
 							umask($old);
 							$this->_messages[] = __d('cake_dev', '%s created', $to);
-							$options = array_merge($options, array('to'=> $to, 'from'=> $from));
+							$options = array_merge($options, array('to' => $to, 'from' => $from));
 							$this->copy($options);
 						} else {
 							$this->_errors[] = __d('cake_dev', '%s not created', $to);
@@ -750,7 +758,7 @@ class Folder {
 			$newpath = DS;
 		}
 
-		while (($part = array_shift($parts)) !== NULL) {
+		while (($part = array_shift($parts)) !== null) {
 			if ($part === '.' || $part === '') {
 				continue;
 			}
@@ -780,4 +788,5 @@ class Folder {
 		$lastChar = $path[strlen($path) - 1];
 		return $lastChar === '/' || $lastChar === '\\';
 	}
+
 }

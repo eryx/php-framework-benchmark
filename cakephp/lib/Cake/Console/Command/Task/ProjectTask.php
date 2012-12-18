@@ -6,12 +6,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @since         CakePHP(tm) v 1.2
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
@@ -47,13 +47,19 @@ class ProjectTask extends AppShell {
 		$project = null;
 		if (isset($this->args[0])) {
 			$project = $this->args[0];
+		} else {
+			$appContents = array_diff(scandir(APP), array('.', '..'));
+			if (empty($appContents)) {
+				$suggestedPath = rtrim(APP, DS);
+			} else {
+				$suggestedPath = APP . 'myapp';
+			}
 		}
 
 		while (!$project) {
 			$prompt = __d('cake_console', "What is the path to the project you want to bake?");
-			$project = $this->in($prompt, null, APP . 'myapp');
+			$project = $this->in($prompt, null, $suggestedPath);
 		}
-
 
 		if ($project && !Folder::isAbsolute($project) && isset($_SERVER['PWD'])) {
 			$project = $_SERVER['PWD'] . DS . $project;
@@ -62,7 +68,7 @@ class ProjectTask extends AppShell {
 		$response = false;
 		while ($response == false && is_dir($project) === true && file_exists($project . 'Config' . 'core.php')) {
 			$prompt = __d('cake_console', '<warning>A project already exists in this location:</warning> %s Overwrite?', $project);
-			$response = $this->in($prompt, array('y','n'), 'n');
+			$response = $this->in($prompt, array('y', 'n'), 'n');
 			if (strtolower($response) === 'n') {
 				$response = $project = false;
 			}
@@ -71,12 +77,6 @@ class ProjectTask extends AppShell {
 		$success = true;
 		if ($this->bake($project)) {
 			$path = Folder::slashTerm($project);
-			if ($this->createHome($path)) {
-				$this->out(__d('cake_console', ' * Welcome page created'));
-			} else {
-				$this->err(__d('cake_console', 'The Welcome page was <error>NOT</error> created'));
-				$success = false;
-			}
 
 			if ($this->securitySalt($path) === true) {
 				$this->out(__d('cake_console', ' * Random hash key created for \'Security.salt\''));
@@ -112,7 +112,7 @@ class ProjectTask extends AppShell {
 				$this->out(__d('cake_console', ' * CAKE_CORE_INCLUDE_PATH set to %s in webroot/index.php', CAKE_CORE_INCLUDE_PATH));
 				$this->out(__d('cake_console', ' * CAKE_CORE_INCLUDE_PATH set to %s in webroot/test.php', CAKE_CORE_INCLUDE_PATH));
 			} else {
-				$this->err(__d('cake_console', 'Unable to set CAKE_CORE_INCLUDE_PATH, you should change it in %s', $path . 'webroot' .DS .'index.php'));
+				$this->err(__d('cake_console', 'Unable to set CAKE_CORE_INCLUDE_PATH, you should change it in %s', $path . 'webroot' . DS . 'index.php'));
 				$success = false;
 			}
 			if ($success && $hardCode) {
@@ -121,8 +121,8 @@ class ProjectTask extends AppShell {
 
 			$Folder = new Folder($path);
 			if (!$Folder->chmod($path . 'tmp', 0777)) {
-				$this->err(__d('cake_console', 'Could not set permissions on %s', $path . DS .'tmp'));
-				$this->out(__d('cake_console', 'chmod -R 0777 %s', $path . DS .'tmp'));
+				$this->err(__d('cake_console', 'Could not set permissions on %s', $path . DS . 'tmp'));
+				$this->out(__d('cake_console', 'chmod -R 0777 %s', $path . DS . 'tmp'));
 				$success = false;
 			}
 			if ($success) {
@@ -153,7 +153,6 @@ class ProjectTask extends AppShell {
  * Looks for a skeleton template of a Cake application,
  * and if not found asks the user for a path. When there is a path
  * this method will make a deep copy of the skeleton to the project directory.
- * A default home page will be added, and the tmp file storage will be chmod'ed to 0777.
  *
  * @param string $path Project path
  * @param string $skel Path to copy from
@@ -223,20 +222,6 @@ class ProjectTask extends AppShell {
 	}
 
 /**
- * Writes a file with a default home page to the project.
- *
- * @param string $dir Path to project
- * @return boolean Success
- */
-	public function createHome($dir) {
-		$app = basename($dir);
-		$path = $dir . 'View' . DS . 'Pages' . DS;
-		$source = CAKE . 'Console' . DS . 'Templates' . DS .'default' . DS . 'views' . DS . 'home.ctp';
-		include($source);
-		return $this->createFile($path.'home.ctp', $output);
-	}
-
-/**
  * Generates the correct path to the CakePHP libs that are generating the project
  * and points app/console/cake.php to the right place
  *
@@ -269,7 +254,7 @@ class ProjectTask extends AppShell {
 		$contents = $File->read();
 		if (preg_match('/([\s]*Configure::write\(\'Security.salt\',[\s\'A-z0-9]*\);)/', $contents, $match)) {
 			$string = Security::generateAuthKey();
-			$result = str_replace($match[0], "\t" . 'Configure::write(\'Security.salt\', \''.$string.'\');', $contents);
+			$result = str_replace($match[0], "\t" . 'Configure::write(\'Security.salt\', \'' . $string . '\');', $contents);
 			if ($File->write($result)) {
 				return true;
 			}
@@ -283,16 +268,14 @@ class ProjectTask extends AppShell {
  *
  * @param string $path Project path
  * @return boolean Success
-	 */
+ */
 	public function securityCipherSeed($path) {
 		$File = new File($path . 'Config' . DS . 'core.php');
 		$contents = $File->read();
 		if (preg_match('/([\s]*Configure::write\(\'Security.cipherSeed\',[\s\'A-z0-9]*\);)/', $contents, $match)) {
-			if (!class_exists('Security')) {
-				require CAKE . 'Utility' . DS . 'security.php';
-			}
+			App::uses('Security', 'Utility');
 			$string = substr(bin2hex(Security::generateAuthKey()), 0, 30);
-			$result = str_replace($match[0], "\t" . 'Configure::write(\'Security.cipherSeed\', \''.$string.'\');', $contents);
+			$result = str_replace($match[0], "\t" . 'Configure::write(\'Security.cipherSeed\', \'' . $string . '\');', $contents);
 			if ($File->write($result)) {
 				return true;
 			}
@@ -359,7 +342,7 @@ class ProjectTask extends AppShell {
 		$File = new File($path . 'core.php');
 		$contents = $File->read();
 		if (preg_match('%(\s*[/]*Configure::write\(\'Routing.prefixes\',[\s\'a-z,\)\(]*\);)%', $contents, $match)) {
-			$result = str_replace($match[0], "\n" . 'Configure::write(\'Routing.prefixes\', array(\''.$name.'\'));', $contents);
+			$result = str_replace($match[0], "\n" . 'Configure::write(\'Routing.prefixes\', array(\'' . $name . '\'));', $contents);
 			if ($File->write($result)) {
 				Configure::write('Routing.prefixes', array($name));
 				return true;
@@ -427,6 +410,7 @@ class ProjectTask extends AppShell {
 			)->addArgument('name', array(
 				'help' => __d('cake_console', 'Application directory to make, if it starts with "/" the path is absolute.')
 			))->addOption('empty', array(
+				'boolean' => true,
 				'help' => __d('cake_console', 'Create empty files in each of the directories. Good if you are using git')
 			))->addOption('skel', array(
 				'default' => current(App::core('Console')) . 'Templates' . DS . 'skel',

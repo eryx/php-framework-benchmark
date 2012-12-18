@@ -5,22 +5,18 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.Utility
  * @since         CakePHP(tm) v 0.2.9
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
 
-/**
- * Included libraries.
- *
- */
 App::uses('Folder', 'Utility');
 
 /**
@@ -114,9 +110,7 @@ class File {
 	public function create() {
 		$dir = $this->Folder->pwd();
 		if (is_dir($dir) && is_writable($dir) && !$this->exists()) {
-			$old = umask(0);
 			if (touch($this->path)) {
-				umask($old);
 				return true;
 			}
 		}
@@ -189,7 +183,7 @@ class File {
 /**
  * Sets or gets the offset for the currently opened file.
  *
- * @param mixed $offset The $offset in bytes to seek. If set to false then the current offset is returned.
+ * @param integer|boolean $offset The $offset in bytes to seek. If set to false then the current offset is returned.
  * @param integer $seek PHP Constant SEEK_SET | SEEK_CUR | SEEK_END determining what the $offset is relative to
  * @return mixed True on success, false on failure (set mode), false on failure or integer offset on success (get mode)
  * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::offset
@@ -295,9 +289,16 @@ class File {
 	}
 
 /**
- * Returns the File info.
+ * Returns the File info as an array with the following keys:
  *
- * @return string The File extension
+ * - dirname
+ * - basename
+ * - extension
+ * - filename
+ * - filesize
+ * - mime
+ *
+ * @return array File information.
  * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::info
  */
 	public function info() {
@@ -306,6 +307,12 @@ class File {
 		}
 		if (!isset($this->info['filename'])) {
 			$this->info['filename'] = $this->name();
+		}
+		if (!isset($this->info['filesize'])) {
+			$this->info['filesize'] = $this->size();
+		}
+		if (!isset($this->info['mime'])) {
+			$this->info['mime'] = $this->mime();
 		}
 		return $this->info;
 	}
@@ -337,7 +344,7 @@ class File {
 			$this->info();
 		}
 		if (isset($this->info['extension'])) {
-			return basename($this->name, '.'.$this->info['extension']);
+			return basename($this->name, '.' . $this->info['extension']);
 		} elseif ($this->name) {
 			return $this->name;
 		}
@@ -359,13 +366,13 @@ class File {
 		if (!$ext) {
 			$ext = $this->ext();
 		}
-		return preg_replace( "/(?:[^\w\.-]+)/", "_", basename($name, $ext));
+		return preg_replace("/(?:[^\w\.-]+)/", "_", basename($name, $ext));
 	}
 
 /**
  * Get md5 Checksum of file with previous check of Filesize
  *
- * @param mixed $maxsize in MB or true to force
+ * @param integer|boolean $maxsize in MB or true to force
  * @return string md5 Checksum {@link http://php.net/md5_file See md5_file()}
  * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::md5
  */
@@ -519,7 +526,7 @@ class File {
  * @return Folder Current folder
  * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::Folder
  */
-	public function &Folder() {
+	public function &folder() {
 		return $this->Folder;
 	}
 
@@ -537,4 +544,25 @@ class File {
 		}
 		return copy($this->path, $dest);
 	}
+
+/**
+ * Get the mime type of the file.  Uses the finfo extension if
+ * its available, otherwise falls back to mime_content_type
+ *
+ * @return false|string The mimetype of the file, or false if reading fails.
+ */
+	public function mime() {
+		if (!$this->exists()) {
+			return false;
+		}
+		if (function_exists('finfo_open')) {
+			$finfo = finfo_open(FILEINFO_MIME);
+			list($type, $charset) = explode(';', finfo_file($finfo, $this->pwd()));
+			return $type;
+		} elseif (function_exists('mime_content_type')) {
+			return mime_content_type($this->pwd());
+		}
+		return false;
+	}
+
 }

@@ -4,14 +4,14 @@
  *
  * PHP 5
  *
- * CakePHP(tm) Tests <http://book.cakephp.org/view/1196/Testing>
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) Tests <http://book.cakephp.org/2.0/en/development/testing.html>
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://book.cakephp.org/view/1196/Testing CakePHP(tm) Tests
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @link          http://book.cakephp.org/2.0/en/development/testing.html CakePHP(tm) Tests
  * @package       Cake.Test.Case.Network.Http
  * @since         CakePHP(tm) v 2.0.0
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
@@ -93,8 +93,8 @@ class DigestAuthenticationTest extends CakeTestCase {
 		$auth = array('user' => 'admin', 'pass' => '1234');
 		DigestAuthentication::authentication($this->HttpSocket, $auth);
 		$this->assertTrue(isset($this->HttpSocket->request['header']['Authorization']));
-		$this->assertEquals($auth['realm'], 'The batcave');
-		$this->assertEquals($auth['nonce'], '4cded326c6c51');
+		$this->assertEquals('The batcave', $auth['realm']);
+		$this->assertEquals('4cded326c6c51', $auth['nonce']);
 	}
 
 /**
@@ -116,8 +116,8 @@ class DigestAuthenticationTest extends CakeTestCase {
 		DigestAuthentication::authentication($this->HttpSocket, $auth);
 		$expected = '@Digest username="admin", realm="The batcave", nonce="4cded326c6c51", uri="/", response="[a-z0-9]{32}", qop="auth", nc=00000001, cnonce="[a-z0-9]+"@';
 		$this->assertRegExp($expected, $this->HttpSocket->request['header']['Authorization']);
-		$this->assertEquals($auth['qop'], 'auth');
-		$this->assertEquals($auth['nc'], 2);
+		$this->assertEquals('auth', $auth['qop']);
+		$this->assertEquals(2, $auth['nc']);
 	}
 
 /**
@@ -147,21 +147,21 @@ class DigestAuthenticationTest extends CakeTestCase {
 		$auth = array('user' => 'admin', 'pass' => '1234');
 		DigestAuthentication::authentication($this->HttpSocket, $auth);
 		$this->assertTrue(strpos($this->HttpSocket->request['header']['Authorization'], 'nc=00000001') > 0);
-		$this->assertEquals($auth['nc'], 2);
+		$this->assertEquals(2, $auth['nc']);
 
 		DigestAuthentication::authentication($this->HttpSocket, $auth);
 		$this->assertTrue(strpos($this->HttpSocket->request['header']['Authorization'], 'nc=00000002') > 0);
-		$this->assertEquals($auth['nc'], 3);
+		$this->assertEquals(3, $auth['nc']);
 		$responsePos = strpos($this->HttpSocket->request['header']['Authorization'], 'response=');
 		$response = substr($this->HttpSocket->request['header']['Authorization'], $responsePos + 10, 32);
 
 		$this->HttpSocket->nextHeader = '';
 		DigestAuthentication::authentication($this->HttpSocket, $auth);
 		$this->assertTrue(strpos($this->HttpSocket->request['header']['Authorization'], 'nc=00000003') > 0);
-		$this->assertEquals($auth['nc'], 4);
+		$this->assertEquals(4, $auth['nc']);
 		$responsePos = strpos($this->HttpSocket->request['header']['Authorization'], 'response=');
-		$response2 = substr($this->HttpSocket->request['header']['Authorization'], $responsePos + 10, 32);
-		$this->assertNotEquals($response, $response2);
+		$responseB = substr($this->HttpSocket->request['header']['Authorization'], $responsePos + 10, 32);
+		$this->assertNotEquals($response, $responseB);
 	}
 
 /**
@@ -176,7 +176,7 @@ class DigestAuthenticationTest extends CakeTestCase {
 		DigestAuthentication::authentication($this->HttpSocket, $auth);
 		$responsePos = strpos($this->HttpSocket->request['header']['Authorization'], 'response=');
 		$response = substr($this->HttpSocket->request['header']['Authorization'], $responsePos + 10, 32);
-		$this->assertNotEquals($response, 'da7e2a46b471d77f70a9bb3698c8902b');
+		$this->assertNotEquals('da7e2a46b471d77f70a9bb3698c8902b', $response);
 	}
 
 /**

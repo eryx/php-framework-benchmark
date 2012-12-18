@@ -4,30 +4,29 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.Console.Templates.default.views
  * @since         CakePHP(tm) v 1.2.0.5234
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
 ?>
-<div class="<?php echo $pluralVar;?> index">
-	<h2><?php echo "<?php echo __('{$pluralHumanName}');?>";?></h2>
+<div class="<?php echo $pluralVar; ?> index">
+	<h2><?php echo "<?php echo __('{$pluralHumanName}'); ?>"; ?></h2>
 	<table cellpadding="0" cellspacing="0">
 	<tr>
-	<?php  foreach ($fields as $field):?>
-		<th><?php echo "<?php echo \$this->Paginator->sort('{$field}');?>";?></th>
-	<?php endforeach;?>
-		<th class="actions"><?php echo "<?php echo __('Actions');?>";?></th>
+	<?php  foreach ($fields as $field): ?>
+		<th><?php echo "<?php echo \$this->Paginator->sort('{$field}'); ?>"; ?></th>
+	<?php endforeach; ?>
+		<th class="actions"><?php echo "<?php echo __('Actions'); ?>"; ?></th>
 	</tr>
 	<?php
 	echo "<?php
-	\$i = 0;
 	foreach (\${$pluralVar} as \${$singularVar}): ?>\n";
 	echo "\t<tr>\n";
 		foreach ($fields as $field) {
@@ -61,7 +60,7 @@
 	echo \$this->Paginator->counter(array(
 	'format' => __('Page {:page} of {:pages}, showing {:current} records out of {:count} total, starting on record {:start}, ending on {:end}')
 	));
-	?>";?>
+	?>"; ?>
 	</p>
 
 	<div class="paging">
@@ -77,7 +76,7 @@
 <div class="actions">
 	<h3><?php echo "<?php echo __('Actions'); ?>"; ?></h3>
 	<ul>
-		<li><?php echo "<?php echo \$this->Html->link(__('New " . $singularHumanName . "'), array('action' => 'add')); ?>";?></li>
+		<li><?php echo "<?php echo \$this->Html->link(__('New " . $singularHumanName . "'), array('action' => 'add')); ?>"; ?></li>
 <?php
 	$done = array();
 	foreach ($associations as $type => $data) {

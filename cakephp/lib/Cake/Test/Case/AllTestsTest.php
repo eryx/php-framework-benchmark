@@ -5,12 +5,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.Test.Case
  * @since         CakePHP(tm) v 2.0
@@ -45,15 +45,16 @@ class AllTests extends PHPUnit_Framework_TestSuite {
 		$suite->addTestFile($path . 'AllControllerTest.php');
 		$suite->addTestFile($path . 'AllDatabaseTest.php');
 		$suite->addTestFile($path . 'AllErrorTest.php');
+		$suite->addTestFile($path . 'AllEventTest.php');
 		$suite->addTestFile($path . 'AllHelpersTest.php');
 		$suite->addTestFile($path . 'AllLogTest.php');
-		$suite->addTestFile($path . 'AllI18nTest.php');
-		$suite->addTestFile($path . 'AllModelTest.php');
+		$suite->addTestFile($path . 'Model' . DS . 'ModelTest.php');
 		$suite->addTestFile($path . 'AllRoutingTest.php');
 		$suite->addTestFile($path . 'AllNetworkTest.php');
-		$suite->addTestFile($path . 'AllTestSuiteTest.php');;
+		$suite->addTestFile($path . 'AllTestSuiteTest.php');
 		$suite->addTestFile($path . 'AllUtilityTest.php');
 		$suite->addTestFile($path . 'AllViewTest.php');
+		$suite->addTestFile($path . 'AllI18nTest.php');
 		return $suite;
 	}
 }

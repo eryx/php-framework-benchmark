@@ -5,12 +5,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.Test.Case
  * @since         CakePHP(tm) v 2.0
@@ -36,14 +36,17 @@ class AllDatabaseTest extends PHPUnit_Framework_TestSuite {
 
 		$path = CORE_TEST_CASES . DS . 'Model' . DS;
 		$tasks = array(
-			'DbAcl',
+			'AclNode',
 			'CakeSchema',
 			'ConnectionManager',
 			'Datasource' . DS . 'DboSource',
 			'Datasource' . DS . 'Database' . DS . 'Mysql',
 			'Datasource' . DS . 'Database' . DS . 'Postgres',
 			'Datasource' . DS . 'Database' . DS . 'Sqlite',
-			'Datasource' . DS . 'Database' . DS . 'Sqlserver'
+			'Datasource' . DS . 'Database' . DS . 'Sqlserver',
+			'Datasource' . DS . 'CakeSession',
+			'Datasource' . DS . 'Session' . DS . 'CacheSession',
+			'Datasource' . DS . 'Session' . DS . 'DatabaseSession',
 		);
 		foreach ($tasks as $task) {
 			$suite->addTestFile($path . $task . 'Test.php');

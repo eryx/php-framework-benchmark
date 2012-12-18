@@ -1,25 +1,23 @@
 <?php
 /**
- * Short description for file.
- *
- * PHP 5
- *
- * CakePHP(tm) Tests <http://book.cakephp.org/view/1196/Testing>
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) Tests <http://book.cakephp.org/2.0/en/development/testing.html>
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://book.cakephp.org/view/1196/Testing CakePHP(tm) Tests
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @link          http://book.cakephp.org/2.0/en/development/testing.html CakePHP(tm) Tests
  * @package       Cake.TestSuite.Fixture
  * @since         CakePHP(tm) v 1.2.0.4667
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
+
 App::uses('CakeSchema', 'Model');
 
 /**
- * Short description for class.
+ * CakeTestFixture is responsible for building and destroying tables to be used
+ * during testing.
  *
  * @package       Cake.TestSuite.Fixture
  */
@@ -35,18 +33,35 @@ class CakeTestFixture {
 /**
  * Cake's DBO driver (e.g: DboMysql).
  *
+ * @var object
  */
 	public $db = null;
 
 /**
+ * Fixture Datasource
+ *
+ * @var string
+ */
+	public $useDbConfig = 'test';
+
+/**
  * Full Table Name
  *
+ * @var string
  */
 	public $table = null;
 
 /**
+ * List of datasources where this fixture has been created
+ *
+ * @var array
+ */
+	public $created = array();
+
+/**
  * Instantiate the fixture.
  *
+ * @throws CakeException on invalid datasource usage.
  */
 	public function __construct() {
 		if ($this->name === null) {
@@ -56,13 +71,28 @@ class CakeTestFixture {
 				$this->name = get_class($this);
 			}
 		}
-		$this->Schema = new CakeSchema(array('name' => 'TestSuite', 'connection' => 'test'));
+		$connection = 'test';
+		if (!empty($this->useDbConfig)) {
+			$connection = $this->useDbConfig;
+			if (strpos($connection, 'test') !== 0) {
+				$message = __d(
+					'cake_dev',
+					'Invalid datasource name "%s" for "%s" fixture. Fixture datasource names must begin with "test".',
+					$connection,
+					$this->name
+				);
+				throw new CakeException($message);
+			}
+		}
+		$this->Schema = new CakeSchema(array('name' => 'TestSuite', 'connection' => $connection));
 		$this->init();
 	}
 
 /**
  * Initialize the fixture.
  *
+ * @return void
+ * @throws MissingModelException Whe importing from a model that does not exist.
  */
 	public function init() {
 		if (isset($this->import) && (is_string($this->import) || is_array($this->import))) {
@@ -71,6 +101,7 @@ class CakeTestFixture {
 				is_array($this->import) ? $this->import : array('model' => $this->import)
 			);
 
+			$this->Schema->connection = $import['connection'];
 			if (isset($import['model'])) {
 				list($plugin, $modelClass) = pluginSplit($import['model'], true);
 				App::uses($modelClass, $plugin . 'Model');
@@ -84,7 +115,7 @@ class CakeTestFixture {
 				}
 				$this->fields = $model->schema(true);
 				$this->fields[$model->primaryKey]['key'] = 'primary';
-				$this->table = $db->fullTableName($model, false);
+				$this->table = $db->fullTableName($model, false, false);
 				ClassRegistry::config(array('ds' => 'test'));
 				ClassRegistry::flush();
 			} elseif (isset($import['table'])) {
@@ -117,7 +148,7 @@ class CakeTestFixture {
 				$records = $db->fetchAll($db->buildStatement($query, $model), false, $model->alias);
 
 				if ($records !== false && !empty($records)) {
-					$this->records = Set::extract($records, '{n}.' . $model->alias);
+					$this->records = Hash::extract($records, '{n}.' . $model->alias);
 				}
 			}
 		}
@@ -144,7 +175,7 @@ class CakeTestFixture {
 
 		if (empty($this->fields['tableParameters']['engine'])) {
 			$canUseMemory = true;
-			foreach($this->fields as $field => $args) {
+			foreach ($this->fields as $field => $args) {
 
 				if (is_string($args)) {
 					$type = $args;
@@ -167,7 +198,16 @@ class CakeTestFixture {
 		$this->Schema->build(array($this->table => $this->fields));
 		try {
 			$db->execute($db->createSchema($this->Schema), array('log' => false));
+			$this->created[] = $db->configKeyName;
 		} catch (Exception $e) {
+			$msg = __d(
+				'cake_dev',
+				'Fixture creation for "%s" failed "%s"',
+				$this->table,
+				$e->getMessage()
+			);
+			CakeLog::error($msg);
+			trigger_error($msg, E_USER_WARNING);
 			return false;
 		}
 		return true;
@@ -187,6 +227,7 @@ class CakeTestFixture {
 		try {
 
 			$db->execute($db->dropSchema($this->Schema), array('log' => false));
+			$this->created = array_diff($this->created, array($db->configKeyName));
 		} catch (Exception $e) {
 			return false;
 		}
@@ -205,7 +246,7 @@ class CakeTestFixture {
 			$values = array();
 			if (isset($this->records) && !empty($this->records)) {
 				$fields = array();
-				foreach($this->records as $record) {
+				foreach ($this->records as $record) {
 					$fields = array_merge($fields, array_keys(array_intersect_key($record, $this->fields)));
 				}
 				$fields = array_unique($fields);
@@ -214,12 +255,15 @@ class CakeTestFixture {
 					$fields = array_keys($record);
 					$values[] = array_values(array_merge($default, $record));
 				}
-				return $db->insertMulti($this->table, $fields, $values);
+				$nested = $db->useNestedTransactions;
+				$db->useNestedTransactions = false;
+				$result = $db->insertMulti($this->table, $fields, $values);
+				$db->useNestedTransactions = $nested;
+				return $result;
 			}
 			return true;
 		}
 	}
-
 
 /**
  * Truncates the current fixture. Can be overwritten by classes extending CakeFixture to trigger other events before / after
@@ -235,4 +279,5 @@ class CakeTestFixture {
 		$db->fullDebug = $fullDebug;
 		return $return;
 	}
+
 }

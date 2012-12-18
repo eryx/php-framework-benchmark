@@ -5,12 +5,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.Utility
  * @since         CakePHP(tm) v .0.10.0.1233
@@ -42,14 +42,11 @@ class Security {
 		switch (Configure::read('Security.level')) {
 			case 'high':
 				return 10;
-			break;
 			case 'medium':
 				return 100;
-			break;
 			case 'low':
 			default:
 				return 300;
-				break;
 		}
 	}
 
@@ -67,7 +64,6 @@ class Security {
  *
  * @param string $authKey Authorization hash
  * @return boolean Success
- * @todo Complete implementation
  */
 	public static function validateAuthKey($authKey) {
 		return true;
@@ -154,4 +150,39 @@ class Security {
 		srand();
 		return $out;
 	}
+
+/**
+ * Encrypts/Decrypts a text using the given key using rijndael method.
+ *
+ * @param string $text Encrypted string to decrypt, normal string to encrypt
+ * @param string $key Key to use
+ * @param string $operation Operation to perform, encrypt or decrypt
+ * @return string Encrypted/Descrypted string
+ */
+	public static function rijndael($text, $key, $operation) {
+		if (empty($key)) {
+			trigger_error(__d('cake_dev', 'You cannot use an empty key for Security::rijndael()'), E_USER_WARNING);
+			return '';
+		}
+		if (empty($operation) || !in_array($operation, array('encrypt', 'decrypt'))) {
+			trigger_error(__d('cake_dev', 'You must specify the operation for Security::rijndael(), either encrypt or decrypt'), E_USER_WARNING);
+			return '';
+		}
+		if (strlen($key) < 32) {
+			trigger_error(__d('cake_dev', 'You must use a key larger than 32 bytes for Security::rijndael()'), E_USER_WARNING);
+			return '';
+		}
+		$algorithm = 'rijndael-256';
+		$mode = 'cbc';
+		$cryptKey = substr($key, 0, 32);
+		$iv = substr($key, strlen($key) - 32, 32);
+		$out = '';
+		if ($operation === 'encrypt') {
+			$out .= mcrypt_encrypt($algorithm, $cryptKey, $text, $mode, $iv);
+		} elseif ($operation === 'decrypt') {
+			$out .= rtrim(mcrypt_decrypt($algorithm, $cryptKey, $text, $mode, $iv), "\0");
+		}
+		return $out;
+	}
+
 }

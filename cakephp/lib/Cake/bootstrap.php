@@ -7,12 +7,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake
  * @since         CakePHP(tm) v 0.2.9
@@ -22,6 +22,10 @@ define('TIME_START', microtime(true));
 
 if (!defined('E_DEPRECATED')) {
 	define('E_DEPRECATED', 8192);
+}
+
+if (!defined('E_USER_DEPRECATED')) {
+	define('E_USER_DEPRECATED', E_USER_NOTICE);
 }
 error_reporting(E_ALL & ~E_DEPRECATED);
 
@@ -46,52 +50,56 @@ if (!defined('WEBROOT_DIR')) {
  * Path to the application's directory.
  */
 if (!defined('APP')) {
-	define('APP', ROOT.DS.APP_DIR.DS);
+	define('APP', ROOT . DS . APP_DIR . DS);
 }
 
 /**
  * Path to the application's libs directory.
  */
-	define('APPLIBS', APP.'Lib'.DS);
+	define('APPLIBS', APP . 'Lib' . DS);
 
 /**
  * Path to the public CSS directory.
  */
-	define('CSS', WWW_ROOT.'css'.DS);
+	define('CSS', WWW_ROOT . 'css' . DS);
 
 /**
  * Path to the public JavaScript directory.
  */
-	define('JS', WWW_ROOT.'js'.DS);
+	define('JS', WWW_ROOT . 'js' . DS);
 
 /**
  * Path to the public images directory.
  */
-	define('IMAGES', WWW_ROOT.'img'.DS);
+	define('IMAGES', WWW_ROOT . 'img' . DS);
 
 /**
  * Path to the tests directory.
  */
 if (!defined('TESTS')) {
-	define('TESTS', APP.'Test'.DS);
+	define('TESTS', APP . 'Test' . DS);
 }
 
 /**
  * Path to the temporary files directory.
  */
 if (!defined('TMP')) {
-	define('TMP', APP.'tmp'.DS);
+	define('TMP', APP . 'tmp' . DS);
 }
 
 /**
  * Path to the logs directory.
  */
-	define('LOGS', TMP.'logs'.DS);
+if (!defined('LOGS')) {
+	define('LOGS', TMP . 'logs' . DS);
+}
 
 /**
  * Path to the cache files directory. It can be shared between hosts in a multi-server setup.
  */
-	define('CACHE', TMP.'cache'.DS);
+if (!defined('CACHE')) {
+	define('CACHE', TMP . 'cache' . DS);
+}
 
 /**
  * Path to the vendors directory.
@@ -123,7 +131,7 @@ if (!defined('JS_URL')) {
 
 
 require CAKE . 'basics.php';
-require CAKE . 'Core' . DS .'App.php';
+require CAKE . 'Core' . DS . 'App.php';
 require CAKE . 'Error' . DS . 'exceptions.php';
 
 spl_autoload_register(array('App', 'load'));
@@ -137,19 +145,26 @@ App::$bootstrapping = true;
 
 Configure::bootstrap(isset($boot) ? $boot : true);
 
+if (function_exists('mb_internal_encoding')) {
+	$encoding = Configure::read('App.encoding');
+	if (!empty($encoding)) {
+		mb_internal_encoding($encoding);
+	}
+}
+
 /**
  *  Full url prefix
  */
 if (!defined('FULL_BASE_URL')) {
 	$s = null;
 	if (env('HTTPS')) {
-		$s ='s';
+		$s = 's';
 	}
 
 	$httpHost = env('HTTP_HOST');
 
 	if (isset($httpHost)) {
-		define('FULL_BASE_URL', 'http'.$s.'://'.$httpHost);
+		define('FULL_BASE_URL', 'http' . $s . '://' . $httpHost);
 	}
 	unset($httpHost, $s);
 }

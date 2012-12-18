@@ -5,12 +5,12 @@
  * PHP 5
  *
  * CakePHP :  Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc.
+ * Copyright 2005-2012, Cake Software Foundation, Inc.
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.View.Helper
  * @since         CakePHP(tm) v 1.2
@@ -32,6 +32,7 @@ App::uses('Multibyte', 'I18n');
  * @property      FormHelper $Form
  */
 class JsHelper extends AppHelper {
+
 /**
  * Whether or not you want scripts to be buffered or output.
  *
@@ -141,7 +142,7 @@ class JsHelper extends AppHelper {
 				$this->buffer($out);
 				return null;
 			}
-			if (is_object($out) && is_a($out, 'JsBaseEngineHelper')) {
+			if (is_object($out) && $out instanceof JsBaseEngineHelper) {
 				return $this;
 			}
 			return $out;
@@ -189,7 +190,7 @@ class JsHelper extends AppHelper {
  * @link http://book.cakephp.org/2.0/en/core-libraries/helpers/js.html#JsHelper::writeBuffer
  */
 	public function writeBuffer($options = array()) {
-		$domReady = $this->request->is('ajax');
+		$domReady = !$this->request->is('ajax');
 		$defaults = array(
 			'onDomReady' => $domReady, 'inline' => true,
 			'cache' => false, 'clear' => true, 'safe' => true
@@ -207,18 +208,19 @@ class JsHelper extends AppHelper {
 		$opts = $options;
 		unset($opts['onDomReady'], $opts['cache'], $opts['clear']);
 
-		if (!$options['cache'] && $options['inline']) {
-			return $this->Html->scriptBlock($script, $opts);
-		}
-
 		if ($options['cache'] && $options['inline']) {
 			$filename = md5($script);
-			if (!file_exists(JS . $filename . '.js')) {
-				cache(str_replace(WWW_ROOT, '', JS) . $filename . '.js', $script, '+999 days', 'public');
+			if (file_exists(JS . $filename . '.js')
+				|| cache(str_replace(WWW_ROOT, '', JS) . $filename . '.js', $script, '+999 days', 'public')
+				) {
+				return $this->Html->script($filename);
 			}
-			return $this->Html->script($filename);
 		}
-		$this->Html->scriptBlock($script, $opts);
+
+		$return = $this->Html->scriptBlock($script, $opts);
+		if ($options['inline']) {
+			return $return;
+		}
 		return null;
 	}
 
@@ -282,7 +284,7 @@ class JsHelper extends AppHelper {
  * - `buffer` - Disable the buffering and return a script tag in addition to the link.
  *
  * @param string $title Title for the link.
- * @param mixed $url Mixed either a string URL or an cake url array.
+ * @param string|array $url Mixed either a string URL or an cake url array.
  * @param array $options Options for both the HTML element and Js::request()
  * @return string Completed link. If buffering is disabled a script tag will be returned as well.
  * @link http://book.cakephp.org/2.0/en/core-libraries/helpers/js.html#JsHelper::link
@@ -320,9 +322,10 @@ class JsHelper extends AppHelper {
  * output when the buffer is fetched with `JsHelper::getBuffer()` or `JsHelper::writeBuffer()`
  * The Javascript variable used to output set variables can be controlled with `JsHelper::$setVariable`
  *
- * @param mixed $one Either an array of variables to set, or the name of the variable to set.
- * @param mixed $two If $one is a string, $two is the value for that key.
+ * @param string|array $one Either an array of variables to set, or the name of the variable to set.
+ * @param string|array $two If $one is a string, $two is the value for that key.
  * @return void
+ * @link http://book.cakephp.org/2.0/en/core-libraries/helpers/js.html#JsHelper::set
  */
 	public function set($one, $two = null) {
 		$data = null;
@@ -428,4 +431,5 @@ class JsHelper extends AppHelper {
 		}
 		return array($options, $htmlOptions);
 	}
+
 }

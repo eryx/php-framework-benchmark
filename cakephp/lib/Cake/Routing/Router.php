@@ -5,12 +5,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.Routing
  * @since         CakePHP(tm) v 0.2.9
@@ -153,6 +153,45 @@ class Router {
 	protected static $_initialState = array();
 
 /**
+ * Default route class to use
+ *
+ * @var string
+ */
+	protected static $_routeClass = 'CakeRoute';
+
+/**
+ * Set the default route class to use or return the current one
+ *
+ * @param string $routeClass to set as default
+ * @return mixed void|string
+ * @throws RouterException
+ */
+	public static function defaultRouteClass($routeClass = null) {
+		if (is_null($routeClass)) {
+			return self::$_routeClass;
+		}
+
+		self::$_routeClass = self::_validateRouteClass($routeClass);
+	}
+
+/**
+ * Validates that the passed route class exists and is a subclass of CakeRoute
+ *
+ * @param $routeClass
+ * @return string
+ * @throws RouterException
+ */
+	protected static function _validateRouteClass($routeClass) {
+		if (
+			$routeClass != 'CakeRoute' &&
+			(!class_exists($routeClass) || !is_subclass_of($routeClass, 'CakeRoute'))
+		) {
+			throw new RouterException(__d('cake_dev', 'Route classes must extend CakeRoute'));
+		}
+		return $routeClass;
+	}
+
+/**
  * Sets the Routing prefixes.
  *
  * @return void
@@ -172,6 +211,20 @@ class Router {
  */
 	public static function getNamedExpressions() {
 		return self::$_namedExpressions;
+	}
+
+/**
+ * Resource map getter & setter.
+ *
+ * @param array $resourceMap Resource map
+ * @return mixed
+ * @see Router::$_resourceMap
+ */
+	public static function resourceMap($resourceMap = null) {
+		if ($resourceMap === null) {
+			return self::$_resourceMap;
+		}
+		self::$_resourceMap = $resourceMap;
 	}
 
 /**
@@ -233,7 +286,11 @@ class Router {
 	public static function connect($route, $defaults = array(), $options = array()) {
 		foreach (self::$_prefixes as $prefix) {
 			if (isset($defaults[$prefix])) {
-				$defaults['prefix'] = $prefix;
+				if ($defaults[$prefix]) {
+					$defaults['prefix'] = $prefix;
+				} else {
+					unset($defaults[$prefix]);
+				}
 				break;
 			}
 		}
@@ -245,16 +302,13 @@ class Router {
 		if (empty($options['action'])) {
 			$defaults += array('action' => 'index');
 		}
-		$routeClass = 'CakeRoute';
+		$routeClass = self::$_routeClass;
 		if (isset($options['routeClass'])) {
-			$routeClass = $options['routeClass'];
-			if (!is_subclass_of($routeClass, 'CakeRoute')) {
-				throw new RouterException(__d('cake_dev', 'Route classes must extend CakeRoute'));
-			}
+			$routeClass = self::_validateRouteClass($options['routeClass']);
 			unset($options['routeClass']);
-			if ($routeClass == 'RedirectRoute' && isset($defaults['redirect'])) {
-				$defaults = $defaults['redirect'];
-			}
+		}
+		if ($routeClass == 'RedirectRoute' && isset($defaults['redirect'])) {
+			$defaults = $defaults['redirect'];
 		}
 		self::$routes[] = new $routeClass($route, $defaults, $options);
 		return self::$routes;
@@ -269,7 +323,7 @@ class Router {
  *
  * Examples:
  *
- * `Router::redirect('/home/*', array('controller' => 'posts', 'action' => 'view', array('persist' => true));`
+ * `Router::redirect('/home/*', array('controller' => 'posts', 'action' => 'view', array('persist' => true)));`
  *
  * Redirects /home/* to /posts/view and passes the parameters to /posts/view.  Using an array as the
  * redirect destination allows you to use other routes to define where a url string should be redirected to.
@@ -406,7 +460,7 @@ class Router {
  *    integer values and UUIDs.
  * - 'prefix' - URL prefix to use for the generated routes.  Defaults to '/'.
  *
- * @param mixed $controller A controller name or array of controller names (i.e. "Posts" or "ListItems")
+ * @param string|array $controller A controller name or array of controller names (i.e. "Posts" or "ListItems")
  * @param array $options Options to use when generating REST routes
  * @return array Array of mapped resources
  */
@@ -464,7 +518,7 @@ class Router {
 		$ext = null;
 		$out = array();
 
-		if ($url && strpos($url, '/') !== 0) {
+		if (strlen($url) && strpos($url, '/') !== 0) {
 			$url = '/' . $url;
 		}
 		if (strpos($url, '?') !== false) {
@@ -566,7 +620,8 @@ class Router {
  */
 	public static function getRequest($current = false) {
 		if ($current) {
-			return self::$_requests[count(self::$_requests) - 1];
+			$i = count(self::$_requests) - 1;
+			return isset(self::$_requests[$i]) ? self::$_requests[$i] : null;
 		}
 		return isset(self::$_requests[0]) ? self::$_requests[0] : null;
 	}
@@ -578,7 +633,7 @@ class Router {
  * @return array Parameter information
  */
 	public static function getParams($current = false) {
-		if ($current) {
+		if ($current && self::$_requests) {
 			return self::$_requests[count(self::$_requests) - 1]->params;
 		}
 		if (isset(self::$_requests[0])) {
@@ -677,11 +732,11 @@ class Router {
  * - `#` - Allows you to set url hash fragments.
  * - `full_base` - If true the `FULL_BASE_URL` constant will be prepended to generated urls.
  *
- * @param mixed $url Cake-relative URL, like "/products/edit/92" or "/presidents/elect/4"
+ * @param string|array $url Cake-relative URL, like "/products/edit/92" or "/presidents/elect/4"
  *   or an array specifying any of the following: 'controller', 'action',
  *   and/or 'plugin', in addition to named arguments (keyed array elements),
  *   and standard URL arguments (indexed array elements)
- * @param mixed $full If (bool) true, the full base URL will be prepended to the result.
+ * @param bool|array $full If (bool) true, the full base URL will be prepended to the result.
  *   If an array accepts the following keys
  *    - escape - used when making urls embedded in html escapes query string '&'
  *    - full - if true the full base URL will be prepended.
@@ -726,7 +781,7 @@ class Router {
 				unset($url['?']);
 			}
 			if (isset($url['#'])) {
-				$frag = '#' . urlencode($url['#']);
+				$frag = '#' . $url['#'];
 				unset($url['#']);
 			}
 			if (isset($url['ext'])) {
@@ -839,10 +894,11 @@ class Router {
 			}
 		}
 
-		list($args, $named) = array(Set::filter($args, true), Set::filter($named, true));
+		list($args, $named) = array(Hash::filter($args), Hash::filter($named));
 		foreach (self::$_prefixes as $prefix) {
-			if (!empty($url[$prefix])) {
-				$url['action'] = str_replace($prefix . '_', '', $url['action']);
+			$prefixed = $prefix . '_';
+			if (!empty($url[$prefix]) && strpos($url['action'], $prefixed) === 0) {
+				$url['action'] = substr($url['action'], strlen($prefixed) * -1);
 				break;
 			}
 		}
@@ -866,18 +922,18 @@ class Router {
 		$output = implode('/', $urlOut);
 
 		if (!empty($args)) {
-			$output .= '/' . implode('/', $args);
+			$output .= '/' . implode('/', array_map('rawurlencode', $args));
 		}
 
 		if (!empty($named)) {
 			foreach ($named as $name => $value) {
 				if (is_array($value)) {
-					$flattend = Set::flatten($value, '][');
+					$flattend = Hash::flatten($value, '][');
 					foreach ($flattend as $namedKey => $namedValue) {
-						$output .= '/' . $name . "[$namedKey]" . self::$_namedConfig['separator'] . $namedValue;
+						$output .= '/' . $name . "[$namedKey]" . self::$_namedConfig['separator'] . rawurlencode($namedValue);
 					}
 				} else {
-					$output .= '/' . $name . self::$_namedConfig['separator'] . $value;
+					$output .= '/' . $name . self::$_namedConfig['separator'] . rawurlencode($value);
 				}
 			}
 		}
@@ -904,12 +960,19 @@ class Router {
 		$out = '';
 
 		if (is_array($q)) {
-			$q = array_merge($extra, $q);
+			$q = array_merge($q, $extra);
 		} else {
 			$out = $q;
 			$q = $extra;
 		}
-		$out .= http_build_query($q, null, $join);
+		$addition = http_build_query($q, null, $join);
+
+		if ($out && $addition && substr($out, strlen($join) * -1, strlen($join)) != $join) {
+			$out .= $join;
+		}
+
+		$out .= $addition;
+
 		if (isset($out[0]) && $out[0] != '?') {
 			$out = '?' . $out;
 		}
@@ -956,13 +1019,14 @@ class Router {
  * and replace any double /'s.  It will not unify the casing and underscoring
  * of the input value.
  *
- * @param mixed $url URL to normalize Either an array or a string url.
+ * @param array|string $url URL to normalize Either an array or a string url.
  * @return string Normalized URL
  */
 	public static function normalize($url = '/') {
 		if (is_array($url)) {
 			$url = Router::url($url);
-		} elseif (preg_match('/^[a-z\-]+:\/\//', $url)) {
+		}
+		if (preg_match('/^[a-z\-]+:\/\//', $url)) {
 			return $url;
 		}
 		$request = Router::getRequest();
@@ -1026,31 +1090,52 @@ class Router {
  * Instructs the router to parse out file extensions from the URL. For example,
  * http://example.com/posts.rss would yield an file extension of "rss".
  * The file extension itself is made available in the controller as
- * $this->params['url']['ext'], and is used by the RequestHandler component to
+ * `$this->params['ext']`, and is used by the RequestHandler component to
  * automatically switch to alternate layouts and templates, and load helpers
- * corresponding to the given content, i.e. RssHelper.
+ * corresponding to the given content, i.e. RssHelper. Switching layouts and helpers
+ * requires that the chosen extension has a defined mime type in `CakeResponse`
  *
  * A list of valid extension can be passed to this method, i.e. Router::parseExtensions('rss', 'xml');
  * If no parameters are given, anything after the first . (dot) after the last / in the URL will be
  * parsed, excluding querystring parameters (i.e. ?q=...).
  *
  * @return void
+ * @see RequestHandler::startup()
  */
 	public static function parseExtensions() {
 		self::$_parseExtensions = true;
 		if (func_num_args() > 0) {
-			self::$_validExtensions = func_get_args();
+			self::setExtensions(func_get_args(), false);
 		}
 	}
 
 /**
- * Get the list of extensions that can be parsed by Router.  To add more
- * extensions use Router::parseExtensions()
+ * Get the list of extensions that can be parsed by Router.
+ * To initially set extensions use `Router::parseExtensions()`
+ * To add more see `setExtensions()`
  *
  * @return array Array of extensions Router is configured to parse.
  */
 	public static function extensions() {
 		return self::$_validExtensions;
+	}
+
+/**
+ * Set/add valid extensions.
+ * To have the extensions parsed you still need to call `Router::parseExtensions()`
+ *
+ * @param array $extensions List of extensions to be added as valid extension
+ * @param boolean $merge Default true will merge extensions. Set to false to override current extensions
+ * @return array
+ */
+	public static function setExtensions($extensions, $merge = true) {
+		if (!is_array($extensions)) {
+			return self::$_validExtensions;
+		}
+		if (!$merge) {
+			return self::$_validExtensions = $extensions;
+		}
+		return self::$_validExtensions = array_merge(self::$_validExtensions, $extensions);
 	}
 
 }

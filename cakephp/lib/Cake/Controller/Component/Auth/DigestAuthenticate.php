@@ -3,12 +3,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
@@ -55,6 +55,7 @@ App::uses('BaseAuthenticate', 'Controller/Component/Auth');
  * @since 2.0
  */
 class DigestAuthenticate extends BaseAuthenticate {
+
 /**
  * Settings for this object.
  *
@@ -62,10 +63,13 @@ class DigestAuthenticate extends BaseAuthenticate {
  * - `userModel` The model name of the User, defaults to User.
  * - `scope` Additional conditions to use when looking up and authenticating users,
  *    i.e. `array('User.is_active' => 1).`
+ * - `recursive` The value of the recursive key passed to find(). Defaults to 0.
+ * - `contain` Extra models to contain and store in session.
  * - `realm` The realm authentication is for, Defaults to the servername.
  * - `nonce` A nonce used for authentication.  Defaults to `uniqid()`.
  * - `qop` Defaults to auth, no other values are supported at this time.
- * - `opaque` A string that must be returned unchanged by clients. Defaults to `md5($settings['realm'])`
+ * - `opaque` A string that must be returned unchanged by clients.
+ *    Defaults to `md5($settings['realm'])`
  *
  * @var array
  */
@@ -76,6 +80,8 @@ class DigestAuthenticate extends BaseAuthenticate {
 		),
 		'userModel' => 'User',
 		'scope' => array(),
+		'recursive' => 0,
+		'contain' => null,
 		'realm' => '',
 		'qop' => 'auth',
 		'nonce' => '',
@@ -100,6 +106,7 @@ class DigestAuthenticate extends BaseAuthenticate {
 			$this->settings['opaque'] = md5($this->settings['realm']);
 		}
 	}
+
 /**
  * Authenticate a user using Digest HTTP auth.  Will use the configured User model and attempt a
  * login using Digest HTTP auth.
@@ -142,6 +149,7 @@ class DigestAuthenticate extends BaseAuthenticate {
 		}
 		return false;
 	}
+
 /**
  * Find a user record using the standard options.
  *
@@ -162,7 +170,7 @@ class DigestAuthenticate extends BaseAuthenticate {
 		}
 		$result = ClassRegistry::init($userModel)->find('first', array(
 			'conditions' => $conditions,
-			'recursive' => 0
+			'recursive' => $this->settings['recursive']
 		));
 		if (empty($result) || empty($result[$model])) {
 			return false;
@@ -259,4 +267,5 @@ class DigestAuthenticate extends BaseAuthenticate {
 		}
 		return 'WWW-Authenticate: Digest ' . implode(',', $opts);
 	}
+
 }

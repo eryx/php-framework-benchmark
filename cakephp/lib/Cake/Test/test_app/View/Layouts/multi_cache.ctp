@@ -4,12 +4,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       cake.libs.view.templates.layouts
  * @since         CakePHP(tm) v 0.10.0.1076
@@ -32,7 +32,7 @@
 	<?php $this->log('5. layout after content') ?>
 <!--/nocache-->
 <p>Additional regular text.</p>
-<?php //echo $this->element('nocache/contains_nocache'); stub?>
+<?php echo $this->element('nocache/contains_nocache'); ?>
 <!--nocache-->
 	<p>G. Layout After Content And After Element With No Cache Tags</p>
 	<?php $this->log('7. layout after content and after element with no cache tags') ?>

@@ -5,12 +5,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @since         CakePHP(tm) v 1.2
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
@@ -21,7 +21,7 @@ App::uses('File', 'Utility');
 App::uses('Folder', 'Utility');
 
 /**
- * Task class for creating a plugin
+ * The Plugin Task handles creating an empty plugin, ready to be used
  *
  * @package       Cake.Console.Command.Task
  */
@@ -35,12 +35,20 @@ class PluginTask extends AppShell {
 	public $path = null;
 
 /**
+ * Path to the bootstrap file. Changed in tests.
+ *
+ * @var string
+ */
+	public $bootstrap = null;
+
+/**
  * initialize
  *
  * @return void
  */
 	public function initialize() {
 		$this->path = current(App::path('plugins'));
+		$this->bootstrap = APP . 'Config' . DS . 'bootstrap.php';
 	}
 
 /**
@@ -53,8 +61,9 @@ class PluginTask extends AppShell {
 			$plugin = Inflector::camelize($this->args[0]);
 			$pluginPath = $this->_pluginPath($plugin);
 			if (is_dir($pluginPath)) {
-				$this->out(__d('cake_console', 'Plugin: %s', $plugin));
+				$this->out(__d('cake_console', 'Plugin: %s already exists, no action taken', $plugin));
 				$this->out(__d('cake_console', 'Path: %s', $pluginPath));
+				return false;
 			} else {
 				$this->_interactive($plugin);
 			}
@@ -75,7 +84,7 @@ class PluginTask extends AppShell {
 		}
 
 		if (!$this->bake($plugin)) {
-			$this->error(__d('cake_console', "An error occured trying to bake: %s in %s", $plugin, $this->path . $plugin));
+			$this->error(__d('cake_console', "An error occurred trying to bake: %s in %s", $plugin, $this->path . $plugin));
 		}
 	}
 
@@ -127,6 +136,9 @@ class PluginTask extends AppShell {
 
 			$errors = $Folder->errors();
 			if (!empty($errors)) {
+				foreach ($errors as $message) {
+					$this->error($message);
+				}
 				return false;
 			}
 
@@ -135,7 +147,7 @@ class PluginTask extends AppShell {
 			$out = "<?php\n\n";
 			$out .= "class {$plugin}AppController extends AppController {\n\n";
 			$out .= "}\n\n";
-			$this->createFile($this->path . $plugin. DS . 'Controller' . DS . $controllerFileName, $out);
+			$this->createFile($this->path . $plugin . DS . 'Controller' . DS . $controllerFileName, $out);
 
 			$modelFileName = $plugin . 'AppModel.php';
 
@@ -144,11 +156,28 @@ class PluginTask extends AppShell {
 			$out .= "}\n\n";
 			$this->createFile($this->path . $plugin . DS . 'Model' . DS . $modelFileName, $out);
 
+			$this->_modifyBootstrap($plugin);
+
 			$this->hr();
 			$this->out(__d('cake_console', '<success>Created:</success> %s in %s', $plugin, $this->path . $plugin), 2);
 		}
 
 		return true;
+	}
+
+/**
+ * Update the app's bootstrap.php file.
+ *
+ * @return void
+ */
+	protected function _modifyBootstrap($plugin) {
+		$bootstrap = new File($this->bootstrap, false);
+		$contents = $bootstrap->read();
+		if (!preg_match("@\n\s*CakePlugin::loadAll@", $contents)) {
+			$bootstrap->append("\nCakePlugin::load('$plugin', array('bootstrap' => false, 'routes' => false));\n");
+			$this->out('');
+			$this->out(__d('cake_dev', '%s modified', $this->bootstrap));
+		}
 	}
 
 /**
@@ -159,18 +188,18 @@ class PluginTask extends AppShell {
  */
 	public function findPath($pathOptions) {
 		$valid = false;
-		foreach ($pathOptions as $i =>$path) {
-			if(!is_dir($path)) {
+		foreach ($pathOptions as $i => $path) {
+			if (!is_dir($path)) {
 				array_splice($pathOptions, $i, 1);
 			}
 		}
 		$max = count($pathOptions);
 		while (!$valid) {
 			foreach ($pathOptions as $i => $option) {
-				$this->out($i + 1 .'. ' . $option);
+				$this->out($i + 1 . '. ' . $option);
 			}
 			$prompt = __d('cake_console', 'Choose a plugin path from the paths above.');
-			$choice = $this->in($prompt);
+			$choice = $this->in($prompt, null, 1);
 			if (intval($choice) > 0 && intval($choice) <= $max) {
 				$valid = true;
 			}
@@ -191,7 +220,6 @@ class PluginTask extends AppShell {
 		))->addArgument('name', array(
 			'help' => __d('cake_console', 'CamelCased name of the plugin to create.')
 		));
-
 	}
 
 }

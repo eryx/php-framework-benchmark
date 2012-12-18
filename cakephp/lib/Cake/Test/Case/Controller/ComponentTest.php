@@ -4,14 +4,14 @@
  *
  * PHP 5
  *
- * CakePHP(tm) Tests <http://book.cakephp.org/view/1196/Testing>
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) Tests <http://book.cakephp.org/2.0/en/development/testing.html>
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://book.cakephp.org/view/1196/Testing CakePHP(tm) Tests
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @link          http://book.cakephp.org/2.0/en/development/testing.html CakePHP(tm) Tests
  * @package       Cake.Test.Case.Controller
  * @since         CakePHP(tm) v 1.2.0.5436
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
@@ -89,12 +89,13 @@ class AppleComponent extends Component {
 /**
  * startup method
  *
- * @param mixed $controller
+ * @param Controller $controller
  * @return void
  */
-	public function startup($controller) {
+	public function startup(Controller $controller) {
 		$this->testName = $controller->name;
 	}
+
 }
 
 /**
@@ -114,10 +115,10 @@ class OrangeComponent extends Component {
 /**
  * initialize method
  *
- * @param mixed $controller
+ * @param Controller $controller
  * @return void
  */
-	public function initialize($controller) {
+	public function initialize(Controller $controller) {
 		$this->Controller = $controller;
 		$this->Banana->testField = 'OrangeField';
 	}
@@ -128,9 +129,10 @@ class OrangeComponent extends Component {
  * @param Controller $controller
  * @return string
  */
-	public function startup($controller) {
+	public function startup(Controller $controller) {
 		$controller->foo = 'pass';
 	}
+
 }
 
 /**
@@ -153,9 +155,10 @@ class BananaComponent extends Component {
  * @param Controller $controller
  * @return string
  */
-	public function startup($controller) {
+	public function startup(Controller $controller) {
 		$controller->bar = 'fail';
 	}
+
 }
 
 /**
@@ -217,20 +220,11 @@ class ComponentTest extends CakeTestCase {
  * @return void
  */
 	public function setUp() {
+		parent::setUp();
 		$this->_pluginPaths = App::path('plugins');
 		App::build(array(
-			'plugins' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'Plugin' . DS)
+			'Plugin' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'Plugin' . DS)
 		));
-	}
-
-/**
- * tearDown method
- *
- * @return void
- */
-	public function tearDown() {
-		App::build();
-		ClassRegistry::flush();
 	}
 
 /**

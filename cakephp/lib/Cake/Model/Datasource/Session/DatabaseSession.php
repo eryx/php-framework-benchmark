@@ -5,17 +5,21 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.Model.Datasource.Session
  * @since         CakePHP(tm) v 2.0
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
+
+App::uses('CakeSessionHandlerInterface', 'Model/Datasource/Session');
+App::uses('ClassRegistry', 'Utility');
+
 /**
  * DatabaseSession provides methods to be used with CakeSession.
  *
@@ -47,13 +51,13 @@ class DatabaseSession implements CakeSessionHandlerInterface {
 
 		if (empty($modelName)) {
 			$settings = array(
-				'class' =>'Session',
+				'class' => 'Session',
 				'alias' => 'Session',
 				'table' => 'cake_sessions',
 			);
 		} else {
 			$settings = array(
-				'class' =>$modelName,
+				'class' => $modelName,
 				'alias' => 'Session',
 			);
 		}
@@ -76,17 +80,13 @@ class DatabaseSession implements CakeSessionHandlerInterface {
  * @return boolean Success
  */
 	public function close() {
-		$probability = mt_rand(1, 150);
-		if ($probability <= 3) {
-			$this->gc();
-		}
 		return true;
 	}
 
 /**
  * Method used to read from a database session.
  *
- * @param mixed $id The key of the value to read
+ * @param integer|string $id The key of the value to read
  * @return mixed The value of the key or false if it does not exist
  */
 	public function read($id) {
@@ -137,16 +137,10 @@ class DatabaseSession implements CakeSessionHandlerInterface {
 	public function gc($expires = null) {
 		if (!$expires) {
 			$expires = time();
+		} else {
+			$expires = time() - $expires;
 		}
 		return $this->_model->deleteAll(array($this->_model->alias . ".expires <" => $expires), false, false);
 	}
 
-/**
- * Closes the session before the objects handling it become unavailable
- *
- * @return void
- */
-	public function __destruct() {
-		session_write_close();
-	}
 }

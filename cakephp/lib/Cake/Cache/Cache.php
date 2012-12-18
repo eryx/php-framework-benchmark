@@ -1,17 +1,12 @@
 <?php
 /**
- * Caching for CakePHP.
- *
- *
- * PHP 5
- *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.Cache
  * @since         CakePHP(tm) v 1.2.0.4933
@@ -19,6 +14,7 @@
  */
 
 App::uses('Inflector', 'Utility');
+App::uses('CacheEngine', 'Cache');
 
 /**
  * Cache provides a consistent interface to Caching in your application. It allows you
@@ -95,6 +91,8 @@ class Cache {
  * The following keys are used in core cache engines:
  *
  * - `duration` Specify how long items in this cache configuration last.
+ * - `groups` List of groups or 'tags' associated to every key stored in this config.
+ *    handy for deleting a complete group from cache.
  * - `prefix` Prefix appended to all entries. Good for when you need to share a keyspace
  *    with either another cache config or another application.
  * - `probability` Probability of hitting a cache gc cleanup.  Setting to 0 will disable
@@ -215,7 +213,7 @@ class Cache {
  *
  * `Cache::set(null, 'my_config');`
  *
- * @param mixed $settings Optional string for simple name-value pair or array
+ * @param string|array $settings Optional string for simple name-value pair or array
  * @param string $value Optional for a simple name-value pair
  * @param string $config The configuration name you are changing. Defaults to 'default'
  * @return array Array of settings.
@@ -254,11 +252,12 @@ class Cache {
  *
  * Permanently remove all expired and deleted data
  *
- * @param string $config The config name you wish to have garbage collected. Defaults to 'default'
+ * @param string $config [optional] The config name you wish to have garbage collected. Defaults to 'default'
+ * @param integer $expires [optional] An expires timestamp. Defaults to NULL
  * @return void
  */
-	public static function gc($config = 'default') {
-		self::$_engines[$config]->gc();
+	public static function gc($config = 'default', $expires = null) {
+		self::$_engines[$config]->gc($expires);
 	}
 
 /**
@@ -285,7 +284,7 @@ class Cache {
 		$settings = self::settings($config);
 
 		if (empty($settings)) {
-			return null;
+			return false;
 		}
 		if (!self::isInitialized($config)) {
 			return false;
@@ -335,7 +334,7 @@ class Cache {
 		$settings = self::settings($config);
 
 		if (empty($settings)) {
-			return null;
+			return false;
 		}
 		if (!self::isInitialized($config)) {
 			return false;
@@ -360,7 +359,7 @@ class Cache {
 		$settings = self::settings($config);
 
 		if (empty($settings)) {
-			return null;
+			return false;
 		}
 		if (!self::isInitialized($config)) {
 			return false;
@@ -374,6 +373,7 @@ class Cache {
 		self::set(null, $config);
 		return $success;
 	}
+
 /**
  * Decrement a number under the key and return decremented value.
  *
@@ -387,7 +387,7 @@ class Cache {
 		$settings = self::settings($config);
 
 		if (empty($settings)) {
-			return null;
+			return false;
 		}
 		if (!self::isInitialized($config)) {
 			return false;
@@ -401,6 +401,7 @@ class Cache {
 		self::set(null, $config);
 		return $success;
 	}
+
 /**
  * Delete a key from the cache.
  *
@@ -422,7 +423,7 @@ class Cache {
 		$settings = self::settings($config);
 
 		if (empty($settings)) {
-			return null;
+			return false;
 		}
 		if (!self::isInitialized($config)) {
 			return false;
@@ -454,6 +455,22 @@ class Cache {
 	}
 
 /**
+ * Delete all keys from the cache belonging to the same group.
+ *
+ * @param string $group name of the group to be cleared
+ * @param string $config name of the configuration to use. Defaults to 'default'
+ * @return boolean True if the cache group was successfully cleared, false otherwise
+ */
+	public static function clearGroup($group, $config = 'default') {
+		if (!self::isInitialized($config)) {
+			return false;
+		}
+		$success = self::$_engines[$config]->clearGroup($group);
+		self::set(null, $config);
+		return $success;
+	}
+
+/**
  * Check if Cache has initialized a working config for the given name.
  *
  * @param string $config name of the configuration to use. Defaults to 'default'
@@ -479,122 +496,6 @@ class Cache {
 		}
 		return array();
 	}
+
 }
 
-/**
- * Storage engine for CakePHP caching
- *
- * @package       Cake.Cache
- */
-abstract class CacheEngine {
-
-/**
- * Settings of current engine instance
- *
- * @var array
- */
-	public $settings = array();
-
-/**
- * Initialize the cache engine
- *
- * Called automatically by the cache frontend
- *
- * @param array $settings Associative array of parameters for the engine
- * @return boolean True if the engine has been successfully initialized, false if not
- */
-	public function init($settings = array()) {
-		$this->settings = array_merge(
-			array('prefix' => 'cake_', 'duration'=> 3600, 'probability'=> 100),
-			$this->settings,
-			$settings
-		);
-		if (!is_numeric($this->settings['duration'])) {
-			$this->settings['duration'] = strtotime($this->settings['duration']) - time();
-		}
-		return true;
-	}
-
-/**
- * Garbage collection
- *
- * Permanently remove all expired and deleted data
- * @return void
- */
-	public function gc() { }
-
-/**
- * Write value for a key into cache
- *
- * @param string $key Identifier for the data
- * @param mixed $value Data to be cached
- * @param mixed $duration How long to cache for.
- * @return boolean True if the data was successfully cached, false on failure
- */
-	abstract public function write($key, $value, $duration);
-
-/**
- * Read a key from the cache
- *
- * @param string $key Identifier for the data
- * @return mixed The cached data, or false if the data doesn't exist, has expired, or if there was an error fetching it
- */
-	abstract public function read($key);
-
-/**
- * Increment a number under the key and return incremented value
- *
- * @param string $key Identifier for the data
- * @param integer $offset How much to add
- * @return New incremented value, false otherwise
- */
-	abstract public function increment($key, $offset = 1);
-
-/**
- * Decrement a number under the key and return decremented value
- *
- * @param string $key Identifier for the data
- * @param integer $offset How much to subtract
- * @return New incremented value, false otherwise
- */
-	abstract public function decrement($key, $offset = 1);
-
-/**
- * Delete a key from the cache
- *
- * @param string $key Identifier for the data
- * @return boolean True if the value was successfully deleted, false if it didn't exist or couldn't be removed
- */
-	abstract public function delete($key);
-
-/**
- * Delete all keys from the cache
- *
- * @param boolean $check if true will check expiration, otherwise delete all
- * @return boolean True if the cache was successfully cleared, false otherwise
- */
-	abstract public function clear($check);
-
-/**
- * Cache Engine settings
- *
- * @return array settings
- */
-	public function settings() {
-		return $this->settings;
-	}
-
-/**
- * Generates a safe key for use with cache engine storage engines.
- *
- * @param string $key the key passed over
- * @return mixed string $key or false
- */
-	public function key($key) {
-		if (empty($key)) {
-			return false;
-		}
-		$key = Inflector::underscore(str_replace(array(DS, '/', '.'), '_', strval($key)));
-		return $key;
-	}
-}

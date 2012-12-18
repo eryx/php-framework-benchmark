@@ -5,12 +5,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @since         CakePHP(tm) v 1.2.0.5012
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
@@ -78,6 +78,14 @@ class Shell extends Object {
  * @var string
  */
 	public $name = null;
+
+/**
+ * The name of the plugin the shell belongs to.
+ * Is automatically set by ShellDispatcher when a shell is constructed.
+ *
+ * @var string
+ */
+	public $plugin = null;
 
 /**
  * Contains tasks to load and instantiate
@@ -163,7 +171,7 @@ class Shell extends Object {
 		if ($this->stdin == null) {
 			$this->stdin = new ConsoleInput('php://stdin');
 		}
-
+		$this->_useLogger();
 		$parent = get_parent_class($this);
 		if ($this->tasks !== null && $this->tasks !== false) {
 			$this->_mergeVars(array('tasks'), $parent, true);
@@ -353,20 +361,26 @@ class Shell extends Object {
 			array_shift($argv);
 		}
 
+		$this->OptionParser = $this->getOptionParser();
 		try {
-			$this->OptionParser = $this->getOptionParser();
 			list($this->params, $this->args) = $this->OptionParser->parse($argv, $command);
 		} catch (ConsoleException $e) {
 			$this->out($this->OptionParser->help($command));
 			return false;
 		}
 
+		if (!empty($this->params['quiet'])) {
+			$this->_useLogger(false);
+		}
+		if (!empty($this->params['plugin'])) {
+			CakePlugin::load($this->params['plugin']);
+		}
 		$this->command = $command;
 		if (!empty($this->params['help'])) {
 			return $this->_displayHelp($command);
 		}
 
-		if (($isTask || $isMethod || $isMain) && $command !== 'execute' ) {
+		if (($isTask || $isMethod || $isMain) && $command !== 'execute') {
 			$this->startup();
 		}
 
@@ -392,7 +406,7 @@ class Shell extends Object {
  */
 	protected function _displayHelp($command) {
 		$format = 'text';
-		if (!empty($this->args[0]) && $this->args[0] == 'xml')  {
+		if (!empty($this->args[0]) && $this->args[0] == 'xml') {
 			$format = 'xml';
 			$this->stdout->outputAs(ConsoleOutput::RAW);
 		} else {
@@ -409,7 +423,8 @@ class Shell extends Object {
  * @link http://book.cakephp.org/2.0/en/console-and-shells.html#Shell::getOptionParser
  */
 	public function getOptionParser() {
-		$parser = new ConsoleOptionParser($this->name);
+		$name = ($this->plugin ? $this->plugin . '.' : '') . $this->name;
+		$parser = new ConsoleOptionParser($name);
 		return $parser;
 	}
 
@@ -435,7 +450,7 @@ class Shell extends Object {
  * Prompts the user for input, and returns it.
  *
  * @param string $prompt Prompt text.
- * @param mixed $options Array or string of options.
+ * @param string|array $options Array or string of options.
  * @param string $default Default input value.
  * @return mixed Either the default value, or the user-provided input.
  * @link http://book.cakephp.org/2.0/en/console-and-shells.html#Shell::in
@@ -444,7 +459,8 @@ class Shell extends Object {
 		if (!$this->interactive) {
 			return $default;
 		}
-		$in = $this->_getInput($prompt, $options, $default);
+		$originalOptions = $options;
+		$in = $this->_getInput($prompt, $originalOptions, $default);
 
 		if ($options && is_string($options)) {
 			if (strpos($options, ',')) {
@@ -456,8 +472,13 @@ class Shell extends Object {
 			}
 		}
 		if (is_array($options)) {
-			while ($in === '' || ($in !== '' && (!in_array(strtolower($in), $options) && !in_array(strtoupper($in), $options)) && !in_array($in, $options))) {
-				$in = $this->_getInput($prompt, $options, $default);
+			$options = array_merge(
+				array_map('strtolower', $options),
+				array_map('strtoupper', $options),
+				$options
+			);
+			while ($in === '' || !in_array($in, $options)) {
+				$in = $this->_getInput($prompt, $originalOptions, $default);
 			}
 		}
 		return $in;
@@ -467,7 +488,7 @@ class Shell extends Object {
  * Prompts the user for input, and returns it.
  *
  * @param string $prompt Prompt text.
- * @param mixed $options Array or string of options.
+ * @param string|array $options Array or string of options.
  * @param string $default Default input value.
  * @return Either the default value, or the user-provided input.
  */
@@ -507,7 +528,7 @@ class Shell extends Object {
  * - `indent` Indent the text with the string provided. Defaults to null.
  *
  * @param string $text Text the text to format.
- * @param mixed $options Array of options to use, or an integer to wrap the text to.
+ * @param string|integer|array $options Array of options to use, or an integer to wrap the text to.
  * @return string Wrapped / indented text
  * @see String::wrap()
  * @link http://book.cakephp.org/2.0/en/console-and-shells.html#Shell::wrapText
@@ -527,7 +548,7 @@ class Shell extends Object {
  * present in  most shells.  Using Shell::QUIET for a message means it will always display.
  * While using Shell::VERBOSE means it will only display when verbose output is toggled.
  *
- * @param mixed $message A string or a an array of strings to output
+ * @param string|array $message A string or a an array of strings to output
  * @param integer $newlines Number of newlines to append
  * @param integer $level The message's output level, see above.
  * @return integer|boolean Returns the number of bytes returned from writing to stdout.
@@ -551,7 +572,7 @@ class Shell extends Object {
  * Outputs a single or multiple error messages to stderr. If no parameters
  * are passed outputs just a newline.
  *
- * @param mixed $message A string or a an array of strings to output
+ * @param string|array $message A string or a an array of strings to output
  * @param integer $newlines Number of newlines to append
  * @return void
  * @link http://book.cakephp.org/2.0/en/console-and-shells.html#Shell::err
@@ -648,7 +669,7 @@ class Shell extends Object {
 		}
 
 		$File = new File($path, true);
-		if ($File->exists()) {
+		if ($File->exists() && $File->writable()) {
 			$data = $File->prepare($contents);
 			$File->write($data);
 			$this->out(__d('cake_console', '<success>Wrote</success> `%s`', $path));
@@ -665,14 +686,18 @@ class Shell extends Object {
  * @return boolean Success
  */
 	protected function _checkUnitTest() {
-		if (App::import('Vendor', 'phpunit', array('file' => 'PHPUnit' . DS . 'Autoload.php'))) {
+		if (class_exists('PHPUnit_Framework_TestCase')) {
+			return true;
+			//@codingStandardsIgnoreStart
+		} elseif (@include 'PHPUnit' . DS . 'Autoload.php') {
+			//@codingStandardsIgnoreEnd
+			return true;
+		} elseif (App::import('Vendor', 'phpunit', array('file' => 'PHPUnit' . DS . 'Autoload.php'))) {
 			return true;
 		}
-		if (@include 'PHPUnit' . DS . 'Autoload.php') {
-			return true;
-		}
+
 		$prompt = __d('cake_console', 'PHPUnit is not installed. Do you want to bake unit test files anyway?');
-		$unitTest = $this->in($prompt, array('y','n'), 'y');
+		$unitTest = $this->in($prompt, array('y', 'n'), 'y');
 		$result = strtolower($unitTest) == 'y' || strtolower($unitTest) == 'yes';
 
 		if ($result) {
@@ -716,10 +741,10 @@ class Shell extends Object {
 	}
 
 /**
- * Creates the proper controller camelized name (singularized) for the specified name
+ * Creates the proper model camelized name (singularized) for the specified name
  *
  * @param string $name Name
- * @return string Camelized and singularized controller name
+ * @return string Camelized and singularized model name
  */
 	protected function _modelName($name) {
 		return Inflector::camelize(Inflector::singularize($name));
@@ -796,5 +821,31 @@ class Shell extends Object {
 			return CakePlugin::path($pluginName);
 		}
 		return current(App::path('plugins')) . $pluginName . DS;
+	}
+
+/**
+ * Used to enable or disable logging stream output to stdout and stderr
+ * If you don't wish to see in your stdout or stderr everything that is logged
+ * through CakeLog, call this function with first param as false
+ *
+ * @param boolean $enable wheter to enable CakeLog output or not
+ * @return void
+ **/
+	protected function _useLogger($enable = true) {
+		if (!$enable) {
+			CakeLog::drop('stdout');
+			CakeLog::drop('stderr');
+			return;
+		}
+		CakeLog::config('stdout', array(
+			'engine' => 'ConsoleLog',
+			'types' => array('notice', 'info'),
+			'stream' => $this->stdout,
+		));
+		CakeLog::config('stderr', array(
+			'engine' => 'ConsoleLog',
+			'types' => array('emergency', 'alert', 'critical', 'error', 'warning', 'debug'),
+			'stream' => $this->stderr,
+		));
 	}
 }

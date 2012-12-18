@@ -6,14 +6,14 @@
  *
  * PHP 5
  *
- * CakePHP(tm) Tests <http://book.cakephp.org/view/1196/Testing>
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) Tests <http://book.cakephp.org/2.0/en/development/testing.html>
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://book.cakephp.org/view/1196/Testing CakePHP(tm) Tests
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @link          http://book.cakephp.org/2.0/en/development/testing.html CakePHP(tm) Tests
  * @package       Cake.Test.Case.Model.Behavior
  * @since         CakePHP(tm) v 1.2.0.5330
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
@@ -21,7 +21,8 @@
 
 App::uses('Model', 'Model');
 App::uses('AppModel', 'Model');
-require_once(dirname(dirname(__FILE__)) . DS . 'models.php');
+App::uses('String', 'Utility');
+require_once dirname(dirname(__FILE__)) . DS . 'models.php';
 
 /**
  * TreeBehaviorUuidTest class
@@ -57,6 +58,37 @@ class TreeBehaviorUuidTest extends CakeTestCase {
 	public $fixtures = array('core.uuid_tree');
 
 /**
+ * testAddWithPreSpecifiedId method
+ *
+ * @return void
+ */
+	public function testAddWithPreSpecifiedId() {
+		extract($this->settings);
+		$this->Tree = new $modelClass();
+		$this->Tree->initialize(2, 2);
+
+		$data = $this->Tree->find('first', array(
+			'fields' => array('id'),
+			'conditions' => array($modelClass . '.name' => '1.1')
+		));
+
+		$id = String::uuid();
+		$this->Tree->create();
+		$result = $this->Tree->save(array($modelClass => array(
+			'id' => $id,
+			'name' => 'testAddMiddle',
+			$parentField => $data[$modelClass]['id'])
+		));
+		$expected = array_merge(
+			array($modelClass => array('id' => $id, 'name' => 'testAddMiddle', $parentField => '2')),
+			$result
+		);
+		$this->assertSame($expected, $result);
+
+		$this->assertTrue($this->Tree->verify());
+	}
+
+/**
  * testMovePromote method
  *
  * @return void
@@ -68,12 +100,12 @@ class TreeBehaviorUuidTest extends CakeTestCase {
 		$this->Tree->id = null;
 
 		$parent = $this->Tree->find('first', array('conditions' => array($modelClass . '.name' => '1. Root')));
-		$parent_id = $parent[$modelClass]['id'];
+		$parentId = $parent[$modelClass]['id'];
 
 		$data = $this->Tree->find('first', array('fields' => array('id'), 'conditions' => array($modelClass . '.name' => '1.1.1')));
-		$this->Tree->id= $data[$modelClass]['id'];
-		$this->Tree->saveField($parentField, $parent_id);
-		$direct = $this->Tree->children($parent_id, true, array('name', $leftField, $rightField));
+		$this->Tree->id = $data[$modelClass]['id'];
+		$this->Tree->saveField($parentField, $parentId);
+		$direct = $this->Tree->children($parentId, true, array('name', $leftField, $rightField));
 		$expects = array(array($modelClass => array('name' => '1.1', $leftField => 2, $rightField => 5)),
 			array($modelClass => array('name' => '1.2', $leftField => 6, $rightField => 11)),
 			array($modelClass => array('name' => '1.1.1', $leftField => 12, $rightField => 13)));
@@ -94,14 +126,14 @@ class TreeBehaviorUuidTest extends CakeTestCase {
 		$this->Tree->id = null;
 
 		$parent = $this->Tree->find('first', array('conditions' => array($modelClass . '.name' => '1. Root')));
-		$parent_id = $parent[$modelClass]['id'];
+		$parentId = $parent[$modelClass]['id'];
 
 		$data = $this->Tree->find('first', array('fields' => array('id'), 'conditions' => array($modelClass . '.name' => '1.1.1')));
 		$this->Tree->id = $data[$modelClass]['id'];
 		$this->Tree->whitelist = array($parentField, 'name', 'description');
-		$this->Tree->saveField($parentField, $parent_id);
+		$this->Tree->saveField($parentField, $parentId);
 
-		$result = $this->Tree->children($parent_id, true, array('name', $leftField, $rightField));
+		$result = $this->Tree->children($parentId, true, array('name', $leftField, $rightField));
 		$expected = array(array($modelClass => array('name' => '1.1', $leftField => 2, $rightField => 5)),
 			array($modelClass => array('name' => '1.2', $leftField => 6, $rightField => 11)),
 			array($modelClass => array('name' => '1.1.1', $leftField => 12, $rightField => 13)));

@@ -4,14 +4,14 @@
  *
  * PHP 5
  *
- * CakePHP(tm) Tests <http://book.cakephp.org/view/1196/Testing>
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) Tests <http://book.cakephp.org/2.0/en/development/testing.html>
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://book.cakephp.org/view/1196/Testing CakePHP(tm) Tests
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @link          http://book.cakephp.org/2.0/en/development/testing.html CakePHP(tm) Tests
  * @package       Cake.TestSuite.templates
  * @since         CakePHP(tm) v 1.2.0.4433
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
@@ -21,7 +21,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-		<title>CakePHP Test Suite 2.0</title>
+		<title>CakePHP Test Suite 2.2</title>
 		<style type="text/css">
 			body h2 {color: #777;}
 			h3 {font-size: 170%; padding-top: 1em}
@@ -127,13 +127,20 @@
 			div.code-coverage-results span.result-bad { color: #a00; }
 			div.code-coverage-results span.result-ok { color: #fa0; }
 			div.code-coverage-results span.result-good { color: #0a0; }
+			
+			div#version {
+				padding-top: 2px;
+				float: right;
+				padding-left: 20px;
+			}
 		</style>
 		<link rel="stylesheet" type="text/css" href="<?php echo $baseDir; ?>css/cake.generic.css" />
 	</head>
 	<body>
 		<div id="container">
 			<div id="header">
+			<div id="version">PHPUnit: <?php echo class_exists('PHPUnit_Runner_Version') ? PHPUnit_Runner_Version::id() : 'n/a'; ?></div>
 				<h1>CakePHP: the rapid development php framework</h1>
 			</div>
 			<div id="content">
-			<h2>CakePHP Test Suite 2.0</h2>
+			<h2>CakePHP Test Suite 2.2</h2>

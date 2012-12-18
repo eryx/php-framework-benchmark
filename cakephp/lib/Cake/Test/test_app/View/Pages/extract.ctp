@@ -12,6 +12,11 @@ echo __dn('domain', 'You deleted %d message (domain).', 'You deleted %d messages
 
 // Duplicated Message
 echo __('Editing this Page');
+echo __('You have %d new message.');
+
+// Contains quotes
+echo __('double "quoted"');
+echo __("single 'quoted'");
 
 // Multiline
 __('Hot features!'

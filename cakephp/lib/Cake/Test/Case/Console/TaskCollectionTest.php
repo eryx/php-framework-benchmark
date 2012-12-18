@@ -5,13 +5,13 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://book.cakephp.org/view/1196/Testing CakePHP(tm) Tests
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @link          http://book.cakephp.org/2.0/en/development/testing.html CakePHP(tm) Tests
  * @package       Cake.Test.Case.Console
  * @since         CakePHP(tm) v 2.0
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
@@ -21,24 +21,27 @@ App::uses('TaskCollection', 'Console');
 App::uses('Shell', 'Console');
 
 class TaskCollectionTest extends CakeTestCase {
+
 /**
- * setup
+ * setUp
  *
  * @return void
  */
-	public function setup() {
+	public function setUp() {
+		parent::setUp();
 		$shell = $this->getMock('Shell', array(), array(), '', false);
 		$dispatcher = $this->getMock('ShellDispatcher', array(), array(), '', false);
 		$this->Tasks = new TaskCollection($shell, $dispatcher);
 	}
 
 /**
- * teardown
+ * tearDown
  *
  * @return void
  */
-	public function teardown() {
+	public function tearDown() {
 		unset($this->Tasks);
+		parent::tearDown();
 	}
 
 /**
@@ -53,8 +56,6 @@ class TaskCollectionTest extends CakeTestCase {
 
 		$result = $this->Tasks->attached();
 		$this->assertEquals(array('DbConfig'), $result, 'attached() results are wrong.');
-
-		$this->assertTrue($this->Tasks->enabled('DbConfig'));
 	}
 
 /**
@@ -69,6 +70,7 @@ class TaskCollectionTest extends CakeTestCase {
 
 		$this->assertFalse($this->Tasks->enabled('DbConfig'), 'DbConfigTask should be disabled');
 	}
+
 /**
  * test missingtask exception
  *

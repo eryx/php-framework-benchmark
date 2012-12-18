@@ -5,12 +5,12 @@
  * PHP versions 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.Test.Case.Console
  * @since         CakePHP(tm) v 2.0
@@ -38,7 +38,7 @@ class ConsoleErrorHandlerTest extends CakeTestCase {
 	}
 
 /**
- * teardown
+ * tearDown
  *
  * @return void
  */
@@ -58,6 +58,23 @@ class ConsoleErrorHandlerTest extends CakeTestCase {
 			->with($content);
 
 		$this->Error->handleError(E_NOTICE, 'This is a notice error', '/some/file', 275);
+	}
+
+/**
+ * test that the console error handler can deal with fatal errors.
+ *
+ * @return void
+ */
+	public function testHandleFatalError() {
+		$content = "<error>Fatal Error Error:</error> This is a fatal error in [/some/file, line 275]\n";
+		ConsoleErrorHandler::$stderr->expects($this->once())->method('write')
+			->with($content);
+
+		$this->Error->expects($this->once())
+			->method('_stop')
+			->with(1);
+
+		$this->Error->handleError(E_USER_ERROR, 'This is a fatal error', '/some/file', 275);
 	}
 
 /**

@@ -11,12 +11,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.View.Helper
  * @since         CakePHP(tm) v 1.3
@@ -26,7 +26,19 @@
 App::uses('AppHelper', 'View/Helper');
 App::uses('JsBaseEngineHelper', 'View/Helper');
 
+/**
+ * jQuery Engine Helper for JsHelper
+ *
+ * Provides jQuery specific Javascript for JsHelper.
+ *
+ * Implements the JsHelper interface for jQuery.  All $options arrays
+ * support all options found in the JsHelper, as well as those in the jQuery
+ * documentation.
+ *
+ * @package       Cake.View.Helper
+ */
 class JqueryEngineHelper extends JsBaseEngineHelper {
+
 /**
  * Option mappings for jQuery
  *
@@ -138,7 +150,7 @@ class JqueryEngineHelper extends JsBaseEngineHelper {
  */
 	public function get($selector) {
 		if ($selector == 'window' || $selector == 'document') {
-			$this->selection = $this->jQueryObject . '(' . $selector .')';
+			$this->selection = $this->jQueryObject . '(' . $selector . ')';
 		} else {
 			$this->selection = $this->jQueryObject . '("' . $selector . '")';
 		}
@@ -217,7 +229,7 @@ class JqueryEngineHelper extends JsBaseEngineHelper {
 				$name = ($name == 'slideIn') ? 'slideDown' : 'slideUp';
 			case 'hide':
 			case 'show':
- 			case 'fadeIn':
+			case 'fadeIn':
 			case 'fadeOut':
 			case 'slideDown':
 			case 'slideUp':
@@ -232,7 +244,7 @@ class JqueryEngineHelper extends JsBaseEngineHelper {
  *
  * If the 'update' key is set, success callback will be overridden.
  *
- * @param mixed $url
+ * @param string|array $url
  * @param array $options See JsHelper::request() for options.
  * @return string The completed ajax call.
  * @see JsBaseEngineHelper::request() for options list.
@@ -247,7 +259,7 @@ class JqueryEngineHelper extends JsBaseEngineHelper {
 		if (isset($options['update'])) {
 			$wrapCallbacks = isset($options['wrapCallbacks']) ? $options['wrapCallbacks'] : true;
 			$success = '';
-			if(isset($options['success']) AND !empty($options['success'])) {
+			if (isset($options['success']) && !empty($options['success'])) {
 				$success .= $options['success'];
 			}
 			$success .= $this->jQueryObject . '("' . $options['update'] . '").html(data);';
@@ -265,7 +277,7 @@ class JqueryEngineHelper extends JsBaseEngineHelper {
 		}
 		$options = $this->_prepareCallbacks('request', $options);
 		$options = $this->_parseOptions($options, $callbacks);
-		return $this->jQueryObject . '.ajax({' . $options .'});';
+		return $this->jQueryObject . '.ajax({' . $options . '});';
 	}
 
 /**
@@ -345,4 +357,5 @@ class JqueryEngineHelper extends JsBaseEngineHelper {
 		}
 		return $selector . $method;
 	}
+
 }

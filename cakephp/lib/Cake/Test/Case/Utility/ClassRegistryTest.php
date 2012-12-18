@@ -4,14 +4,14 @@
  *
  * PHP 5
  *
- * CakePHP(tm) Tests <http://book.cakephp.org/view/1196/Testing>
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) Tests <http://book.cakephp.org/2.0/en/development/testing.html>
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://book.cakephp.org/view/1196/Testing CakePHP(tm) Tests
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @link          http://book.cakephp.org/2.0/en/development/testing.html CakePHP(tm) Tests
  * @package       Cake.Test.Case.Utility
  * @since         CakePHP(tm) v 1.2.0.5432
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
@@ -122,6 +122,38 @@ class RegisterCategory extends ClassRegisterModel {
  */
 	public $name = 'RegisterCategory';
 }
+/**
+ * RegisterPrefixedDs class
+ *
+ * @package       Cake.Test.Case.Utility
+ */
+class RegisterPrefixedDs extends ClassRegisterModel {
+
+/**
+ * useDbConfig property
+ *
+ * @var string 'doesnotexist'
+ */
+	public $useDbConfig = 'doesnotexist';
+}
+
+/**
+ * Abstract class for testing ClassRegistry.
+ */
+abstract class ClassRegistryAbstractModel extends ClassRegisterModel {
+
+	public abstract function doSomething();
+
+}
+
+/**
+ * Interface for testing ClassRegistry
+ */
+interface ClassRegistryInterfaceTest {
+
+	public function doSomething();
+
+}
 
 /**
  * ClassRegistryTest class
@@ -136,7 +168,6 @@ class ClassRegistryTest extends CakeTestCase {
  * @return void
  */
 	public function testAddModel() {
-
 		$Tag = ClassRegistry::init('RegisterArticleTag');
 		$this->assertTrue(is_a($Tag, 'RegisterArticleTag'));
 
@@ -152,7 +183,6 @@ class ClassRegistryTest extends CakeTestCase {
 
 		$NewTag = ClassRegistry::init(array('class' => 'RegisterArticleTag', 'alias' => 'NewTag'));
 		$this->assertTrue(is_a($Tag, 'RegisterArticleTag'));
-
 
 		$NewTagCopy = ClassRegistry::init(array('class' => 'RegisterArticleTag', 'alias' => 'NewTag'));
 
@@ -259,7 +289,7 @@ class ClassRegistryTest extends CakeTestCase {
 		$TestRegistryPluginModel = ClassRegistry::init('RegistryPlugin.TestRegistryPluginModel');
 		$this->assertTrue(is_a($TestRegistryPluginModel, 'TestRegistryPluginModel'));
 
-		$this->assertEquals($TestRegistryPluginModel->tablePrefix, 'something_');
+		$this->assertEquals('something_', $TestRegistryPluginModel->tablePrefix);
 
 		$PluginUser = ClassRegistry::init(array('class' => 'RegistryPlugin.RegisterUser', 'alias' => 'RegistryPluginUser', 'table' => false));
 		$this->assertTrue(is_a($PluginUser, 'RegistryPluginAppModel'));
@@ -271,10 +301,49 @@ class ClassRegistryTest extends CakeTestCase {
 	}
 
 /**
+ * Tests prefixed datasource names for test purposes
+ *
+ */
+	public function testPrefixedTestDatasource() {
+		ClassRegistry::config(array('testing' => true));
+		$Model = ClassRegistry::init('RegisterPrefixedDs');
+		$this->assertEquals('test', $Model->useDbConfig);
+		ClassRegistry::removeObject('RegisterPrefixedDs');
+
+		$testConfig = ConnectionManager::getDataSource('test')->config;
+		ConnectionManager::create('test_doesnotexist', $testConfig);
+
+		$Model = ClassRegistry::init('RegisterArticle');
+		$this->assertEquals('test', $Model->useDbConfig);
+		$Model = ClassRegistry::init('RegisterPrefixedDs');
+		$this->assertEquals('test_doesnotexist', $Model->useDbConfig);
+	}
+
+/**
  * Tests that passing the string parameter to init() will return false if the model does not exists
  *
  */
 	public function testInitStrict() {
 		$this->assertFalse(ClassRegistry::init('NonExistent', true));
+	}
+
+/**
+ * Test that you cannot init() an abstract class. An exception will be raised.
+ *
+ * @expectedException CakeException
+ * @return void
+ */
+	public function testInitAbstractClass() {
+		ClassRegistry::init('ClassRegistryAbstractModel');
+	}
+
+/**
+ * Test that you cannot init() an abstract class. A exception will be raised.
+ *
+ * @expectedException CakeException
+ * @return void
+ */
+	public function testInitInterface() {
+		ClassRegistry::init('ClassRegistryInterfaceTest');
 	}
 }

@@ -4,13 +4,13 @@
  *
  * PHP 5
  *
- * CakePHP(tm) Tests <http://book.cakephp.org/view/1196/Testing>
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) Tests <http://book.cakephp.org/2.0/en/development/testing.html>
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.TestSuite
  * @since         CakePHP(tm) v 1.3
@@ -28,6 +28,7 @@ App::uses('CakeTestSuiteCommand', 'TestSuite');
  * @package       Cake.TestSuite
  */
 class CakeTestSuiteDispatcher {
+
 /**
  * 'Request' parameters
  *
@@ -37,7 +38,7 @@ class CakeTestSuiteDispatcher {
 		'codeCoverage' => false,
 		'case' => null,
 		'core' => false,
-		'app' => false,
+		'app' => true,
 		'plugin' => null,
 		'output' => 'html',
 		'show' => 'groups',
@@ -45,6 +46,7 @@ class CakeTestSuiteDispatcher {
 		'filter' => false,
 		'fixture' => null
 	);
+
 /**
  * Baseurl for the request
  *
@@ -78,7 +80,7 @@ class CakeTestSuiteDispatcher {
  *
  * @return void
  */
-	function __construct() {
+	public function __construct() {
 		$this->_baseUrl = $_SERVER['PHP_SELF'];
 		$dir = rtrim(dirname($this->_baseUrl), '\\');
 		$this->_baseDir = ($dir === '/') ? $dir : $dir . '/';
@@ -134,24 +136,14 @@ class CakeTestSuiteDispatcher {
  * @return boolean true if found, false otherwise
  */
 	public function loadTestFramework() {
-		$found = $path = null;
-
-		if (@include 'PHPUnit' . DS . 'Autoload.php') {
-			$found = true;
-		}
-
-		if (!$found) {
-			foreach (App::path('vendors') as $vendor) {
-				if (is_dir($vendor . 'PHPUnit')) {
-					$path = $vendor;
-				}
-			}
-
-			if ($path && ini_set('include_path', $path . PATH_SEPARATOR . ini_get('include_path'))) {
-				$found = include 'PHPUnit' . DS . 'Autoload.php';
+		foreach (App::path('vendors') as $vendor) {
+			if (is_dir($vendor . 'PHPUnit')) {
+				ini_set('include_path', $vendor . PATH_SEPARATOR . ini_get('include_path'));
+				break;
 			}
 		}
-		return $found;
+
+		return include 'PHPUnit' . DS . 'Autoload.php';
 	}
 
 /**
@@ -160,7 +152,7 @@ class CakeTestSuiteDispatcher {
  *
  * @return void
  */
-	function _checkXdebug() {
+	protected function _checkXdebug() {
 		if (!extension_loaded('xdebug')) {
 			$baseDir = $this->_baseDir;
 			include CAKE . 'TestSuite' . DS . 'templates' . DS . 'xdebug.php';
@@ -173,7 +165,7 @@ class CakeTestSuiteDispatcher {
  *
  * @return void
  */
-	function _testCaseList() {
+	protected function _testCaseList() {
 		$command = new CakeTestSuiteCommand('', $this->params);
 		$Reporter = $command->handleReporter($this->params['output']);
 		$Reporter->paintDocumentStart();
@@ -198,7 +190,7 @@ class CakeTestSuiteDispatcher {
  *
  * @return void
  */
-	function _parseParams() {
+	protected function _parseParams() {
 		if (!$this->_paramsParsed) {
 			if (!isset($_SERVER['SERVER_NAME'])) {
 				$_SERVER['SERVER_NAME'] = '';
@@ -213,8 +205,8 @@ class CakeTestSuiteDispatcher {
 				$this->_checkXdebug();
 			}
 		}
-		if (empty($this->params['plugin']) && empty($this->params['app'])) {
-			$this->params['core'] = true;
+		if (empty($this->params['plugin']) && empty($this->params['core'])) {
+			$this->params['app'] = true;
 		}
 		$this->params['baseUrl'] = $this->_baseUrl;
 		$this->params['baseDir'] = $this->_baseDir;
@@ -225,10 +217,10 @@ class CakeTestSuiteDispatcher {
  *
  * @return void
  */
-	function _runTestCase() {
+	protected function _runTestCase() {
 		$commandArgs = array(
 			'case' => $this->params['case'],
-			'core' =>$this->params['core'],
+			'core' => $this->params['core'],
 			'app' => $this->params['app'],
 			'plugin' => $this->params['plugin'],
 			'codeCoverage' => $this->params['codeCoverage'],
@@ -245,6 +237,7 @@ class CakeTestSuiteDispatcher {
 		restore_error_handler();
 
 		try {
+			self::time();
 			$command = new CakeTestSuiteCommand('CakeTestLoader', $commandArgs);
 			$result = $command->run($options);
 		} catch (MissingConnectionException $exception) {
@@ -254,4 +247,30 @@ class CakeTestSuiteDispatcher {
 			exit();
 		}
 	}
+
+/**
+ * Sets a static timestamp
+ *
+ * @param boolean $reset to set new static timestamp.
+ * @return integer timestamp
+ */
+	public static function time($reset = false) {
+		static $now;
+		if ($reset || !$now) {
+			$now = time();
+		}
+		return $now;
+	}
+
+/**
+ * Returns formatted date string using static time
+ * This method is being used as formatter for created, modified and updated fields in Model::save()
+ *
+ * @param string $format format to be used.
+ * @return string formatted date
+ */
+	public static function date($format) {
+		return date($format, self::time());
+	}
+
 }

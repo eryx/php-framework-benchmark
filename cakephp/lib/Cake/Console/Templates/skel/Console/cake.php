@@ -6,12 +6,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc.
+ * Copyright 2005-2012, Cake Software Foundation, Inc.
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       app.Console
  * @since         CakePHP(tm) v 2.0
@@ -19,23 +19,15 @@
  */
 $ds = DIRECTORY_SEPARATOR;
 $dispatcher = 'Cake' . $ds . 'Console' . $ds . 'ShellDispatcher.php';
-$found = false;
-$paths = explode(PATH_SEPARATOR, ini_get('include_path'));
 
-foreach ($paths as $path) {
-	if (file_exists($path . $ds . $dispatcher)) {
-		$found = $path;
-	}
-}
-
-if (!$found && function_exists('ini_set')) {
+if (function_exists('ini_set')) {
 	$root = dirname(dirname(dirname(__FILE__)));
-	ini_set('include_path', __CAKE_PATH__ . PATH_SEPARATOR . ini_get('include_path'));
+	ini_set('include_path', $root . PATH_SEPARATOR . __CAKE_PATH__ . PATH_SEPARATOR . ini_get('include_path'));
 }
 
-if (!include($dispatcher)) {
+if (!include $dispatcher) {
 	trigger_error('Could not locate CakePHP core files.', E_USER_ERROR);
 }
-unset($paths, $path, $found, $dispatcher, $root, $ds);
+unset($paths, $path, $dispatcher, $root, $ds);
 
 return ShellDispatcher::run($argv);

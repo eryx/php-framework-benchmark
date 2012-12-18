@@ -4,14 +4,14 @@
  *
  * PHP 5
  *
- * CakePHP(tm) Tests <http://book.cakephp.org/view/1196/Testing>
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) Tests <http://book.cakephp.org/2.0/en/development/testing.html>
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://book.cakephp.org/view/1196/Testing CakePHP(tm) Tests
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @link          http://book.cakephp.org/2.0/en/development/testing.html CakePHP(tm) Tests
  * @package       Cake.Test.Case.View.Helper
  * @since         CakePHP(tm) v 1.2.0.4206
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
@@ -91,10 +91,10 @@ class SessionHelperTest extends CakeTestCase {
  */
 	public function testRead() {
 		$result = $this->Session->read('Deeply.nested.key');
-		$this->assertEquals($result, 'value');
+		$this->assertEquals('value', $result);
 
 		$result = $this->Session->read('test');
-		$this->assertEquals($result, 'info');
+		$this->assertEquals('info', $result);
 	}
 
 /**
@@ -128,7 +128,7 @@ class SessionHelperTest extends CakeTestCase {
 		$this->assertEquals($expected, $result);
 
 		App::build(array(
-			'View' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'View'. DS)
+			'View' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'View' . DS)
 		));
 		$result = $this->Session->flash('notification');
 		$result = str_replace("\r\n", "\n", $result);
@@ -161,23 +161,24 @@ class SessionHelperTest extends CakeTestCase {
  */
 	public function testFlashElementInAttrs() {
 		App::build(array(
-			'View' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'View'. DS)
+			'View' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'View' . DS)
 		));
 		$result = $this->Session->flash('flash', array(
 			'element' => 'session_helper',
 			'params' => array('title' => 'Notice!', 'name' => 'Alert!')
 		));
 		$expected = "<div id=\"notificationLayout\">\n\t<h1>Alert!</h1>\n\t<h3>Notice!</h3>\n\t<p>This is a calling</p>\n</div>";
+		$this->assertTextEquals($expected, $result);
 	}
 
 /**
- * test using eleents in plugins.
+ * test using elements in plugins.
  *
  * @return void
  */
 	public function testFlashWithPluginElement() {
 		App::build(array(
-			'Plugin' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'Plugin'. DS)
+			'Plugin' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'Plugin' . DS)
 		));
 		CakePlugin::load('TestPlugin');
 

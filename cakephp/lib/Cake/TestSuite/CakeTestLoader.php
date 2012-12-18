@@ -7,15 +7,23 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @since         CakePHP(tm) v 2.0
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
+ * @package Cake.TestSuite
+ */
+
+/**
+ * TestLoader for CakePHP Test suite.
+ *
+ * Turns partial paths used on the testsuite console and web UI into full file paths.
+ *
  * @package Cake.TestSuite
  */
 class CakeTestLoader extends PHPUnit_Runner_StandardTestSuiteLoader {
@@ -53,17 +61,18 @@ class CakeTestLoader extends PHPUnit_Runner_StandardTestSuiteLoader {
 		$result = null;
 		if (!empty($params['core'])) {
 			$result = CORE_TEST_CASES;
-		} elseif (!empty($params['app'])) {
-			$result = APP_TEST_CASES;
-		} else if (!empty($params['plugin'])) {
+		} elseif (!empty($params['plugin'])) {
 			if (!CakePlugin::loaded($params['plugin'])) {
 				try {
 					CakePlugin::load($params['plugin']);
 					$result = CakePlugin::path($params['plugin']) . 'Test' . DS . 'Case';
-				} catch (MissingPluginException $e) {}
+				} catch (MissingPluginException $e) {
+				}
 			} else {
 				$result = CakePlugin::path($params['plugin']) . 'Test' . DS . 'Case';
 			}
+		} elseif (!empty($params['app'])) {
+			$result = APP_TEST_CASES;
 		}
 		return $result;
 	}

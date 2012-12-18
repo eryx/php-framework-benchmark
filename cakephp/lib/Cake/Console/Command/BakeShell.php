@@ -9,12 +9,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @since         CakePHP(tm) v 1.2.0.5012
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
@@ -24,7 +24,11 @@ App::uses('AppShell', 'Console/Command');
 App::uses('Model', 'Model');
 
 /**
- * Bake is a command-line code generation utility for automating programmer chores.
+ * Command-line code generation utility to automate programmer chores.
+ *
+ * Bake is CakePHP's code generation script, which can help you kickstart
+ * application development by writing fully functional skeleton controllers,
+ * models, and views. Going further, Bake can also write Unit Tests for you.
  *
  * @package       Cake.Console.Command
  * @link          http://book.cakephp.org/2.0/en/console-and-shells/code-generation-with-bake.html
@@ -185,7 +189,7 @@ class BakeShell extends AppShell {
 			}
 			App::uses($controller . 'Controller', 'Controller');
 			if (class_exists($controller . 'Controller')) {
-				$this->View->args = array($controller);
+				$this->View->args = array($name);
 				$this->View->execute();
 			}
 			$this->out('', 1, Shell::QUIET);
@@ -205,9 +209,9 @@ class BakeShell extends AppShell {
 	public function getOptionParser() {
 		$parser = parent::getOptionParser();
 		return $parser->description(__d('cake_console',
-			'The Bake script generates controllers, views and models for your application.'
-			. ' If run with no command line arguments, Bake guides the user through the class creation process.'
-			. ' You can customize the generation process by telling Bake where different parts of your application are using command line arguments.'
+			'The Bake script generates controllers, views and models for your application.' .
+			' If run with no command line arguments, Bake guides the user through the class creation process.' .
+			' You can customize the generation process by telling Bake where different parts of your application are using command line arguments.'
 		))->addSubcommand('all', array(
 			'help' => __d('cake_console', 'Bake a complete MVC. optional <name> of a Model'),
 		))->addSubcommand('project', array(

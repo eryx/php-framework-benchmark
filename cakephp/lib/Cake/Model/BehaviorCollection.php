@@ -7,12 +7,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.Model
  * @since         CakePHP(tm) v 1.2.0.0
@@ -20,6 +20,7 @@
  */
 
 App::uses('ObjectCollection', 'Utility');
+App::uses('CakeEventListener', 'Event');
 
 /**
  * Model behavior collection class.
@@ -28,7 +29,7 @@ App::uses('ObjectCollection', 'Utility');
  *
  * @package       Cake.Model
  */
-class BehaviorCollection extends ObjectCollection {
+class BehaviorCollection extends ObjectCollection implements CakeEventListener {
 
 /**
  * Stores a reference to the attached name
@@ -54,7 +55,6 @@ class BehaviorCollection extends ObjectCollection {
 /**
  * Attaches a model object and loads a list of behaviors
  *
- * @todo Make this method a constructor instead..
  * @param string $modelName
  * @param array $behaviors
  * @return void
@@ -106,6 +106,9 @@ class BehaviorCollection extends ObjectCollection {
 			$alias = $behavior;
 			$behavior = $config['className'];
 		}
+		$configDisabled = isset($config['enabled']) && $config['enabled'] === false;
+		unset($config['enabled'], $config['className']);
+
 		list($plugin, $name) = pluginSplit($behavior, true);
 		if (!isset($alias)) {
 			$alias = $name;
@@ -165,10 +168,9 @@ class BehaviorCollection extends ObjectCollection {
 			}
 		}
 
-		$configDisabled = isset($config['enabled']) && $config['enabled'] === false;
 		if (!in_array($alias, $this->_enabled) && !$configDisabled) {
 			$this->enable($alias);
-		} elseif ($configDisabled) {
+		} else {
 			$this->disable($alias);
 		}
 		return true;
@@ -184,14 +186,13 @@ class BehaviorCollection extends ObjectCollection {
 		list($plugin, $name) = pluginSplit($name);
 		if (isset($this->_loaded[$name])) {
 			$this->_loaded[$name]->cleanup(ClassRegistry::getObject($this->modelName));
-			unset($this->_loaded[$name]);
+			parent::unload($name);
 		}
 		foreach ($this->_methods as $m => $callback) {
 			if (is_array($callback) && $callback[0] == $name) {
 				unset($this->_methods[$m]);
 			}
 		}
-		$this->_enabled = array_values(array_diff($this->_enabled, (array)$name));
 	}
 
 /**
@@ -208,7 +209,7 @@ class BehaviorCollection extends ObjectCollection {
 /**
  * Dispatches a behavior method.  Will call either normal methods or mapped methods.
  *
- * If a method is not handeled by the BehaviorCollection, and $strict is false, a
+ * If a method is not handled by the BehaviorCollection, and $strict is false, a
  * special return of `array('unhandled')` will be returned to signal the method was not found.
  *
  * @param Model $model The model the method was originally called on.
@@ -253,8 +254,8 @@ class BehaviorCollection extends ObjectCollection {
  *
  * @param string $method The method to find.
  * @param boolean $callback Return the callback for the method.
- * @return mixed If $callback is false, a boolean will be returnned, if its true, an array
- *   containing callback information will be returnned.  For mapped methods the array will have 3 elements.
+ * @return mixed If $callback is false, a boolean will be returned, if its true, an array
+ *   containing callback information will be returned.  For mapped methods the array will have 3 elements.
  */
 	public function hasMethod($method, $callback = false) {
 		if (isset($this->_methods[$method])) {
@@ -270,6 +271,25 @@ class BehaviorCollection extends ObjectCollection {
 			}
 		}
 		return false;
+	}
+
+/**
+ * Returns the implemented events that will get routed to the trigger function
+ * in order to dispatch them separately on each behavior
+ *
+ * @return array
+ */
+	public function implementedEvents() {
+		return array(
+			'Model.beforeFind' => 'trigger',
+			'Model.afterFind' => 'trigger',
+			'Model.beforeValidate' => 'trigger',
+			'Model.afterValidate' => 'trigger',
+			'Model.beforeSave' => 'trigger',
+			'Model.afterSave' => 'trigger',
+			'Model.beforeDelete' => 'trigger',
+			'Model.afterDelete' => 'trigger'
+		);
 	}
 
 }

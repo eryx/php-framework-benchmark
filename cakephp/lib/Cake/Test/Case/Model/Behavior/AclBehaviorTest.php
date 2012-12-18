@@ -7,12 +7,12 @@
  * PHP 5
  *
  * CakePHP : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc.
+ * Copyright 2005-2012, Cake Software Foundation, Inc.
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc.
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc.
  * @link          http://cakephp.org CakePHP Project
  * @package       Cake.Test.Case.Model.Behavior
  * @since         CakePHP v 1.2.0.4487
@@ -27,11 +27,10 @@ App::uses('DbAcl', 'Model');
 
 
 /**
-* Test Person class - self joined model
-*
-* @package       Cake.Test.Case.Model.Behavior
-* @package       Cake.Test.Case.Model.Behavior
-*/
+ * Test Person class - self joined model
+ *
+ * @package       Cake.Test.Case.Model.Behavior
+ */
 class AclPerson extends CakeTestModel {
 
 /**
@@ -99,14 +98,14 @@ class AclPerson extends CakeTestModel {
 			return array('AclPerson' => array('id' => $motherId));
 		}
 	}
+
 }
 
 /**
-* AclUser class
-*
-* @package       Cake.Test.Case.Model.Behavior
-* @package       Cake.Test.Case.Model.Behavior
-*/
+ * AclUser class
+ *
+ * @package       Cake.Test.Case.Model.Behavior
+ */
 class AclUser extends CakeTestModel {
 
 /**
@@ -137,14 +136,14 @@ class AclUser extends CakeTestModel {
 	public function parentNode() {
 		return null;
 	}
+
 }
 
 /**
-* AclPost class
-*
-* @package       Cake.Test.Case.Model.Behavior
-* @package       Cake.Test.Case.Model.Behavior
-*/
+ * AclPost class
+ *
+ * @package       Cake.Test.Case.Model.Behavior
+ */
 class AclPost extends CakeTestModel {
 
 /**
@@ -175,14 +174,14 @@ class AclPost extends CakeTestModel {
 	public function parentNode() {
 		return null;
 	}
+
 }
 
 /**
-* AclBehaviorTest class
-*
-* @package       Cake.Test.Case.Model.Behavior
-* @package       Cake.Test.Case.Model.Behavior
-*/
+ * AclBehaviorTest class
+ *
+ * @package       Cake.Test.Case.Model.Behavior
+ */
 class AclBehaviorTest extends CakeTestCase {
 
 /**
@@ -212,6 +211,7 @@ class AclBehaviorTest extends CakeTestCase {
  * @return void
  */
 	public function setUp() {
+		parent::setUp();
 		Configure::write('Acl.database', 'test');
 
 		$this->Aco = new Aco();
@@ -224,7 +224,7 @@ class AclBehaviorTest extends CakeTestCase {
  * @return void
  */
 	public function tearDown() {
-		ClassRegistry::flush();
+		parent::tearDown();
 		unset($this->Aro, $this->Aco);
 	}
 
@@ -236,12 +236,12 @@ class AclBehaviorTest extends CakeTestCase {
 	public function testSetup() {
 		$User = new AclUser();
 		$this->assertTrue(isset($User->Behaviors->Acl->settings['User']));
-		$this->assertEquals($User->Behaviors->Acl->settings['User']['type'], 'requester');
+		$this->assertEquals('requester', $User->Behaviors->Acl->settings['User']['type']);
 		$this->assertTrue(is_object($User->Aro));
 
 		$Post = new AclPost();
 		$this->assertTrue(isset($Post->Behaviors->Acl->settings['Post']));
-		$this->assertEquals($Post->Behaviors->Acl->settings['Post']['type'], 'controlled');
+		$this->assertEquals('controlled', $Post->Behaviors->Acl->settings['Post']['type']);
 		$this->assertTrue(is_object($Post->Aco));
 	}
 
@@ -253,7 +253,7 @@ class AclBehaviorTest extends CakeTestCase {
 	public function testSetupMulti() {
 		$User = new AclPerson();
 		$this->assertTrue(isset($User->Behaviors->Acl->settings['AclPerson']));
-		$this->assertEquals($User->Behaviors->Acl->settings['AclPerson']['type'], 'both');
+		$this->assertEquals('both', $User->Behaviors->Acl->settings['AclPerson']['type']);
 		$this->assertTrue(is_object($User->Aro));
 		$this->assertTrue(is_object($User->Aco));
 	}
@@ -278,8 +278,8 @@ class AclBehaviorTest extends CakeTestCase {
 			'conditions' => array('Aco.model' => 'Post', 'Aco.foreign_key' => $Post->id)
 		));
 		$this->assertTrue(is_array($result));
-		$this->assertEquals($result['Aco']['model'], 'Post');
-		$this->assertEquals($result['Aco']['foreign_key'], $Post->id);
+		$this->assertEquals('Post', $result['Aco']['model']);
+		$this->assertEquals($Post->id, $result['Aco']['foreign_key']);
 
 		$aroData = array(
 			'Aro' => array(
@@ -312,12 +312,12 @@ class AclBehaviorTest extends CakeTestCase {
 			'conditions' => array('Aro.model' => 'AclPerson', 'Aro.foreign_key' => $Person->id)
 		));
 		$this->assertTrue(is_array($result));
-		$this->assertEquals($result['Aro']['parent_id'], 5);
+		$this->assertEquals(5, $result['Aro']['parent_id']);
 
 		$node = $Person->node(array('model' => 'AclPerson', 'foreign_key' => 8), 'Aro');
-		$this->assertEquals(count($node), 2);
-		$this->assertEquals($node[0]['Aro']['parent_id'], 5);
-		$this->assertEquals($node[1]['Aro']['parent_id'], null);
+		$this->assertEquals(2, count($node));
+		$this->assertEquals(5, $node[0]['Aro']['parent_id']);
+		$this->assertEquals(null, $node[1]['Aro']['parent_id']);
 
 		$aroData = array(
 			'Aro' => array(
@@ -343,12 +343,12 @@ class AclBehaviorTest extends CakeTestCase {
 			'conditions' => array('Aro.model' => 'AclPerson', 'Aro.foreign_key' => $Person->id)
 		));
 		$this->assertTrue(is_array($result));
-		$this->assertEquals($result['Aro']['parent_id'], 7);
+		$this->assertEquals(7, $result['Aro']['parent_id']);
 
 		$node = $Person->node(array('model' => 'AclPerson', 'foreign_key' => 8), 'Aro');
-		$this->assertEquals(sizeof($node), 2);
-		$this->assertEquals($node[0]['Aro']['parent_id'], 7);
-		$this->assertEquals($node[1]['Aro']['parent_id'], null);
+		$this->assertEquals(2, count($node));
+		$this->assertEquals(7, $node[0]['Aro']['parent_id']);
+		$this->assertEquals(null, $node[1]['Aro']['parent_id']);
 	}
 
 /**
@@ -365,7 +365,6 @@ class AclBehaviorTest extends CakeTestCase {
 			)
 		);
 		$this->Aro->save($aroData);
-
 
 		$acoData = array(
 			'Aco' => array(
@@ -389,13 +388,13 @@ class AclBehaviorTest extends CakeTestCase {
 			'conditions' => array('Aro.model' => 'AclPerson', 'Aro.foreign_key' => $Person->id)
 		));
 		$this->assertTrue(is_array($result));
-		$this->assertEquals($result['Aro']['parent_id'], 5);
+		$this->assertEquals(5, $result['Aro']['parent_id']);
 
 		$Person->save(array('id' => $Person->id, 'name' => 'Bruce'));
 		$result = $this->Aro->find('first', array(
 			'conditions' => array('Aro.model' => 'AclPerson', 'Aro.foreign_key' => $Person->id)
 		));
-		$this->assertEquals($result['Aro']['parent_id'], 5);
+		$this->assertEquals(5, $result['Aro']['parent_id']);
 	}
 
 /**
@@ -433,9 +432,9 @@ class AclBehaviorTest extends CakeTestCase {
 		$Person->save($data);
 		$id = $Person->id;
 		$node = $Person->node(null, 'Aro');
-		$this->assertEquals(count($node), 2);
-		$this->assertEquals($node[0]['Aro']['parent_id'], 5);
-		$this->assertEquals($node[1]['Aro']['parent_id'], null);
+		$this->assertEquals(2, count($node));
+		$this->assertEquals(5, $node[0]['Aro']['parent_id']);
+		$this->assertEquals(null, $node[1]['Aro']['parent_id']);
 
 		$Person->delete($id);
 		$result = $this->Aro->find('first', array(
@@ -487,6 +486,6 @@ class AclBehaviorTest extends CakeTestCase {
 		$Person->id = 2;
 		$result = $Person->node(null, 'Aro');
 		$this->assertTrue(is_array($result));
-		$this->assertEquals(count($result), 1);
+		$this->assertEquals(1, count($result));
 	}
 }

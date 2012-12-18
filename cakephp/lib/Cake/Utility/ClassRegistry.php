@@ -1,23 +1,24 @@
 <?php
 /**
- * Class collections.
- *
- * A repository for class objects, each registered with a key.
- *
- * PHP 5
- *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.Utility
  * @since         CakePHP(tm) v 0.9.2
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
+
+/**
+ * Included libraries.
+ */
+App::uses('Model', 'Model');
+App::uses('AppModel', 'Model');
+App::uses('ConnectionManager', 'Model');
 
 /**
  * Class Collections.
@@ -84,11 +85,12 @@ class ClassRegistry {
  *		array('class' => 'ClassName', 'alias' => 'AliasNameStoredInTheRegistry')
  * );
  * }}}
- * @param mixed $class as a string or a single key => value array instance will be created,
+ * @param string|array $class as a string or a single key => value array instance will be created,
  *  stored in the registry and returned.
  * @param boolean $strict if set to true it will return false if the class was not found instead
  *	of trying to create an AppModel
- * @return object instance of ClassName
+ * @return object instance of ClassName.
+ * @throws CakeException when you try to construct an interface or abstract class.
  */
 	public static function init($class, $strict = false) {
 		$_this = ClassRegistry::getInstance();
@@ -105,6 +107,7 @@ class ClassRegistry {
 		}
 		$defaults = isset($_this->_config['Model']) ? $_this->_config['Model'] : array();
 		$count = count($objects);
+		$availableDs = array_keys(ConnectionManager::enumConnectionObjects());
 
 		foreach ($objects as $key => $settings) {
 			if (is_array($settings)) {
@@ -127,13 +130,33 @@ class ClassRegistry {
 					return $model;
 				}
 
-				App::uses('Model', 'Model');
-				App::uses('AppModel', 'Model');
 				App::uses($plugin . 'AppModel', $pluginPath . 'Model');
 				App::uses($class, $pluginPath . 'Model');
 
-				if (class_exists($class)) {
-					$instance = new $class($settings);
+				if (class_exists($class) || interface_exists($class)) {
+					$reflection = new ReflectionClass($class);
+					if ($reflection->isAbstract() || $reflection->isInterface()) {
+						throw new CakeException(__d('cake_dev', 'Cannot create instance of %s, as it is abstract or is an interface', $class));
+					}
+					$testing = isset($settings['testing']) ? $settings['testing'] : false;
+					if ($testing) {
+						$settings['ds'] = 'test';
+						$defaultProperties = $reflection->getDefaultProperties();
+						if (isset($defaultProperties['useDbConfig'])) {
+							$useDbConfig = $defaultProperties['useDbConfig'];
+							if (in_array('test_' . $useDbConfig, $availableDs)) {
+								$useDbConfig = 'test_' . $useDbConfig;
+							}
+							if (strpos($useDbConfig, 'test') === 0) {
+								$settings['ds'] = $useDbConfig;
+							}
+						}
+					}
+					if ($reflection->getConstructor()) {
+						$instance = $reflection->newInstance($settings);
+					} else {
+						$instance = $reflection->newInstance();
+					}
 					if ($strict) {
 						$instance = ($instance instanceof Model) ? $instance : null;
 					}
@@ -152,7 +175,7 @@ class ClassRegistry {
 					}
 
 					if (!isset($instance)) {
-						trigger_error(__d('cake_dev', '(ClassRegistry::init() could not create instance of %1$s class %2$s ', $class, $type), E_USER_WARNING);
+						trigger_error(__d('cake_dev', '(ClassRegistry::init() could not create instance of %s', $class), E_USER_WARNING);
 						return $false;
 					}
 				}
@@ -172,8 +195,8 @@ class ClassRegistry {
 /**
  * Add $object to the registry, associating it with the name $key.
  *
- * @param string $key	Key for the object in registry
- * @param mixed $object	Object to store
+ * @param string $key		Key for the object in registry
+ * @param object $object	Object to store
  * @return boolean True if the object was written, false if $key already exists
  */
 	public static function addObject($key, $object) {
@@ -268,6 +291,9 @@ class ClassRegistry {
 		} elseif (empty($param) && is_string($type)) {
 			return isset($_this->_config[$type]) ? $_this->_config[$type] : null;
 		}
+		if (isset($_this->_config[$type]['testing'])) {
+			$param['testing'] = true;
+		}
 		$_this->_config[$type] = $param;
 	}
 
@@ -338,4 +364,5 @@ class ClassRegistry {
 		$_this->_objects = array();
 		$_this->_map = array();
 	}
+
 }

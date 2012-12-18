@@ -9,19 +9,23 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @since         CakePHP(tm) v 1.2.0.4933
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
 
 /**
- * File Storage engine for cache
+ * File Storage engine for cache.  Filestorage is the slowest cache storage
+ * to read and write.  However, it is good for servers that don't have other storage
+ * engine available, or have content which is not performance sensitive.
+ *
+ * You can configure a FileEngine cache, using Cache::config()
  *
  * @package       Cake.Cache.Engine
  */
@@ -64,13 +68,16 @@ class FileEngine extends CacheEngine {
  * @return boolean True if the engine has been successfully initialized, false if not
  */
 	public function init($settings = array()) {
-		parent::init(array_merge(
-			array(
-				'engine' => 'File', 'path' => CACHE, 'prefix'=> 'cake_', 'lock'=> true,
-				'serialize'=> true, 'isWindows' => false, 'mask' => 0664
-			),
-			$settings
-		));
+		$settings += array(
+			'engine' => 'File',
+			'path' => CACHE,
+			'prefix' => 'cake_',
+			'lock' => true,
+			'serialize' => true,
+			'isWindows' => false,
+			'mask' => 0664
+		);
+		parent::init($settings);
 
 		if (DS === '\\') {
 			$this->settings['isWindows'] = true;
@@ -78,15 +85,19 @@ class FileEngine extends CacheEngine {
 		if (substr($this->settings['path'], -1) !== DS) {
 			$this->settings['path'] .= DS;
 		}
+		if (!empty($this->_groupPrefix)) {
+			$this->_groupPrefix = str_replace('_', DS, $this->_groupPrefix);
+		}
 		return $this->_active();
 	}
 
 /**
  * Garbage collection. Permanently remove all expired and deleted data
  *
- * @return boolean True if garbage collection was succesful, false on failure
+ * @param integer $expires [optional] An expires timestamp, invalidataing all data before.
+ * @return boolean True if garbage collection was successful, false on failure
  */
-	public function gc() {
+	public function gc($expires = null) {
 		return $this->clear(true);
 	}
 
@@ -95,7 +106,7 @@ class FileEngine extends CacheEngine {
  *
  * @param string $key Identifier for the data
  * @param mixed $data Data to be cached
- * @param mixed $duration How long to cache the data, in seconds
+ * @param integer $duration How long to cache the data, in seconds
  * @return boolean True if the data was successfully cached, false on failure
  */
 	public function write($key, $data, $duration) {
@@ -125,14 +136,14 @@ class FileEngine extends CacheEngine {
 		$contents = $expires . $lineBreak . $data . $lineBreak;
 
 		if ($this->settings['lock']) {
-		    $this->_File->flock(LOCK_EX);
+			$this->_File->flock(LOCK_EX);
 		}
 
 		$this->_File->rewind();
 		$success = $this->_File->ftruncate(0) && $this->_File->fwrite($contents) && $this->_File->fflush();
 
 		if ($this->settings['lock']) {
-		    $this->_File->flock(LOCK_UN);
+			$this->_File->flock(LOCK_UN);
 		}
 
 		return $success;
@@ -273,14 +284,23 @@ class FileEngine extends CacheEngine {
 
 /**
  * Sets the current cache key this class is managing, and creates a writable SplFileObject
- * for the cache file the key is refering to.
+ * for the cache file the key is referring to.
  *
  * @param string $key The key
  * @param boolean $createKey Whether the key should be created if it doesn't exists, or not
  * @return boolean true if the cache key could be set, false otherwise
  */
 	protected function _setKey($key, $createKey = false) {
-		$path = new SplFileInfo($this->settings['path'] . $key);
+		$groups = null;
+		if (!empty($this->_groupPrefix)) {
+			$groups = vsprintf($this->_groupPrefix, $this->groups());
+		}
+		$dir = $this->settings['path'] . $groups;
+
+		if (!is_dir($dir)) {
+			mkdir($dir, 0777, true);
+		}
+		$path = new SplFileInfo($dir . $key);
 
 		if (!$createKey && !$path->isFile()) {
 			return false;
@@ -295,7 +315,7 @@ class FileEngine extends CacheEngine {
 			}
 			unset($path);
 
-			if (!$exists && !chmod($this->_File->getPathname(), (int) $this->settings['mask'])) {
+			if (!$exists && !chmod($this->_File->getPathname(), (int)$this->settings['mask'])) {
 				trigger_error(__d(
 					'cake_dev', 'Could not apply permission mask "%s" on cache file "%s"',
 					array($this->_File->getPathname(), $this->settings['mask'])), E_USER_WARNING);
@@ -315,6 +335,38 @@ class FileEngine extends CacheEngine {
 			$this->_init = false;
 			trigger_error(__d('cake_dev', '%s is not writable', $this->settings['path']), E_USER_WARNING);
 			return false;
+		}
+		return true;
+	}
+
+/**
+ * Generates a safe key for use with cache engine storage engines.
+ *
+ * @param string $key the key passed over
+ * @return mixed string $key or false
+ */
+	public function key($key) {
+		if (empty($key)) {
+			return false;
+		}
+
+		$key = Inflector::underscore(str_replace(array(DS, '/', '.'), '_', strval($key)));
+		return $key;
+	}
+
+/**
+ * Recursively deletes all files under any directory named as $group
+ *
+ * @return boolean success
+ **/
+	public function clearGroup($group) {
+		$directoryIterator = new RecursiveDirectoryIterator($this->settings['path']);
+		$contents = new RecursiveIteratorIterator($directoryIterator, RecursiveIteratorIterator::CHILD_FIRST);
+		foreach ($contents as $object) {
+			$containsGroup = strpos($object->getPathName(), DS . $group . DS) !== false;
+			if ($object->isFile() && $containsGroup) {
+				unlink($object->getPathName());
+			}
 		}
 		return true;
 	}

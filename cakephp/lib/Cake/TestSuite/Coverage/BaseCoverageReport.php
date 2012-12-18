@@ -6,16 +6,23 @@
  * PHP5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.TestSuite.Coverage
  * @since         CakePHP(tm) v 2.0
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
+ */
+
+/**
+ * Abstract class for common CoverageReport methods.
+ * Provides several template methods for custom output.
+ *
+ * @package       Cake.TestSuite.Coverage
  */
 abstract class BaseCoverageReport {
 
@@ -57,7 +64,7 @@ abstract class BaseCoverageReport {
  */
 	public function __construct($coverage, CakeBaseReporter $reporter) {
 		$this->_rawCoverage = $coverage;
-		$this->setParams($reporter);
+		$this->_setParams($reporter);
 	}
 
 /**
@@ -66,7 +73,7 @@ abstract class BaseCoverageReport {
  * @param CakeBaseReporter $reporter Reporter to suck params out of.
  * @return void
  */
-	protected function setParams(CakeBaseReporter $reporter) {
+	protected function _setParams(CakeBaseReporter $reporter) {
 		if ($reporter->params['app']) {
 			$this->appTest = true;
 		}
@@ -145,7 +152,7 @@ abstract class BaseCoverageReport {
 			if (is_array($coverageData[$lineno]) && !empty($coverageData[$lineno])) {
 				$covered++;
 				$total++;
-			} else if ($coverageData[$lineno] === -1 || $coverageData[$lineno] === array()) {
+			} elseif ($coverageData[$lineno] === -1 || $coverageData[$lineno] === array()) {
 				$total++;
 			}
 		}

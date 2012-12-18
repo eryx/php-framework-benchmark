@@ -5,12 +5,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.View.Helper
  * @since         CakePHP(tm) v 1.1.7.3328
@@ -90,7 +90,7 @@ class SessionHelper extends AppHelper {
  * echo $this->Session->flash('flash', array('params' => array('name' => $user['User']['name'])));
  * }}}
  *
- * This would pass the current user's name into the flash message, so you could create peronsonalized
+ * This would pass the current user's name into the flash message, so you could create personalized
  * messages without the controller needing access to that data.
  *
  * Lastly you can choose the element that is rendered when creating the flash message. Using
@@ -100,7 +100,7 @@ class SessionHelper extends AppHelper {
  * echo $this->Session->flash('flash', array('element' => 'my_custom_element'));
  * }}}
  *
- * If you want to use an element from a plugin for rendering your flash message you can do that using the 
+ * If you want to use an element from a plugin for rendering your flash message you can do that using the
  * plugin param:
  *
  * {{{
@@ -154,8 +154,10 @@ class SessionHelper extends AppHelper {
  * Used to check is a session is valid in a view
  *
  * @return boolean
+ * @link http://book.cakephp.org/2.0/en/core-libraries/helpers/session.html#SessionHelper::valid
  */
 	public function valid() {
 		return CakeSession::valid();
 	}
+
 }

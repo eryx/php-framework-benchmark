@@ -5,21 +5,22 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.Network.Email
  * @since         CakePHP(tm) v 2.0.0
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
+
 App::uses('CakeSocket', 'Network');
 
 /**
- * SendEmail class
+ * Send mail using SMTP protocol
  *
  * @package       Cake.Network.Email
  */
@@ -167,7 +168,16 @@ class SmtpTransport extends AbstractTransport {
 
 		$headers = $this->_cakeEmail->getHeaders(array('from', 'sender', 'replyTo', 'readReceipt', 'returnPath', 'to', 'cc', 'subject'));
 		$headers = $this->_headersToString($headers);
-		$message = implode("\r\n", $this->_cakeEmail->message());
+		$lines = $this->_cakeEmail->message();
+		$messages = array();
+		foreach ($lines as $line) {
+			if ((!empty($line)) && ($line[0] === '.')) {
+				$messages[] = '.' . $line;
+			} else {
+				$messages[] = $line;
+			}
+		}
+		$message = implode("\r\n", $messages);
 		$this->_smtpSend($headers . "\r\n\r\n" . $message . "\r\n\r\n\r\n.");
 		$this->_content = array('headers' => $headers, 'message' => $message);
 	}
@@ -197,7 +207,7 @@ class SmtpTransport extends AbstractTransport {
  * Protected method for sending data to SMTP connection
  *
  * @param string $data data to be sent to SMTP server
- * @param mixed $checkCode code to check for in server response, false to skip
+ * @param string|boolean $checkCode code to check for in server response, false to skip
  * @return void
  * @throws SocketException
  */

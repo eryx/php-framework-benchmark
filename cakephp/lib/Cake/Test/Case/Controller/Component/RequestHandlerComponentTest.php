@@ -4,14 +4,14 @@
  *
  * PHP 5
  *
- * CakePHP(tm) Tests <http://book.cakephp.org/view/1196/Testing>
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) Tests <http://book.cakephp.org/2.0/en/development/testing.html>
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://book.cakephp.org/view/1196/Testing CakePHP(tm) Tests
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @link          http://book.cakephp.org/2.0/en/development/testing.html CakePHP(tm) Tests
  * @package       Cake.Test.Case.Controller.Component
  * @since         CakePHP(tm) v 1.2.0.5435
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
@@ -45,6 +45,7 @@ class RequestHandlerTestController extends Controller {
 		$this->viewPath = 'Posts';
 		$this->render('index');
 	}
+
 /**
  * test method for ajax redirection + parameter parsing
  *
@@ -66,6 +67,7 @@ class RequestHandlerTestController extends Controller {
 		}
 		$this->destination();
 	}
+
 }
 
 
@@ -97,7 +99,6 @@ class RequestHandlerComponentTest extends CakeTestCase {
  */
 	public function setUp() {
 		parent::setUp();
-		$this->_server = $_SERVER;
 		$this->_init();
 	}
 
@@ -106,7 +107,7 @@ class RequestHandlerComponentTest extends CakeTestCase {
  *
  * @return void
  */
-	function _init() {
+	protected function _init() {
 		$request = new CakeRequest('controller_posts/index');
 		$response = new CakeResponse();
 		$this->Controller = new RequestHandlerTestController($request, $response);
@@ -116,7 +117,7 @@ class RequestHandlerComponentTest extends CakeTestCase {
 	}
 
 /**
- * endTest method
+ * tearDown method
  *
  * @return void
  */
@@ -126,7 +127,6 @@ class RequestHandlerComponentTest extends CakeTestCase {
 		if (!headers_sent()) {
 			header('Content-type: text/html'); //reset content type.
 		}
-		$_SERVER = $this->_server;
 		call_user_func_array('Router::parseExtensions', $this->_extensions);
 	}
 
@@ -142,7 +142,7 @@ class RequestHandlerComponentTest extends CakeTestCase {
 		$Collection = new ComponentCollection();
 		$Collection->init($this->Controller);
 		$RequestHandler = new RequestHandlerComponent($Collection, $settings);
-		$this->assertEquals($RequestHandler->ajaxLayout, 'test_ajax');
+		$this->assertEquals('test_ajax', $RequestHandler->ajaxLayout);
 	}
 
 /**
@@ -154,7 +154,7 @@ class RequestHandlerComponentTest extends CakeTestCase {
 		$this->assertNull($this->RequestHandler->ext);
 		$this->Controller->request->params['ext'] = 'rss';
 		$this->RequestHandler->initialize($this->Controller);
-		$this->assertEquals($this->RequestHandler->ext, 'rss');
+		$this->assertEquals('rss', $this->RequestHandler->ext);
 	}
 
 /**
@@ -188,7 +188,7 @@ class RequestHandlerComponentTest extends CakeTestCase {
 
 /**
  * Test that RequestHandler sets $this->ext when jQuery sends its wonky-ish headers
- * and the application is configured to handle multiplate extensions
+ * and the application is configured to handle multiple extensions
  *
  * @return void
  */
@@ -202,7 +202,7 @@ class RequestHandlerComponentTest extends CakeTestCase {
 	}
 
 /**
- * Test that RequestHandler does not set $this->ext when multple accepts are sent.
+ * Test that RequestHandler does not set $this->ext when multiple accepts are sent.
  *
  * @return void
  */
@@ -228,7 +228,7 @@ class RequestHandlerComponentTest extends CakeTestCase {
 		$this->RequestHandler->initialize($this->Controller);
 		$this->assertNull($this->RequestHandler->ext);
 	}
-	
+
 /**
  * Test that ext is not set with confusing android accepts headers.
  *
@@ -275,7 +275,7 @@ class RequestHandlerComponentTest extends CakeTestCase {
 		$this->RequestHandler->initialize($this->Controller);
 		$this->Controller->beforeFilter();
 		$this->RequestHandler->startup($this->Controller);
-		$this->assertEquals($this->Controller->params['isAjax'], true);
+		$this->assertEquals(true, $this->Controller->params['isAjax']);
 	}
 
 /**
@@ -288,9 +288,8 @@ class RequestHandlerComponentTest extends CakeTestCase {
 		$this->Controller->request->params['ext'] = 'rss';
 		$this->RequestHandler->initialize($this->Controller);
 		$this->RequestHandler->startup($this->Controller);
-		$this->assertEquals($this->Controller->ext, '.ctp');
+		$this->assertEquals('.ctp', $this->Controller->ext);
 	}
-
 
 /**
  * testAutoAjaxLayout method
@@ -306,7 +305,7 @@ class RequestHandlerComponentTest extends CakeTestCase {
 		$this->Controller->request->params['ext'] = 'js';
 		$this->RequestHandler->initialize($this->Controller);
 		$this->RequestHandler->startup($this->Controller);
-		$this->assertNotEquals($this->Controller->layout, 'ajax');
+		$this->assertNotEquals('ajax', $this->Controller->layout);
 
 		unset($_SERVER['HTTP_X_REQUESTED_WITH']);
 	}
@@ -385,7 +384,7 @@ class RequestHandlerComponentTest extends CakeTestCase {
 
 		$this->Controller->viewPath = 'request_handler_test\\rss';
 		$this->RequestHandler->renderAs($this->Controller, 'js');
-		$this->assertEquals($this->Controller->viewPath, 'request_handler_test' . DS . 'js');
+		$this->assertEquals('request_handler_test' . DS . 'js', $this->Controller->viewPath);
 	}
 
 /**
@@ -412,8 +411,7 @@ class RequestHandlerComponentTest extends CakeTestCase {
 
 		$this->RequestHandler->renderAs($this->Controller, 'xml', array('attachment' => 'myfile.xml'));
 
-		$expected = 'RequestHandlerTest' . DS . 'xml';
-		$this->assertEquals($expected, $this->Controller->viewPath);
+		$this->assertEquals('Xml', $this->Controller->viewClass);
 	}
 
 /**
@@ -428,7 +426,6 @@ class RequestHandlerComponentTest extends CakeTestCase {
 		$this->RequestHandler->response->expects($this->at(1))->method('type')
 			->with('text/xml');
 
-		$RequestHandler = $this->getMock('RequestHandlerComponent', array('_header'), array(&$this->Controller->Components));
 		$result = $this->RequestHandler->respondAs('json');
 		$this->assertTrue($result);
 		$result = $this->RequestHandler->respondAs('text/xml');
@@ -469,13 +466,13 @@ class RequestHandlerComponentTest extends CakeTestCase {
  * @return void
  */
 	public function testRenderAsCalledTwice() {
-		$this->RequestHandler->renderAs($this->Controller, 'xml');
-		$this->assertEquals($this->Controller->viewPath, 'RequestHandlerTest' . DS . 'xml');
-		$this->assertEquals($this->Controller->layoutPath, 'xml');
+		$this->RequestHandler->renderAs($this->Controller, 'print');
+		$this->assertEquals('RequestHandlerTest' . DS . 'print', $this->Controller->viewPath);
+		$this->assertEquals('print', $this->Controller->layoutPath);
 
 		$this->RequestHandler->renderAs($this->Controller, 'js');
-		$this->assertEquals($this->Controller->viewPath, 'RequestHandlerTest' . DS . 'js');
-		$this->assertEquals($this->Controller->layoutPath, 'js');
+		$this->assertEquals('RequestHandlerTest' . DS . 'js', $this->Controller->viewPath);
+		$this->assertEquals('js', $this->Controller->layoutPath);
 		$this->assertTrue(in_array('Js', $this->Controller->helpers));
 	}
 
@@ -486,7 +483,7 @@ class RequestHandlerComponentTest extends CakeTestCase {
  */
 	public function testRequestClientTypes() {
 		$_SERVER['HTTP_X_PROTOTYPE_VERSION'] = '1.5';
-		$this->assertEquals($this->RequestHandler->getAjaxVersion(), '1.5');
+		$this->assertEquals('1.5', $this->RequestHandler->getAjaxVersion());
 
 		unset($_SERVER['HTTP_X_REQUESTED_WITH'], $_SERVER['HTTP_X_PROTOTYPE_VERSION']);
 		$this->assertFalse($this->RequestHandler->getAjaxVersion());
@@ -518,12 +515,12 @@ class RequestHandlerComponentTest extends CakeTestCase {
 
 		$_SERVER['REQUEST_METHOD'] = 'POST';
 		$_SERVER['CONTENT_TYPE'] = 'application/json';
-		$this->assertEquals($this->RequestHandler->requestedWith(), 'json');
+		$this->assertEquals('json', $this->RequestHandler->requestedWith());
 
 		$result = $this->RequestHandler->requestedWith(array('json', 'xml'));
-		$this->assertEquals($result, 'json');
+		$this->assertEquals('json', $result);
 
-		$result =$this->RequestHandler->requestedWith(array('rss', 'atom'));
+		$result = $this->RequestHandler->requestedWith(array('rss', 'atom'));
 		$this->assertFalse($result);
 
 		$_SERVER['HTTP_ACCEPT'] = 'text/xml,application/xml,application/xhtml+xml,text/html,text/plain,image/png,*/*';
@@ -554,7 +551,7 @@ class RequestHandlerComponentTest extends CakeTestCase {
 	public function testResponseContentType() {
 		$this->assertEquals('html', $this->RequestHandler->responseType());
 		$this->assertTrue($this->RequestHandler->respondAs('atom'));
-		$this->assertEquals($this->RequestHandler->responseType(), 'atom');
+		$this->assertEquals('atom', $this->RequestHandler->responseType());
 	}
 
 /**
@@ -658,22 +655,22 @@ class RequestHandlerComponentTest extends CakeTestCase {
  */
 	public function testPrefers() {
 		$_SERVER['HTTP_ACCEPT'] = 'text/xml,application/xml,application/xhtml+xml,text/html,text/plain,image/png,*/*';
-		$this->assertNotEquals($this->RequestHandler->prefers(), 'rss');
+		$this->assertNotEquals('rss', $this->RequestHandler->prefers());
 		$this->RequestHandler->ext = 'rss';
-		$this->assertEquals($this->RequestHandler->prefers(), 'rss');
+		$this->assertEquals('rss', $this->RequestHandler->prefers());
 		$this->assertFalse($this->RequestHandler->prefers('xml'));
-		$this->assertEquals($this->RequestHandler->prefers(array('js', 'xml', 'xhtml')), 'xml');
+		$this->assertEquals('xml', $this->RequestHandler->prefers(array('js', 'xml', 'xhtml')));
 		$this->assertFalse($this->RequestHandler->prefers(array('red', 'blue')));
-		$this->assertEquals($this->RequestHandler->prefers(array('js', 'json', 'xhtml')), 'xhtml');
+		$this->assertEquals('xhtml', $this->RequestHandler->prefers(array('js', 'json', 'xhtml')));
 		$this->assertTrue($this->RequestHandler->prefers(array('rss')), 'Should return true if input matches ext.');
 		$this->assertFalse($this->RequestHandler->prefers(array('html')), 'No match with ext, return false.');
 
 		$_SERVER['HTTP_ACCEPT'] = 'text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5';
 		$this->_init();
-		$this->assertEquals($this->RequestHandler->prefers(), 'xml');
+		$this->assertEquals('xml', $this->RequestHandler->prefers());
 
 		$_SERVER['HTTP_ACCEPT'] = '*/*;q=0.5';
-		$this->assertEquals($this->RequestHandler->prefers(), 'html');
+		$this->assertEquals('html', $this->RequestHandler->prefers());
 		$this->assertFalse($this->RequestHandler->prefers('rss'));
 	}
 
@@ -686,7 +683,7 @@ class RequestHandlerComponentTest extends CakeTestCase {
 		$_SERVER['HTTP_ACCEPT'] = 'text/x-mobile,text/html;q=0.9,text/plain;q=0.8,*/*;q=0.5';
 		$this->RequestHandler->setContent('mobile', 'text/x-mobile');
 		$this->RequestHandler->startup($this->Controller);
-		$this->assertEquals($this->RequestHandler->prefers(), 'mobile');
+		$this->assertEquals('mobile', $this->RequestHandler->prefers());
 	}
 
 /**
@@ -712,8 +709,8 @@ class RequestHandlerComponentTest extends CakeTestCase {
  */
 	public function testAjaxRedirectAsRequestAction() {
 		App::build(array(
-			'View' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'View'. DS)
-		), true);
+			'View' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'View' . DS)
+		), App::RESET);
 
 		$this->Controller->RequestHandler = $this->getMock('RequestHandlerComponent', array('_stop'), array(&$this->Controller->Components));
 		$this->Controller->request = $this->getMock('CakeRequest');
@@ -741,8 +738,8 @@ class RequestHandlerComponentTest extends CakeTestCase {
  */
 	public function testAjaxRedirectAsRequestActionStillRenderingLayout() {
 		App::build(array(
-			'View' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'View'. DS)
-		), true);
+			'View' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'View' . DS)
+		), App::RESET);
 
 		$this->Controller->RequestHandler = $this->getMock('RequestHandlerComponent', array('_stop'), array(&$this->Controller->Components));
 		$this->Controller->request = $this->getMock('CakeRequest');
@@ -790,7 +787,7 @@ class RequestHandlerComponentTest extends CakeTestCase {
 			array('controller' => 'request_handler_test', 'action' => 'param_method', 'first', 'second')
 		);
 		$result = ob_get_clean();
-		$this->assertEquals($result, 'one: first two: second');
+		$this->assertEquals('one: first two: second', $result);
 	}
 
 /**
@@ -822,5 +819,61 @@ class RequestHandlerComponentTest extends CakeTestCase {
  */
 	public function testAddInputTypeException() {
 		$this->RequestHandler->addInputType('csv', array('I am not callable'));
+	}
+
+/**
+ * Test checkNotModified method
+ *
+ * @return void
+ **/
+	public function testCheckNotModifiedByEtagStar() {
+		$_SERVER['HTTP_IF_NONE_MATCH'] = '*';
+		$RequestHandler = $this->getMock('RequestHandlerComponent', array('_stop'), array(&$this->Controller->Components));
+		$RequestHandler->response = $this->getMock('CakeResponse', array('notModified'));
+		$RequestHandler->response->etag('something');
+		$RequestHandler->response->expects($this->once())->method('notModified');
+		$this->assertFalse($RequestHandler->beforeRender($this->Controller));
+	}
+
+/**
+ * Test checkNotModified method
+ *
+ * @return void
+ **/
+	public function testCheckNotModifiedByEtagExact() {
+		$_SERVER['HTTP_IF_NONE_MATCH'] = 'W/"something", "other"';
+		$RequestHandler = $this->getMock('RequestHandlerComponent', array('_stop'), array(&$this->Controller->Components));
+		$RequestHandler->response = $this->getMock('CakeResponse', array('notModified'));
+		$RequestHandler->response->etag('something', true);
+		$RequestHandler->response->expects($this->once())->method('notModified');
+		$this->assertFalse($RequestHandler->beforeRender($this->Controller));
+	}
+
+/**
+ * Test checkNotModified method
+ *
+ * @return void
+ **/
+	public function testCheckNotModifiedByEtagAndTime() {
+		$_SERVER['HTTP_IF_NONE_MATCH'] = 'W/"something", "other"';
+		$_SERVER['HTTP_IF_MODIFIED_SINCE'] = '2012-01-01 00:00:00';
+		$RequestHandler = $this->getMock('RequestHandlerComponent', array('_stop'), array(&$this->Controller->Components));
+		$RequestHandler->response = $this->getMock('CakeResponse', array('notModified'));
+		$RequestHandler->response->etag('something', true);
+		$RequestHandler->response->modified('2012-01-01 00:00:00');
+		$RequestHandler->response->expects($this->once())->method('notModified');
+		$this->assertFalse($RequestHandler->beforeRender($this->Controller));
+	}
+
+/**
+ * Test checkNotModified method
+ *
+ * @return void
+ **/
+	public function testCheckNotModifiedNoInfo() {
+		$RequestHandler = $this->getMock('RequestHandlerComponent', array('_stop'), array(&$this->Controller->Components));
+		$RequestHandler->response = $this->getMock('CakeResponse', array('notModified'));
+		$RequestHandler->response->expects($this->never())->method('notModified');
+		$this->assertNull($RequestHandler->beforeRender($this->Controller));
 	}
 }

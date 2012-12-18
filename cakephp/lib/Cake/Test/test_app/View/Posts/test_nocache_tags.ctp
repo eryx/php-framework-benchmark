@@ -4,12 +4,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       cake.libs.view.templates.pages
  * @since         CakePHP(tm) v 0.10.0.1076
@@ -43,6 +43,9 @@
 
 				echo 'Settings: <ul>';
 				foreach ($settings as $name => $value):
+					if (is_array($value)):
+						$value = join(',', $value);
+					endif;
 					echo '<li>' . $name . ': ' . $value . '</li>';
 				endforeach;
 				echo '</ul>';
@@ -75,9 +78,7 @@
 </p>
 <?php
 if (!empty($filePresent)):
-	if (!class_exists('ConnectionManager')) {
-		require CAKE . 'model' . DS . 'connection_manager.php';
-	}
+	App::uses('ConnectionManager', 'Model');
  	$connected = ConnectionManager::getDataSource('default');
 ?>
 <p>

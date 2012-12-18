@@ -4,14 +4,14 @@
  *
  * PHP 5
  *
- * CakePHP(tm) Tests <http://book.cakephp.org/view/1196/Testing>
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) Tests <http://book.cakephp.org/2.0/en/development/testing.html>
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://book.cakephp.org/view/1196/Testing CakePHP(tm) Tests
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @link          http://book.cakephp.org/2.0/en/development/testing.html CakePHP(tm) Tests
  * @package       Cake.Test.Case.Model
  * @since         CakePHP(tm) v 1.2.0.4206
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
@@ -41,6 +41,7 @@ abstract class BaseModelTest extends CakeTestCase {
  * @var bool false
  */
 	public $backupGlobals = false;
+
 /**
  * fixtures property
  *
@@ -50,7 +51,7 @@ abstract class BaseModelTest extends CakeTestCase {
 		'core.category', 'core.category_thread', 'core.user', 'core.my_category', 'core.my_product',
 		'core.my_user', 'core.my_categories_my_users', 'core.my_categories_my_products',
 		'core.article', 'core.featured', 'core.article_featureds_tags', 'core.article_featured',
-		'core.articles', 'core.numeric_article', 'core.tag', 'core.articles_tag', 'core.comment',
+		'core.numeric_article', 'core.tag', 'core.articles_tag', 'core.comment',
 		'core.attachment', 'core.apple', 'core.sample', 'core.another_article', 'core.item',
 		'core.advertisement', 'core.home', 'core.post', 'core.author', 'core.bid', 'core.portfolio',
 		'core.product', 'core.project', 'core.thread', 'core.message', 'core.items_portfolio',
@@ -67,7 +68,9 @@ abstract class BaseModelTest extends CakeTestCase {
 		'core.counter_cache_user_nonstandard_primary_key',
 		'core.counter_cache_post_nonstandard_primary_key', 'core.uuidportfolio',
 		'core.uuiditems_uuidportfolio', 'core.uuiditems_uuidportfolio_numericid', 'core.fruit',
-		'core.fruits_uuid_tag', 'core.uuid_tag', 'core.product_update_all', 'core.group_update_all'
+		'core.fruits_uuid_tag', 'core.uuid_tag', 'core.product_update_all', 'core.group_update_all',
+		'core.player', 'core.guild', 'core.guilds_player', 'core.armor', 'core.armors_player',
+		'core.bidding', 'core.bidding_message', 'core.site', 'core.domain', 'core.domains_site',
 	);
 
 /**

@@ -5,12 +5,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.Test.Case.Controller.Component.Auth
  * @since         CakePHP(tm) v 2.0
@@ -26,7 +26,7 @@ App::uses('CakeResponse', 'Network');
 class ActionsAuthorizeTest extends CakeTestCase {
 
 /**
- * setup
+ * setUp
  *
  * @return void
  */
@@ -75,7 +75,7 @@ class ActionsAuthorizeTest extends CakeTestCase {
 
 		$this->Acl->expects($this->once())
 			->method('check')
-			->with($user, '/controllers/Posts/index')
+			->with($user, 'controllers/Posts/index')
 			->will($this->returnValue(false));
 
 		$this->assertFalse($this->auth->authorize($user['User'], $request));
@@ -104,10 +104,40 @@ class ActionsAuthorizeTest extends CakeTestCase {
 
 		$this->Acl->expects($this->once())
 			->method('check')
-			->with($user, '/controllers/Posts/index')
+			->with($user, 'controllers/Posts/index')
 			->will($this->returnValue(true));
 
 		$this->assertTrue($this->auth->authorize($user['User'], $request));
+	}
+
+/**
+ * testAuthorizeSettings
+ *
+ * @return void
+ */
+	public function testAuthorizeSettings() {
+		$request = new CakeRequest('/posts/index', false);
+		$request->addParams(array(
+			'plugin' => null,
+			'controller' => 'posts',
+			'action' => 'index'
+		));
+
+		$this->_mockAcl();
+
+		$this->auth->settings['userModel'] = 'TestPlugin.TestPluginAuthUser';
+		$user = array(
+			'id' => 1,
+			'user' => 'mariano'
+		);
+
+		$expected = array('TestPlugin.TestPluginAuthUser' => array('id' => 1, 'user' => 'mariano'));
+		$this->Acl->expects($this->once())
+			->method('check')
+			->with($expected, 'controllers/Posts/index')
+			->will($this->returnValue(true));
+
+		$this->assertTrue($this->auth->authorize($user, $request));
 	}
 
 /**
@@ -124,8 +154,23 @@ class ActionsAuthorizeTest extends CakeTestCase {
 		));
 
 		$result = $this->auth->action($request);
+		$this->assertEquals('controllers/Posts/index', $result);
+	}
 
-		$this->assertEquals('/controllers/Posts/index', $result);
+/**
+ * Make sure that action() doesn't create double slashes anywhere.
+ *
+ * @return void
+ */
+	public function testActionNoDoubleSlash() {
+		$this->auth->settings['actionPath'] = '/controllers/';
+		$request = array(
+			'plugin' => null,
+			'controller' => 'posts',
+			'action' => 'index'
+		);
+		$result = $this->auth->action($request);
+		$this->assertEquals('controllers/Posts/index', $result);
 	}
 
 /**
@@ -142,6 +187,6 @@ class ActionsAuthorizeTest extends CakeTestCase {
 		));
 
 		$result = $this->auth->action($request);
-		$this->assertEquals('/controllers/DebugKit/Posts/index', $result);
+		$this->assertEquals('controllers/DebugKit/Posts/index', $result);
 	}
 }

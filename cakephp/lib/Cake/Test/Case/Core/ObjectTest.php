@@ -4,14 +4,14 @@
  *
  * PHP 5
  *
- * CakePHP(tm) Tests <http://book.cakephp.org/view/1196/Testing>
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) Tests <http://book.cakephp.org/2.0/en/development/testing.html>
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://book.cakephp.org/view/1196/Testing CakePHP(tm) Tests
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @link          http://book.cakephp.org/2.0/en/development/testing.html CakePHP(tm) Tests
  * @package       Cake.Test.Case.Core
  * @since         CakePHP(tm) v 1.2.0.5432
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
@@ -52,31 +52,31 @@ class RequestActionPost extends CakeTestModel {
 class RequestActionController extends Controller {
 
 /**
-* uses property
-*
-* @var array
-* @access public
-*/
+ * uses property
+ *
+ * @var array
+ * @access public
+ */
 	public $uses = array('RequestActionPost');
 
 /**
-* test_request_action method
-*
-* @access public
-* @return void
-*/
+ * test_request_action method
+ *
+ * @access public
+ * @return void
+ */
 	public function test_request_action() {
 		return 'This is a test';
 	}
 
 /**
-* another_ra_test method
-*
-* @param mixed $id
-* @param mixed $other
-* @access public
-* @return void
-*/
+ * another_ra_test method
+ *
+ * @param mixed $id
+ * @param mixed $other
+ * @access public
+ * @return void
+ */
 	public function another_ra_test($id, $other) {
 		return $id + $other;
 	}
@@ -135,8 +135,8 @@ class RequestActionController extends Controller {
 		}
 		$this->response->body($content);
 	}
-}
 
+}
 
 /**
  * TestObject class
@@ -189,64 +189,66 @@ class TestObject extends Object {
  * twoParamMethod method
  *
  * @param mixed $param
- * @param mixed $param2
+ * @param mixed $paramTwo
  * @return void
  */
-	public function twoParamMethod($param, $param2) {
-		$this->methodCalls[] = array('twoParamMethod' => array($param, $param2));
+	public function twoParamMethod($param, $paramTwo) {
+		$this->methodCalls[] = array('twoParamMethod' => array($param, $paramTwo));
 	}
 
 /**
  * threeParamMethod method
  *
  * @param mixed $param
- * @param mixed $param2
- * @param mixed $param3
+ * @param mixed $paramTwo
+ * @param mixed $paramThree
  * @return void
  */
-	public function threeParamMethod($param, $param2, $param3) {
-		$this->methodCalls[] = array('threeParamMethod' => array($param, $param2, $param3));
+	public function threeParamMethod($param, $paramTwo, $paramThree) {
+		$this->methodCalls[] = array('threeParamMethod' => array($param, $paramTwo, $paramThree));
 	}
-	/**
+
+/**
  * fourParamMethod method
  *
  * @param mixed $param
- * @param mixed $param2
- * @param mixed $param3
- * @param mixed $param4
+ * @param mixed $paramTwo
+ * @param mixed $paramThree
+ * @param mixed $paramFour
  * @return void
  */
-	public function fourParamMethod($param, $param2, $param3, $param4) {
-		$this->methodCalls[] = array('fourParamMethod' => array($param, $param2, $param3, $param4));
+	public function fourParamMethod($param, $paramTwo, $paramThree, $paramFour) {
+		$this->methodCalls[] = array('fourParamMethod' => array($param, $paramTwo, $paramThree, $paramFour));
 	}
-	/**
+
+/**
  * fiveParamMethod method
  *
  * @param mixed $param
- * @param mixed $param2
- * @param mixed $param3
- * @param mixed $param4
- * @param mixed $param5
+ * @param mixed $paramTwo
+ * @param mixed $paramThree
+ * @param mixed $paramFour
+ * @param mixed $paramFive
  * @return void
  */
-	public function fiveParamMethod($param, $param2, $param3, $param4, $param5) {
-		$this->methodCalls[] = array('fiveParamMethod' => array($param, $param2, $param3, $param4, $param5));
+	public function fiveParamMethod($param, $paramTwo, $paramThree, $paramFour, $paramFive) {
+		$this->methodCalls[] = array('fiveParamMethod' => array($param, $paramTwo, $paramThree, $paramFour, $paramFive));
 	}
 
 /**
  * crazyMethod method
  *
  * @param mixed $param
- * @param mixed $param2
- * @param mixed $param3
- * @param mixed $param4
- * @param mixed $param5
- * @param mixed $param6
- * @param mixed $param7
+ * @param mixed $paramTwo
+ * @param mixed $paramThree
+ * @param mixed $paramFour
+ * @param mixed $paramFive
+ * @param mixed $paramSix
+ * @param mixed $paramSeven
  * @return void
  */
-	public function crazyMethod($param, $param2, $param3, $param4, $param5, $param6, $param7 = null) {
-		$this->methodCalls[] = array('crazyMethod' => array($param, $param2, $param3, $param4, $param5, $param6, $param7));
+	public function crazyMethod($param, $paramTwo, $paramThree, $paramFour, $paramFive, $paramSix, $paramSeven = null) {
+		$this->methodCalls[] = array('crazyMethod' => array($param, $paramTwo, $paramThree, $paramFour, $paramFive, $paramSix, $paramSeven));
 	}
 
 /**
@@ -267,6 +269,7 @@ class TestObject extends Object {
 	public function set($properties = array()) {
 		return parent::_set($properties);
 	}
+
 }
 
 /**
@@ -275,8 +278,11 @@ class TestObject extends Object {
  * @package       Cake.Test.Case.Core
  */
 class ObjectTestModel extends CakeTestModel {
+
 	public $useTable = false;
+
 	public $name = 'ObjectTestModel';
+
 }
 
 /**
@@ -299,6 +305,7 @@ class ObjectTest extends CakeTestCase {
  * @return void
  */
 	public function setUp() {
+		parent::setUp();
 		$this->object = new TestObject();
 	}
 
@@ -308,7 +315,7 @@ class ObjectTest extends CakeTestCase {
  * @return void
  */
 	public function tearDown() {
-		App::build();
+		parent::tearDown();
 		CakePlugin::unload();
 		unset($this->object);
 	}
@@ -350,17 +357,17 @@ class ObjectTest extends CakeTestCase {
  */
 	public function testSet() {
 		$this->object->set('a string');
-		$this->assertEquals($this->object->firstName, 'Joel');
+		$this->assertEquals('Joel', $this->object->firstName);
 
 		$this->object->set(array('firstName'));
-		$this->assertEquals($this->object->firstName, 'Joel');
+		$this->assertEquals('Joel', $this->object->firstName);
 
 		$this->object->set(array('firstName' => 'Ashley'));
-		$this->assertEquals($this->object->firstName, 'Ashley');
+		$this->assertEquals('Ashley', $this->object->firstName);
 
 		$this->object->set(array('firstName' => 'Joel', 'lastName' => 'Moose'));
-		$this->assertEquals($this->object->firstName, 'Joel');
-		$this->assertEquals($this->object->lastName, 'Moose');
+		$this->assertEquals('Joel', $this->object->firstName);
+		$this->assertEquals('Moose', $this->object->lastName);
 	}
 
 /**
@@ -370,7 +377,7 @@ class ObjectTest extends CakeTestCase {
  */
 	public function testToString() {
 		$result = strtolower($this->object->toString());
-		$this->assertEquals($result, 'testobject');
+		$this->assertEquals('testobject', $result);
 	}
 
 /**
@@ -446,16 +453,20 @@ class ObjectTest extends CakeTestCase {
  */
 	public function testRequestAction() {
 		App::build(array(
-			'models' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'Model' . DS),
-			'views' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'View' . DS),
-			'controllers' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'Controller' . DS)
-		), true);
+			'Model' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'Model' . DS),
+			'View' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'View' . DS),
+			'Controller' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'Controller' . DS)
+		), App::RESET);
 		$this->assertNull(Router::getRequest(), 'request stack should be empty.');
 
 		$result = $this->object->requestAction('');
 		$this->assertFalse($result);
 
 		$result = $this->object->requestAction('/request_action/test_request_action');
+		$expected = 'This is a test';
+		$this->assertEquals($expected, $result);
+
+		$result = $this->object->requestAction(FULL_BASE_URL . '/request_action/test_request_action');
 		$expected = 'This is a test';
 		$this->assertEquals($expected, $result);
 
@@ -488,8 +499,8 @@ class ObjectTest extends CakeTestCase {
  */
 	public function testRequestActionPlugins() {
 		App::build(array(
-			'plugins' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'Plugin' . DS),
-		), true);
+			'Plugin' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'Plugin' . DS),
+		), App::RESET);
 		CakePlugin::load('TestPlugin');
 		Router::reload();
 
@@ -525,12 +536,12 @@ class ObjectTest extends CakeTestCase {
  */
 	public function testRequestActionArray() {
 		App::build(array(
-			'models' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'Model' . DS),
-			'views' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'View' . DS),
-			'controllers' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'Controller' . DS),
-			'plugins' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'Plugin'. DS)
-		), true);
-		CakePlugin::loadAll();
+			'Model' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'Model' . DS),
+			'View' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'View' . DS),
+			'Controller' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'Controller' . DS),
+			'Plugin' => array(CAKE . 'Test' . DS . 'test_app' . DS . 'Plugin' . DS)
+		), App::RESET);
+		CakePlugin::load(array('TestPlugin'));
 
 		$result = $this->object->requestAction(
 			array('controller' => 'request_action', 'action' => 'test_request_action')
@@ -592,20 +603,38 @@ class ObjectTest extends CakeTestCase {
  */
 	public function testRequestActionParamParseAndPass() {
 		$result = $this->object->requestAction('/request_action/params_pass');
-		$this->assertEquals($result->url, 'request_action/params_pass');
-		$this->assertEquals($result['controller'], 'request_action');
-		$this->assertEquals($result['action'], 'params_pass');
-		$this->assertEquals($result['plugin'], null);
+		$this->assertEquals('request_action/params_pass', $result->url);
+		$this->assertEquals('request_action', $result['controller']);
+		$this->assertEquals('params_pass', $result['action']);
+		$this->assertEquals(null, $result['plugin']);
 
 		$result = $this->object->requestAction('/request_action/params_pass/sort:desc/limit:5');
 		$expected = array('sort' => 'desc', 'limit' => 5,);
-		$this->assertEquals($result['named'], $expected);
+		$this->assertEquals($expected, $result['named']);
 
 		$result = $this->object->requestAction(
 			array('controller' => 'request_action', 'action' => 'params_pass'),
 			array('named' => array('sort' => 'desc', 'limit' => 5))
 		);
-		$this->assertEquals($result['named'], $expected);
+		$this->assertEquals($expected, $result['named']);
+	}
+
+/**
+ * Test that requestAction handles get parameters correctly.
+ *
+ * @return void
+ */
+	public function testRequestActionGetParameters() {
+		$result = $this->object->requestAction(
+			'/request_action/params_pass?get=value&limit=5'
+		);
+		$this->assertEquals('value', $result->query['get']);
+
+		$result = $this->object->requestAction(
+			array('controller' => 'request_action', 'action' => 'params_pass'),
+			array('url' => array('get' => 'value', 'limit' => 5))
+		);
+		$this->assertEquals('value', $result->query['get']);
 	}
 
 /**
@@ -621,7 +650,6 @@ class ObjectTest extends CakeTestCase {
 			'item' => 'value'
 		));
 		$result = $this->object->requestAction(array('controller' => 'request_action', 'action' => 'post_pass'));
-		$expected = null;
 		$this->assertEmpty($result);
 
 		$result = $this->object->requestAction(

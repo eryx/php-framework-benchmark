@@ -5,12 +5,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @since         CakePHP(tm) v 1.2
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
@@ -133,7 +133,7 @@ class ViewTask extends BakeTask {
  * @return array Array of action names that should be baked
  */
 	protected function _methodsToBake() {
-		$methods =  array_diff(
+		$methods = array_diff(
 			array_map('strtolower', get_class_methods($this->controllerName . 'Controller')),
 			array_map('strtolower', get_class_methods('AppController'))
 		);
@@ -195,7 +195,7 @@ class ViewTask extends BakeTask {
  */
 	protected function _interactive() {
 		$this->hr();
-		$this->out(sprintf("Bake View\nPath: %s", $this->path));
+		$this->out(sprintf("Bake View\nPath: %s", $this->getPath()));
 		$this->hr();
 
 		$this->DbConfig->interactive = $this->Controller->interactive = $this->interactive = true;
@@ -215,9 +215,9 @@ class ViewTask extends BakeTask {
 		}
 
 		$prompt = __d('cake_console', "Would you like to create some CRUD views\n(index, add, view, edit) for this controller?\nNOTE: Before doing so, you'll need to create your controller\nand model classes (including associated models).");
-		$wannaDoScaffold = $this->in($prompt, array('y','n'), 'y');
+		$wannaDoScaffold = $this->in($prompt, array('y', 'n'), 'y');
 
-		$wannaDoAdmin = $this->in(__d('cake_console', "Would you like to create the views for admin routing?"), array('y','n'), 'n');
+		$wannaDoAdmin = $this->in(__d('cake_console', "Would you like to create the views for admin routing?"), array('y', 'n'), 'n');
 
 		if (strtolower($wannaDoScaffold) == 'y' || strtolower($wannaDoAdmin) == 'y') {
 			$vars = $this->_loadController();
@@ -292,7 +292,7 @@ class ViewTask extends BakeTask {
 		$pluralHumanName = $this->_pluralHumanName($this->controllerName);
 
 		return compact('modelClass', 'schema', 'primaryKey', 'displayField', 'singularVar', 'pluralVar',
-				'singularHumanName', 'pluralHumanName', 'fields','associations');
+				'singularHumanName', 'pluralHumanName', 'fields', 'associations');
 	}
 
 /**
@@ -330,7 +330,7 @@ class ViewTask extends BakeTask {
 		$this->out(__d('cake_console', 'Action Name:     %s', $action));
 		$this->out(__d('cake_console', 'Path:            %s', $this->getPath() . $this->controllerName . DS . Inflector::underscore($action) . ".ctp"));
 		$this->hr();
-		$looksGood = $this->in(__d('cake_console', 'Look okay?'), array('y','n'), 'y');
+		$looksGood = $this->in(__d('cake_console', 'Look okay?'), array('y', 'n'), 'y');
 		if (strtolower($looksGood) == 'y') {
 			$this->bake($action, ' ');
 			$this->_stop();
@@ -448,7 +448,7 @@ class ViewTask extends BakeTask {
  * @param Model $model
  * @return array $associations
  */
-	protected function _associations($model) {
+	protected function _associations(Model $model) {
 		$keys = array('belongsTo', 'hasOne', 'hasMany', 'hasAndBelongsToMany');
 		$associations = array();
 
@@ -459,9 +459,10 @@ class ViewTask extends BakeTask {
 				$associations[$type][$assocKey]['displayField'] = $model->{$assocKey}->displayField;
 				$associations[$type][$assocKey]['foreignKey'] = $assocData['foreignKey'];
 				$associations[$type][$assocKey]['controller'] = Inflector::pluralize(Inflector::underscore($modelClass));
-				$associations[$type][$assocKey]['fields'] =  array_keys($model->{$assocKey}->schema(true));
+				$associations[$type][$assocKey]['fields'] = array_keys($model->{$assocKey}->schema(true));
 			}
 		}
 		return $associations;
 	}
+
 }

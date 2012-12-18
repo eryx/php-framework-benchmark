@@ -1,24 +1,27 @@
 <?php
 /**
+ * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ *
+ * Licensed under The MIT License
+ * Redistributions of files must retain the above copyright notice.
+ *
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @link          http://cakephp.org CakePHP(tm) Project
+ * @since         CakePHP(tm) v 1.3
+ * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
+ */
+
+App::uses('Set', 'Utility');
+
+/**
  * A single Route used by the Router to connect requests to
  * parameter maps.
  *
  * Not normally created as a standalone.  Use Router::connect() to create
  * Routes for your application.
  *
- * PHP5
- *
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
- *
- * Licensed under The MIT License
- * Redistributions of files must retain the above copyright notice.
- *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
- * @package       Cake.Routing.Route
- * @since         CakePHP(tm) v 1.3
- * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
+ * @package Cake.Routing.Route
  */
 class CakeRoute {
 
@@ -60,7 +63,7 @@ class CakeRoute {
 	protected $_greedy = false;
 
 /**
- * The compiled route regular expresssion
+ * The compiled route regular expression
  *
  * @var string
  */
@@ -148,7 +151,10 @@ class CakeRoute {
 			}
 			$names[] = $name;
 		}
-		if (preg_match('#\/\*$#', $route)) {
+		if (preg_match('#\/\*\*$#', $route)) {
+			$parsed = preg_replace('#/\\\\\*\\\\\*$#', '(?:/(?P<_trailing_>.*))?', $parsed);
+			$this->_greedy = true;
+		} elseif (preg_match('#\/\*$#', $route)) {
 			$parsed = preg_replace('#/\\\\\*$#', '(?:/(?P<_args_>.*))?', $parsed);
 			$this->_greedy = true;
 		}
@@ -179,6 +185,7 @@ class CakeRoute {
 			return false;
 		}
 		foreach ($this->defaults as $key => $val) {
+			$key = (string)$key;
 			if ($key[0] === '[' && preg_match('/^\[(\w+)\]$/', $key, $header)) {
 				if (isset($this->_headerMap[$header[1]])) {
 					$header = $this->_headerMap[$header[1]];
@@ -219,6 +226,12 @@ class CakeRoute {
 			$route[$key] = $value;
 		}
 
+		foreach ($this->keys as $key) {
+			if (isset($route[$key])) {
+				$route[$key] = rawurldecode($route[$key]);
+			}
+		}
+
 		if (isset($route['_args_'])) {
 			list($pass, $named) = $this->_parseArgs($route['_args_'], $route);
 			$route['pass'] = array_merge($route['pass'], $pass);
@@ -226,10 +239,15 @@ class CakeRoute {
 			unset($route['_args_']);
 		}
 
+		if (isset($route['_trailing_'])) {
+			$route['pass'][] = rawurldecode($route['_trailing_']);
+			unset($route['_trailing_']);
+		}
+
 		// restructure 'pass' key route params
 		if (isset($this->options['pass'])) {
 			$j = count($this->options['pass']);
-			while($j--) {
+			while ($j--) {
 				if (isset($route[$this->options['pass'][$j]])) {
 					array_unshift($route['pass'], $route[$this->options['pass'][$j]]);
 				}
@@ -272,6 +290,7 @@ class CakeRoute {
 			$separatorIsPresent = strpos($param, $namedConfig['separator']) !== false;
 			if ((!isset($this->options['named']) || !empty($this->options['named'])) && $separatorIsPresent) {
 				list($key, $val) = explode($namedConfig['separator'], $param, 2);
+				$key = rawurldecode($key);
 				$val = rawurldecode($val);
 				$hasRule = isset($rules[$key]);
 				$passIt = (!$hasRule && !$greedy) || ($hasRule && !$this->_matchNamed($val, $rules[$key], $context));
@@ -341,7 +360,7 @@ class CakeRoute {
 	}
 
 /**
- * Apply persistent parameters to a url array. Persistant parameters are a special
+ * Apply persistent parameters to a url array. Persistent parameters are a special
  * key used during route creation to force route parameters to persist when omitted from
  * a url array.
  *
@@ -459,8 +478,11 @@ class CakeRoute {
  * @return string Composed route string.
  */
 	protected function _writeUrl($params) {
-		if (isset($params['prefix'], $params['action'])) {
-			$params['action'] = str_replace($params['prefix'] . '_', '', $params['action']);
+		if (isset($params['prefix'])) {
+			$prefixed = $params['prefix'] . '_';
+		}
+		if (isset($prefixed, $params['action']) && strpos($params['action'], $prefixed) === 0) {
+			$params['action'] = substr($params['action'], strlen($prefixed) * -1);
 			unset($params['prefix']);
 		}
 
@@ -475,8 +497,9 @@ class CakeRoute {
 			$named = array();
 			foreach ($params['named'] as $key => $value) {
 				if (is_array($value)) {
-					foreach ($value as $namedKey => $namedValue) {
-						$named[] = $key . "[$namedKey]" . $separator . rawurlencode($namedValue);
+					$flat = Hash::flatten($value, '%5D%5B');
+					foreach ($flat as $namedKey => $namedValue) {
+						$named[] = $key . "%5B{$namedKey}%5D" . $separator . rawurlencode($namedValue);
 					}
 				} else {
 					$named[] = $key . $separator . rawurlencode($value);

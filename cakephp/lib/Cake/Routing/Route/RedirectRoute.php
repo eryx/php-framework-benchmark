@@ -1,25 +1,27 @@
 <?php
-App::uses('CakeResponse', 'Network');
-App::uses('CakeRoute', 'Routing/Route');
-
 /**
- * Redirect route will perform an immediate redirect.  Redirect routes
- * are useful when you want to have Routing layer redirects occur in your
- * application, for when URLs move.
- *
- * PHP5
- *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.Routing.Route
  * @since         CakePHP(tm) v 2.0
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
+ */
+
+App::uses('CakeResponse', 'Network');
+App::uses('CakeRoute', 'Routing/Route');
+
+/**
+ * Redirect route will perform an immediate redirect. Redirect routes
+ * are useful when you want to have Routing layer redirects occur in your
+ * application, for when URLs move.
+ *
+ * @package Cake.Routing.Route
  */
 class RedirectRoute extends CakeRoute {
 
@@ -31,7 +33,7 @@ class RedirectRoute extends CakeRoute {
 	public $response = null;
 
 /**
- * The location to redirect to.  Either a string or a cake array url.
+ * The location to redirect to. Either a string or a cake array url.
  *
  * @var mixed
  */
@@ -100,7 +102,7 @@ class RedirectRoute extends CakeRoute {
 	}
 
 /**
- * Stop execution of the current script.  Wraps exit() making
+ * Stop execution of the current script. Wraps exit() making
  * testing easier.
  *
  * @param integer|string $status see http://php.net/exit for values
@@ -111,4 +113,5 @@ class RedirectRoute extends CakeRoute {
 			exit($code);
 		}
 	}
+
 }

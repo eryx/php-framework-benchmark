@@ -5,12 +5,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @since         CakePHP(tm) v 2.0
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
@@ -134,16 +134,40 @@ class ShellDispatcher {
 			include_once CAKE_CORE_INCLUDE_PATH . DS . 'Cake' . DS . 'Console' . DS . 'Templates' . DS . 'skel' . DS . 'Config' . DS . 'core.php';
 			App::build();
 		}
-		require_once CAKE . 'Console' . DS . 'ConsoleErrorHandler.php';
-		$ErrorHandler = new ConsoleErrorHandler();
-		set_exception_handler(array($ErrorHandler, 'handleException'));
-		set_error_handler(array($ErrorHandler, 'handleError'), Configure::read('Error.level'));
+
+		$this->setErrorHandlers();
 
 		if (!defined('FULL_BASE_URL')) {
 			define('FULL_BASE_URL', 'http://localhost');
 		}
 
 		return true;
+	}
+
+/**
+ * Set the error/exception handlers for the console
+ * based on the `Error.consoleHandler`, and `Exception.consoleHandler` values
+ * if they are set. If they are not set, the default ConsoleErrorHandler will be
+ * used.
+ *
+ * @return void
+ */
+	public function setErrorHandlers() {
+		App::uses('ConsoleErrorHandler', 'Console');
+		$error = Configure::read('Error');
+		$exception = Configure::read('Exception');
+
+		$errorHandler = new ConsoleErrorHandler();
+		if (empty($error['consoleHandler'])) {
+			$error['consoleHandler'] = array($errorHandler, 'handleError');
+			Configure::write('Error', $error);
+		}
+		if (empty($exception['consoleHandler'])) {
+			$exception['consoleHandler'] = array($errorHandler, 'handleException');
+			Configure::write('Exception', $exception);
+		}
+		set_exception_handler($exception['consoleHandler']);
+		set_error_handler($error['consoleHandler'], Configure::read('Error.level'));
 	}
 
 /**
@@ -191,7 +215,8 @@ class ShellDispatcher {
 				return $Shell->main();
 			}
 		}
-		throw new MissingShellMethodException(array('shell' => $shell, 'method' => $arg));
+
+		throw new MissingShellMethodException(array('shell' => $shell, 'method' => $command));
 	}
 
 /**
@@ -219,6 +244,7 @@ class ShellDispatcher {
 			));
 		}
 		$Shell = new $class();
+		$Shell->plugin = trim($plugin, '.');
 		return $Shell;
 	}
 
@@ -327,4 +353,5 @@ class ShellDispatcher {
 	protected function _stop($status = 0) {
 		exit($status);
 	}
+
 }

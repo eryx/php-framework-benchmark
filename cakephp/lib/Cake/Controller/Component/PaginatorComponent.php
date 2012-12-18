@@ -5,21 +5,22 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.Controller.Component
  * @since         CakePHP(tm) v 2.0
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
+App::uses('Hash', 'Utility');
 
 /**
  * This component is used to handle automatic model data pagination.  The primary way to use this
- * component is to call the paginate() method. There is a convience wrapper on Controller as well.
+ * component is to call the paginate() method. There is a convenience wrapper on Controller as well.
  *
  * ### Configuring pagination
  *
@@ -100,8 +101,8 @@ class PaginatorComponent extends Component {
 /**
  * Handles automatic pagination of model records.
  *
- * @param mixed $object Model to paginate (e.g: model instance, or 'Model', or 'Model.InnerModel')
- * @param mixed $scope Additional find conditions to use while paginating
+ * @param Model|string $object Model to paginate (e.g: model instance, or 'Model', or 'Model.InnerModel')
+ * @param string|array $scope Additional find conditions to use while paginating
  * @param array $whitelist List of allowed fields for ordering.  This allows you to prevent ordering
  *   on non-indexed, or undesirable columns.
  * @return array Model query results
@@ -184,6 +185,7 @@ class PaginatorComponent extends Component {
 			$count = $object->find('count', array_merge($parameters, $extra));
 		}
 		$pageCount = intval(ceil($count / $limit));
+		$page = max(min($page, $pageCount), 1);
 
 		$paging = array(
 			'page' => $page,
@@ -194,7 +196,7 @@ class PaginatorComponent extends Component {
 			'pageCount' => $pageCount,
 			'order' => $order,
 			'limit' => $limit,
-			'options' => Set::diff($options, $defaults),
+			'options' => Hash::diff($options, $defaults),
 			'paramType' => $options['paramType']
 		);
 		if (!isset($this->Controller->request['paging'])) {
@@ -217,13 +219,13 @@ class PaginatorComponent extends Component {
 /**
  * Get the object pagination will occur on.
  *
- * @param mixed $object The object you are looking for.
+ * @param string|Model $object The object you are looking for.
  * @return mixed The model object to paginate on.
  */
 	protected function _getObject($object) {
 		if (is_string($object)) {
 			$assoc = null;
-			if (strpos($object, '.')  !== false) {
+			if (strpos($object, '.') !== false) {
 				list($object, $assoc) = pluginSplit($object);
 			}
 
@@ -333,7 +335,7 @@ class PaginatorComponent extends Component {
 			$options['order'] = array($options['sort'] => $direction);
 		}
 
-		if (!empty($whitelist)) {
+		if (!empty($whitelist) && isset($options['order']) && is_array($options['order'])) {
 			$field = key($options['order']);
 			if (!in_array($field, $whitelist)) {
 				$options['order'] = null;
@@ -370,11 +372,12 @@ class PaginatorComponent extends Component {
  * @return array An array of options for pagination
  */
 	public function checkLimit($options) {
-		$options['limit'] = (int) $options['limit'];
+		$options['limit'] = (int)$options['limit'];
 		if (empty($options['limit']) || $options['limit'] < 1) {
 			$options['limit'] = 1;
 		}
-		$options['limit'] = min((int)$options['limit'], $options['maxLimit']);
+		$options['limit'] = min($options['limit'], $options['maxLimit']);
 		return $options;
 	}
+
 }

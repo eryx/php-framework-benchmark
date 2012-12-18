@@ -5,17 +5,18 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.Network
  * @since         CakePHP(tm) v 1.2.0
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
+
 App::uses('Validation', 'Utility');
 
 /**
@@ -104,11 +105,13 @@ class CakeSocket {
 			$scheme = 'ssl://';
 		}
 
+		//@codingStandardsIgnoreStart
 		if ($this->config['persistent'] == true) {
-			$this->connection = @pfsockopen($scheme.$this->config['host'], $this->config['port'], $errNum, $errStr, $this->config['timeout']);
+			$this->connection = @pfsockopen($scheme . $this->config['host'], $this->config['port'], $errNum, $errStr, $this->config['timeout']);
 		} else {
-			$this->connection = @fsockopen($scheme.$this->config['host'], $this->config['port'], $errNum, $errStr, $this->config['timeout']);
+			$this->connection = @fsockopen($scheme . $this->config['host'], $this->config['port'], $errNum, $errStr, $this->config['timeout']);
 		}
+		//@codingStandardsIgnoreEnd
 
 		if (!empty($errNum) || !empty($errStr)) {
 			$this->setLastError($errNum, $errStr);
@@ -275,4 +278,5 @@ class CakeSocket {
 		}
 		return true;
 	}
+
 }

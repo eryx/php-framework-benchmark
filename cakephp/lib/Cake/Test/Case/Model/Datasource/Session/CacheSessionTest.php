@@ -4,13 +4,13 @@
  *
  * PHP 5
  *
- * CakePHP(tm) Tests <http://book.cakephp.org/view/1196/Testing>
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) Tests <http://book.cakephp.org/2.0/en/development/testing.html>
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.Test.Case.Model.Datasource.Session
  * @since         CakePHP(tm) v 2.0
@@ -46,7 +46,7 @@ class CacheSessionTest extends CakeTestCase {
  * @return void
  */
 	public static function teardownAfterClass() {
-		Cache::clear('session_test');
+		Cache::clear(false, 'session_test');
 		Cache::drop('session_test');
 
 		Configure::write('Session', self::$_sessionBackup);
@@ -63,7 +63,7 @@ class CacheSessionTest extends CakeTestCase {
 	}
 
 /**
- * teardown
+ * tearDown
  *
  * @return void
  */

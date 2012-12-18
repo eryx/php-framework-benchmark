@@ -4,14 +4,14 @@
  *
  * PHP 5
  *
- * CakePHP(tm) Tests <http://book.cakephp.org/view/1196/Testing>
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) Tests <http://book.cakephp.org/2.0/en/development/testing.html>
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://book.cakephp.org/view/1196/Testing CakePHP(tm) Tests
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @link          http://book.cakephp.org/2.0/en/development/testing.html CakePHP(tm) Tests
  * @package       Cake.Test.Case.Utility
  * @since         CakePHP(tm) v 1.2.0.5428
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
@@ -90,28 +90,28 @@ class SanitizeTest extends CakeTestCase {
  */
 	public function testEscapeAlphaNumeric() {
 		$resultAlpha = Sanitize::escape('abc', 'test');
-		$this->assertEquals($resultAlpha, 'abc');
+		$this->assertEquals('abc', $resultAlpha);
 
 		$resultNumeric = Sanitize::escape('123', 'test');
-		$this->assertEquals($resultNumeric, '123');
+		$this->assertEquals('123', $resultNumeric);
 
 		$resultNumeric = Sanitize::escape(1234, 'test');
-		$this->assertEquals($resultNumeric, 1234);
+		$this->assertEquals(1234, $resultNumeric);
 
 		$resultNumeric = Sanitize::escape(1234.23, 'test');
-		$this->assertEquals($resultNumeric, 1234.23);
+		$this->assertEquals(1234.23, $resultNumeric);
 
 		$resultNumeric = Sanitize::escape('#1234.23', 'test');
-		$this->assertEquals($resultNumeric, '#1234.23');
+		$this->assertEquals('#1234.23', $resultNumeric);
 
 		$resultNull = Sanitize::escape(null, 'test');
-		$this->assertEquals($resultNull, null);
+		$this->assertEquals(null, $resultNull);
 
 		$resultNull = Sanitize::escape(false, 'test');
-		$this->assertEquals($resultNull, false);
+		$this->assertEquals(false, $resultNull);
 
 		$resultNull = Sanitize::escape(true, 'test');
-		$this->assertEquals($resultNull, true);
+		$this->assertEquals(true, $resultNull);
 	}
 
 /**
@@ -168,7 +168,7 @@ class SanitizeTest extends CakeTestCase {
 		$string = '';
 		$expected = '';
 		$result = Sanitize::clean($string, array('connection' => 'test'));
-		$this->assertEquals($string, $expected);
+		$this->assertEquals($expected, $string);
 
 		$data = array(
 			'Grant' => array(
@@ -191,7 +191,7 @@ class SanitizeTest extends CakeTestCase {
 			)
 		);
 		$result = Sanitize::clean($data, array('connection' => 'test'));
-		$this->assertEquals($result, $data);
+		$this->assertEquals($data, $result);
 	}
 
 /**
@@ -217,7 +217,7 @@ class SanitizeTest extends CakeTestCase {
 
 		$string = 'The "lazy" dog \'jumped\'';
 		$result = Sanitize::html($string, array('quotes' => ENT_NOQUOTES));
-		$this->assertEquals($result, $string);
+		$this->assertEquals($string, $result);
 
 		$string = 'The "lazy" dog \'jumped\' & flew over the moon. If (1+1) = 2 <em>is</em> true, (2-1) = 1 is also true';
 		$expected = 'The &quot;lazy&quot; dog &#039;jumped&#039; &amp; flew over the moon. If (1+1) = 2 &lt;em&gt;is&lt;/em&gt; true, (2-1) = 1 is also true';
@@ -249,7 +249,7 @@ class SanitizeTest extends CakeTestCase {
 		$text = 'I    love  ßá†ö√    letters.';
 		$result = Sanitize::stripWhitespace($text);
 		$expected = 'I love ßá†ö√ letters.';
-		$this->assertEquals($result, $expected);
+		$this->assertEquals($expected, $result);
 	}
 
 /**
@@ -331,8 +331,13 @@ class SanitizeTest extends CakeTestCase {
 		$result = Sanitize::stripScripts($string);
 		$this->assertEquals($expected, $result);
 
-		$string = '<link href="/css/styles.css" media="screen" rel="stylesheet" />' . "\n" . '<link rel="icon" href="/favicon.ico" type="image/x-icon" />' . "\n" . '<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />' . "\n" . '<link rel="alternate" href="/feed.xml" title="RSS Feed" type="application/rss+xml" />';
-		$expected = "\n" . '<link rel="icon" href="/favicon.ico" type="image/x-icon" />' . "\n" . '<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />'."\n".'<link rel="alternate" href="/feed.xml" title="RSS Feed" type="application/rss+xml" />';
+		$string = '<link href="/css/styles.css" media="screen" rel="stylesheet" />' . "\n" .
+			'<link rel="icon" href="/favicon.ico" type="image/x-icon" />' . "\n" .
+			'<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />' . "\n" .
+			'<link rel="alternate" href="/feed.xml" title="RSS Feed" type="application/rss+xml" />';
+		$expected = "\n" . '<link rel="icon" href="/favicon.ico" type="image/x-icon" />' . "\n" .
+			'<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />' . "\n" .
+			'<link rel="alternate" href="/feed.xml" title="RSS Feed" type="application/rss+xml" />';
 		$result = Sanitize::stripScripts($string);
 		$this->assertEquals($expected, $result);
 
@@ -367,7 +372,7 @@ text
 HTML;
 		$expected = "text\n\ntext";
 		$result = Sanitize::stripScripts($string);
-		$this->assertEquals($expected, $result);
+		$this->assertTextEquals($expected, $result);
 
 		$string = <<<HTML
 text
@@ -380,7 +385,7 @@ text
 HTML;
 		$expected = "text\n\ntext";
 		$result = Sanitize::stripScripts($string);
-		$this->assertEquals($expected, $result);
+		$this->assertTextEquals($expected, $result);
 	}
 
 /**
@@ -390,7 +395,7 @@ HTML;
  */
 	public function testStripAll() {
 		$string = '<img """><script>alert("xss")</script>"/>';
-		$expected ='"/>';
+		$expected = '"/>';
 		$result = Sanitize::stripAll($string);
 		$this->assertEquals($expected, $result);
 
@@ -404,14 +409,13 @@ HTML;
 		$result = Sanitize::stripAll($string);
 		$this->assertEquals($expected, $result);
 
-		$string = '<img src="http://google.com/images/logo.gif" onload="window.location=\'http://sam.com/\'" />'."\n".
-					"<p>This is ok      \t\n   text</p>\n".
-					'<link rel="stylesheet" href="/css/master.css" type="text/css" media="screen" title="my sheet" charset="utf-8">'."\n".
-					'<script src="xss.js" type="text/javascript" charset="utf-8"></script>';
+		$string = '<img src="http://google.com/images/logo.gif" onload="window.location=\'http://sam.com/\'" />' . "\n" .
+			"<p>This is ok      \t\n   text</p>\n" .
+			'<link rel="stylesheet" href="/css/master.css" type="text/css" media="screen" title="my sheet" charset="utf-8">' . "\n" .
+			'<script src="xss.js" type="text/javascript" charset="utf-8"></script>';
 		$expected = '<p>This is ok text</p>';
 		$result = Sanitize::stripAll($string);
 		$this->assertEquals($expected, $result);
-
 	}
 
 /**

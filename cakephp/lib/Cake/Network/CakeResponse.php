@@ -5,12 +5,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake.Network
  * @since         CakePHP(tm) v 2.0
@@ -80,6 +80,10 @@ class CakeResponse {
  * @var array
  */
 	protected $_mimeTypes = array(
+		'html' => array('text/html', '*/*'),
+		'json' => 'application/json',
+		'xml' => array('application/xml', 'text/xml'),
+		'rss' => 'application/rss+xml',
 		'ai' => 'application/postscript',
 		'bcpio' => 'application/x-bcpio',
 		'bin' => 'application/octet-stream',
@@ -89,11 +93,12 @@ class CakeResponse {
 		'cpio' => 'application/x-cpio',
 		'cpt' => 'application/mac-compactpro',
 		'csh' => 'application/x-csh',
-		'csv' =>  array('text/csv', 'application/vnd.ms-excel', 'text/plain'),
+		'csv' => array('text/csv', 'application/vnd.ms-excel', 'text/plain'),
 		'dcr' => 'application/x-director',
 		'dir' => 'application/x-director',
 		'dms' => 'application/octet-stream',
 		'doc' => 'application/msword',
+		'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 		'drw' => 'application/drafting',
 		'dvi' => 'application/x-dvi',
 		'dwg' => 'application/acad',
@@ -127,10 +132,11 @@ class CakeResponse {
 		'otf' => 'font/otf',
 		'pdf' => 'application/pdf',
 		'pgn' => 'application/x-chess-pgn',
-		'pot' => 'application/mspowerpoint',
-		'pps' => 'application/mspowerpoint',
-		'ppt' => 'application/mspowerpoint',
-		'ppz' => 'application/mspowerpoint',
+		'pot' => 'application/vnd.ms-powerpoint',
+		'pps' => 'application/vnd.ms-powerpoint',
+		'ppt' => 'application/vnd.ms-powerpoint',
+		'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+		'ppz' => 'application/vnd.ms-powerpoint',
 		'pre' => 'application/x-freelance',
 		'prt' => 'application/pro_eng',
 		'ps' => 'application/postscript',
@@ -174,6 +180,7 @@ class CakeResponse {
 		'xll' => 'application/vnd.ms-excel',
 		'xlm' => 'application/vnd.ms-excel',
 		'xls' => 'application/vnd.ms-excel',
+		'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 		'xlw' => 'application/vnd.ms-excel',
 		'zip' => 'application/zip',
 		'aif' => 'audio/x-aiff',
@@ -187,6 +194,8 @@ class CakeResponse {
 		'mp3' => 'audio/mpeg',
 		'mpga' => 'audio/mpeg',
 		'ogg' => 'audio/ogg',
+		'oga' => 'audio/ogg',
+		'spx' => 'audio/ogg',
 		'ra' => 'audio/x-realaudio',
 		'ram' => 'audio/x-pn-realaudio',
 		'rm' => 'audio/x-pn-realaudio',
@@ -194,6 +203,7 @@ class CakeResponse {
 		'snd' => 'audio/basic',
 		'tsi' => 'audio/TSP-audio',
 		'wav' => 'audio/x-wav',
+		'aac' => 'audio/aac',
 		'asc' => 'text/plain',
 		'c' => 'text/plain',
 		'cc' => 'text/plain',
@@ -203,8 +213,8 @@ class CakeResponse {
 		'f90' => 'text/plain',
 		'h' => 'text/plain',
 		'hh' => 'text/plain',
-		'html' => array('text/html', '*/*'),
 		'htm' => array('text/html', '*/*'),
+		'ics' => 'text/calendar',
 		'm' => 'text/plain',
 		'rtf' => 'text/rtf',
 		'rtx' => 'text/richtext',
@@ -214,7 +224,6 @@ class CakeResponse {
 		'tpl' => 'text/template',
 		'txt' => 'text/plain',
 		'text' => 'text/plain',
-		'xml' => array('application/xml', 'text/xml'),
 		'avi' => 'video/x-msvideo',
 		'fli' => 'video/x-fli',
 		'mov' => 'video/quicktime',
@@ -225,6 +234,9 @@ class CakeResponse {
 		'qt' => 'video/quicktime',
 		'viv' => 'video/vnd.vivo',
 		'vivo' => 'video/vnd.vivo',
+		'ogv' => 'video/ogg',
+		'webm' => 'video/webm',
+		'mp4' => 'video/mp4',
 		'gif' => 'image/gif',
 		'ief' => 'image/ief',
 		'jpe' => 'image/jpeg',
@@ -254,12 +266,10 @@ class CakeResponse {
 		'pdb' => 'chemical/x-pdb',
 		'xyz' => 'chemical/x-pdb',
 		'javascript' => 'text/javascript',
-		'json' => 'application/json',
 		'form' => 'application/x-www-form-urlencoded',
 		'file' => 'multipart/form-data',
 		'xhtml'	=> array('application/xhtml+xml', 'application/xhtml', 'text/xhtml'),
 		'xhtml-mobile'	=> 'application/vnd.wap.xhtml+xml',
-		'rss' => 'application/rss+xml',
 		'atom' => 'application/atom+xml',
 		'amf' => 'application/x-amf',
 		'wap' => array('text/vnd.wap.wml', 'text/vnd.wap.wmlscript', 'image/vnd.wap.wbmp'),
@@ -312,6 +322,21 @@ class CakeResponse {
 	protected $_charset = 'UTF-8';
 
 /**
+ * Holds all the cache directives that will be converted
+ * into headers when sending the request
+ *
+ * @var string
+ */
+	protected $_cacheDirectives = array();
+
+/**
+ * Holds cookies to be sent to the client
+ *
+ * @var array
+ */
+	protected $_cookies = array();
+
+/**
  * Class constructor
  *
  * @param array $options list of parameters to setup the response. Possible values are:
@@ -347,13 +372,61 @@ class CakeResponse {
 		}
 
 		$codeMessage = $this->_statusCodes[$this->_status];
+		$this->_setCookies();
 		$this->_sendHeader("{$this->_protocol} {$this->_status} {$codeMessage}");
-		$this->_sendHeader('Content-Type', "{$this->_contentType}; charset={$this->_charset}");
+		$this->_setContent();
 		$this->_setContentLength();
+		$this->_setContentType();
 		foreach ($this->_headers as $header => $value) {
 			$this->_sendHeader($header, $value);
 		}
 		$this->_sendContent($this->_body);
+	}
+
+/**
+ * Sets the cookies that have been added via static method CakeResponse::addCookie()
+ * before any other output is sent to the client.
+ * Will set the cookies in the order they have been set.
+ *
+ * @return void
+ */
+	protected function _setCookies() {
+		foreach ($this->_cookies as $name => $c) {
+			setcookie(
+				$name, $c['value'], $c['expire'], $c['path'],
+				$c['domain'], $c['secure'], $c['httpOnly']
+			);
+		}
+	}
+
+/**
+ * Formats the Content-Type header based on the configured contentType and charset
+ * the charset will only be set in the header if the response is of type text/*
+ *
+ * @return void
+ */
+	protected function _setContentType() {
+		if (in_array($this->_status, array(304, 204))) {
+			return;
+		}
+		if (strpos($this->_contentType, 'text/') === 0) {
+			$this->header('Content-Type', "{$this->_contentType}; charset={$this->_charset}");
+		} elseif ($this->_contentType === 'application/json') {
+			$this->header('Content-Type', "{$this->_contentType}; charset=UTF-8");
+		} else {
+			$this->header('Content-Type', "{$this->_contentType}");
+		}
+	}
+
+/**
+ * Sets the response body to an empty text if the status code is 204 or 304
+ *
+ * @return void
+ */
+	protected function _setContent() {
+		if (in_array($this->_status, array(304, 204))) {
+			$this->body('');
+		}
 	}
 
 /**
@@ -363,16 +436,20 @@ class CakeResponse {
  * @return void
  */
 	protected function _setContentLength() {
-		$shouldSetLength = empty($this->_headers['Content-Length']) && !in_array($this->_status, range(301, 307));
+		$shouldSetLength = !isset($this->_headers['Content-Length']) && !in_array($this->_status, range(301, 307));
+		if (isset($this->_headers['Content-Length']) && $this->_headers['Content-Length'] === false) {
+			unset($this->_headers['Content-Length']);
+			return;
+		}
 		if ($shouldSetLength && !$this->outputCompressed()) {
 			$offset = ob_get_level() ? ob_get_length() : 0;
 			if (ini_get('mbstring.func_overload') & 2 && function_exists('mb_strlen')) {
-				$this->_headers['Content-Length'] = $offset + mb_strlen($this->_body, '8bit');
+				$this->length($offset + mb_strlen($this->_body, '8bit'));
 			} else {
-				$this->_headers['Content-Length'] = $offset + strlen($this->_body);
+				$this->length($this->_headers['Content-Length'] = $offset + strlen($this->_body));
 			}
 		}
-    }
+	}
 
 /**
  * Sends a header to the client.
@@ -422,10 +499,10 @@ class CakeResponse {
  *  e.g `header('WWW-Authenticate: Negotiate'); header('WWW-Authenticate: Not-Negotiate');`
  * will have the same effect as only doing `header('WWW-Authenticate: Not-Negotiate');`
  *
- * @param mixed $header. An array of header strings or a single header string
- *	- an assotiative array of "header name" => "header value" is also accepted
+ * @param string|array $header. An array of header strings or a single header string
+ *	- an associative array of "header name" => "header value" is also accepted
  *	- an array of string headers is also accepted
- * @param mixed $value. The header value.
+ * @param string $value. The header value.
  * @return array list of headers to be sent
  */
 	public function header($header = null, $value = null) {
@@ -488,7 +565,7 @@ class CakeResponse {
 /**
  * Queries & sets valid HTTP response codes & messages.
  *
- * @param mixed $code If $code is an integer, then the corresponding code/message is
+ * @param integer|array $code If $code is an integer, then the corresponding code/message is
  *        returned if it exists, null if it does not exist. If $code is an array,
  *        then the 'code' and 'message' keys of each nested array are added to the default
  *        HTTP codes. Example:
@@ -523,7 +600,7 @@ class CakeResponse {
  * Sets the response content type. It can be either a file extension
  * which will be mapped internally to a mime-type or a string representing a mime-type
  * if $contentType is null the current content type is returned
- * if $contentType is an associative array, it will be stored as a content type definition
+ * if $contentType is an associative array, content type definitions will be stored/replaced
  *
  * ### Setting the content type
  *
@@ -533,9 +610,9 @@ class CakeResponse {
  *
  * e.g `type();`
  *
- * ### Storing a content type definition
+ * ### Storing content type definitions
  *
- * e.g `type(array('keynote' => 'application/keynote'));`
+ * e.g `type(array('keynote' => 'application/keynote', 'bat' => 'application/bat'));`
  *
  * ### Replacing a content type definition
  *
@@ -549,9 +626,9 @@ class CakeResponse {
 			return $this->_contentType;
 		}
 		if (is_array($contentType)) {
-			$type = key($contentType);
-			$defitition = current($contentType);
-			$this->_mimeTypes[$type] = $defitition;
+			foreach ($contentType as $type => $definition) {
+				$this->_mimeTypes[$type] = $definition;
+			}
 			return $this->_contentType;
 		}
 		if (isset($this->_mimeTypes[$contentType])) {
@@ -584,7 +661,7 @@ class CakeResponse {
  *
  * e.g `mapType('application/pdf'); // returns 'pdf'`
  *
- * @param mixed $ctype Either a string content type to map, or an array of types.
+ * @param string|array $ctype Either a string content type to map, or an array of types.
  * @return mixed Aliases for the types provided.
  */
 	public function mapType($ctype) {
@@ -625,8 +702,7 @@ class CakeResponse {
 		$this->header(array(
 			'Expires' => 'Mon, 26 Jul 1997 05:00:00 GMT',
 			'Last-Modified' => gmdate("D, d M Y H:i:s") . " GMT",
-			'Cache-Control' => 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0',
-			'Pragma' => 'no-cache'
+			'Cache-Control' => 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0'
 		));
 	}
 
@@ -642,12 +718,271 @@ class CakeResponse {
 			$time = strtotime($time);
 		}
 		$this->header(array(
-			'Date' => gmdate("D, j M Y G:i:s ", time()) . 'GMT',
-			'Last-Modified' => gmdate("D, j M Y G:i:s ", $since) . 'GMT',
-			'Expires' => gmdate("D, j M Y H:i:s", $time) . " GMT",
-			'Cache-Control' => 'public, max-age=' . ($time - time()),
-			'Pragma' => 'cache'
+			'Date' => gmdate("D, j M Y G:i:s ", time()) . 'GMT'
 		));
+		$this->modified($since);
+		$this->expires($time);
+		$this->sharable(true);
+		$this->maxAge($time - time());
+	}
+
+/**
+ * Sets whether a response is eligible to be cached by intermediate proxies
+ * This method controls the `public` or `private` directive in the Cache-Control
+ * header
+ *
+ * @param boolean $public  if set to true, the Cache-Control header will be set as public
+ * if set to false, the response will be set to private
+ * if no value is provided, it will return whether the response is sharable or not
+ * @param integer $time time in seconds after which the response should no longer be considered fresh
+ * @return boolean
+ */
+	public function sharable($public = null, $time = null) {
+		if ($public === null) {
+			$public = array_key_exists('public', $this->_cacheDirectives);
+			$private = array_key_exists('private', $this->_cacheDirectives);
+			$noCache = array_key_exists('no-cache', $this->_cacheDirectives);
+			if (!$public && !$private && !$noCache) {
+				return null;
+			}
+			$sharable = $public || ! ($private || $noCache);
+			return $sharable;
+		}
+		if ($public) {
+			$this->_cacheDirectives['public'] = true;
+			unset($this->_cacheDirectives['private']);
+			$this->sharedMaxAge($time);
+		} else {
+			$this->_cacheDirectives['private'] = true;
+			unset($this->_cacheDirectives['public']);
+			$this->maxAge($time);
+		}
+		if ($time == null) {
+			$this->_setCacheControl();
+		}
+		return (bool)$public;
+	}
+
+/**
+ * Sets the Cache-Control s-maxage directive.
+ * The max-age is the number of seconds after which the response should no longer be considered
+ * a good candidate to be fetched from a shared cache (like in a proxy server).
+ * If called with no parameters, this function will return the current max-age value if any
+ *
+ * @param integer $seconds if null, the method will return the current s-maxage value
+ * @return int
+ */
+	public function sharedMaxAge($seconds = null) {
+		if ($seconds !== null) {
+			$this->_cacheDirectives['s-maxage'] = $seconds;
+			$this->_setCacheControl();
+		}
+		if (isset($this->_cacheDirectives['s-maxage'])) {
+			return $this->_cacheDirectives['s-maxage'];
+		}
+		return null;
+	}
+
+/**
+ * Sets the Cache-Control max-age directive.
+ * The max-age is the number of seconds after which the response should no longer be considered
+ * a good candidate to be fetched from the local (client) cache.
+ * If called with no parameters, this function will return the current max-age value if any
+ *
+ * @param integer $seconds if null, the method will return the current max-age value
+ * @return int
+ */
+	public function maxAge($seconds = null) {
+		if ($seconds !== null) {
+			$this->_cacheDirectives['max-age'] = $seconds;
+			$this->_setCacheControl();
+		}
+		if (isset($this->_cacheDirectives['max-age'])) {
+			return $this->_cacheDirectives['max-age'];
+		}
+		return null;
+	}
+
+/**
+ * Sets the Cache-Control must-revalidate directive.
+ * must-revalidate indicates that the response should not be served
+ * stale by a cache under any cirumstance without first revalidating
+ * with the origin.
+ * If called with no parameters, this function will return wheter must-revalidate is present.
+ *
+ * @param integer $seconds if null, the method will return the current
+ * must-revalidate value
+ * @return boolean
+ */
+	public function mustRevalidate($enable = null) {
+		if ($enable !== null) {
+			if ($enable) {
+				$this->_cacheDirectives['must-revalidate'] = true;
+			} else {
+				unset($this->_cacheDirectives['must-revalidate']);
+			}
+			$this->_setCacheControl();
+		}
+		return array_key_exists('must-revalidate', $this->_cacheDirectives);
+	}
+
+/**
+ * Helper method to generate a valid Cache-Control header from the options set
+ * in other methods
+ *
+ * @return void
+ */
+	protected function _setCacheControl() {
+		$control = '';
+		foreach ($this->_cacheDirectives as $key => $val) {
+			$control .= $val === true ? $key : sprintf('%s=%s', $key, $val);
+			$control .= ', ';
+		}
+		$control = rtrim($control, ', ');
+		$this->header('Cache-Control', $control);
+	}
+
+/**
+ * Sets the Expires header for the response by taking an expiration time
+ * If called with no parameters it will return the current Expires value
+ *
+ * ## Examples:
+ *
+ * `$response->expires('now')` Will Expire the response cache now
+ * `$response->expires(new DateTime('+1 day'))` Will set the expiration in next 24 hours
+ * `$response->expires()` Will return the current expiration header value
+ *
+ * @param string|DateTime $time
+ * @return string
+ */
+	public function expires($time = null) {
+		if ($time !== null) {
+			$date = $this->_getUTCDate($time);
+			$this->_headers['Expires'] = $date->format('D, j M Y H:i:s') . ' GMT';
+		}
+		if (isset($this->_headers['Expires'])) {
+			return $this->_headers['Expires'];
+		}
+		return null;
+	}
+
+/**
+ * Sets the Last-Modified header for the response by taking an modification time
+ * If called with no parameters it will return the current Last-Modified value
+ *
+ * ## Examples:
+ *
+ * `$response->modified('now')` Will set the Last-Modified to the current time
+ * `$response->modified(new DateTime('+1 day'))` Will set the modification date in the past 24 hours
+ * `$response->modified()` Will return the current Last-Modified header value
+ *
+ * @param string|DateTime $time
+ * @return string
+ */
+	public function modified($time = null) {
+		if ($time !== null) {
+			$date = $this->_getUTCDate($time);
+			$this->_headers['Last-Modified'] = $date->format('D, j M Y H:i:s') . ' GMT';
+		}
+		if (isset($this->_headers['Last-Modified'])) {
+			return $this->_headers['Last-Modified'];
+		}
+		return null;
+	}
+
+/**
+ * Sets the response as Not Modified by removing any body contents
+ * setting the status code to "304 Not Modified" and removing all
+ * conflicting headers
+ *
+ * @return void
+ **/
+	public function notModified() {
+		$this->statusCode(304);
+		$this->body('');
+		$remove = array(
+			'Allow',
+			'Content-Encoding',
+			'Content-Language',
+			'Content-Length',
+			'Content-MD5',
+			'Content-Type',
+			'Last-Modified'
+		);
+		foreach ($remove as $header) {
+			unset($this->_headers[$header]);
+		}
+	}
+
+/**
+ * Sets the Vary header for the response, if an array is passed,
+ * values will be imploded into a comma separated string. If no
+ * parameters are passed, then an array with the current Vary header
+ * value is returned
+ *
+ * @param string|array $cacheVariances a single Vary string or a array
+ * containig the list for variances.
+ * @return array
+ **/
+	public function vary($cacheVariances = null) {
+		if ($cacheVariances !== null) {
+			$cacheVariances = (array)$cacheVariances;
+			$this->_headers['Vary'] = implode(', ', $cacheVariances);
+		}
+		if (isset($this->_headers['Vary'])) {
+			return explode(', ', $this->_headers['Vary']);
+		}
+		return null;
+	}
+
+/**
+ * Sets the response Etag, Etags are a strong indicative that a response
+ * can be cached by a HTTP client. A bad way of generaing Etags is
+ * creating a hash of the response output, instead generate a unique
+ * hash of the unique components that identifies a request, such as a
+ * modification time, a resource Id, and anything else you consider it
+ * makes it unique.
+ *
+ * Second parameter is used to instuct clients that the content has
+ * changed, but sematicallly, it can be used as the same thing. Think
+ * for instance of a page with a hit counter, two different page views
+ * are equivalent, but they differ by a few bytes. This leaves off to
+ * the Client the decision of using or not the cached page.
+ *
+ * If no parameters are passed, current Etag header is returned.
+ *
+ * @param string $hash the unique has that identifies this resposnse
+ * @param boolean $weak whether the response is semantically the same as
+ * other with th same hash or not
+ * @return string
+ **/
+	public function etag($tag = null, $weak = false) {
+		if ($tag !== null) {
+			$this->_headers['Etag'] = sprintf('%s"%s"', ($weak) ? 'W/' : null, $tag);
+		}
+		if (isset($this->_headers['Etag'])) {
+			return $this->_headers['Etag'];
+		}
+		return null;
+	}
+
+/**
+ * Returns a DateTime object initialized at the $time param and using UTC
+ * as timezone
+ *
+ * @param string|integer|DateTime $time
+ * @return DateTime
+ */
+	protected function _getUTCDate($time = null) {
+		if ($time instanceof DateTime) {
+			$result = clone $time;
+		} elseif (is_integer($time)) {
+			$result = new DateTime(date('Y-m-d H:i:s', $time));
+		} else {
+			$result = new DateTime($time);
+		}
+		$result->setTimeZone(new DateTimeZone('UTC'));
+		return $result;
 	}
 
 /**
@@ -674,13 +1009,75 @@ class CakeResponse {
 	}
 
 /**
- * Sets the correct headers to instruct the browser to dowload the response as a file.
+ * Sets the correct headers to instruct the browser to download the response as a file.
  *
  * @param string $filename the name of the file as the browser will download the response
  * @return void
  */
 	public function download($filename) {
 		$this->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+	}
+
+/**
+ * Sets the protocol to be used when sending the response. Defaults to HTTP/1.1
+ * If called with no arguments, it will return the current configured protocol
+ *
+ * @return string protocol to be used for sending response
+ */
+	public function protocol($protocol = null) {
+		if ($protocol !== null) {
+			$this->_protocol = $protocol;
+		}
+		return $this->_protocol;
+	}
+
+/**
+ * Sets the Content-Length header for the response
+ * If called with no arguments returns the last Content-Length set
+ *
+ * @return int
+ */
+	public function length($bytes = null) {
+		if ($bytes !== null ) {
+			$this->_headers['Content-Length'] = $bytes;
+		}
+		if (isset($this->_headers['Content-Length'])) {
+			return $this->_headers['Content-Length'];
+		}
+		return null;
+	}
+
+/**
+ * Checks whether a response has not been modified according to the 'If-None-Match'
+ * (Etags) and 'If-Modified-Since' (last modification date) request
+ * headers headers. If the response is detected to be not modified, it
+ * is marked as so accordingly so the client can be informed of that.
+ *
+ * In order to mark a response as not modified, you need to set at least
+ * the Last-Modified response header or a response etag to be compared
+ * with the request itself
+ *
+ * @return boolean whether the response was marked as not modified or
+ * not
+ **/
+	public function checkNotModified(CakeRequest $request) {
+		$etags = preg_split('/\s*,\s*/', $request->header('If-None-Match'), null, PREG_SPLIT_NO_EMPTY);
+		$modifiedSince = $request->header('If-Modified-Since');
+		if ($responseTag = $this->etag()) {
+			$etagMatches = in_array('*', $etags) || in_array($responseTag, $etags);
+		}
+		if ($modifiedSince) {
+			$timeMatches = strtotime($this->modified()) == strtotime($modifiedSince);
+		}
+		$checks = compact('etagMatches', 'timeMatches');
+		if (empty($checks)) {
+			return false;
+		}
+		$notModified = !in_array(false, $checks, true);
+		if ($notModified) {
+			$this->notModified();
+		}
+		return $notModified;
 	}
 
 /**
@@ -692,4 +1089,71 @@ class CakeResponse {
 	public function __toString() {
 		return (string)$this->_body;
 	}
+
+/**
+ * Getter/Setter for cookie configs
+ *
+ * This method acts as a setter/getter depending on the type of the argument.
+ * If the method is called with no arguments, it returns all configurations.
+ *
+ * If the method is called with a string as argument, it returns either the
+ * given configuration if it is set, or null, if it's not set.
+ *
+ * If the method is called with an array as argument, it will set the cookie
+ * configuration to the cookie container.
+ *
+ * @param $options Either null to get all cookies, string for a specific cookie
+ *  or array to set cookie.
+ *
+ * ### Options (when setting a configuration)
+ *  - name: The Cookie name
+ *  - value: Value of the cookie
+ *  - expire: Time the cookie expires in
+ *  - path: Path the cookie applies to
+ *  - domain: Domain the cookie is for.
+ *  - secure: Is the cookie https?
+ *  - httpOnly: Is the cookie available in the client?
+ *
+ * ## Examples
+ *
+ * ### Getting all cookies
+ *
+ * `$this->cookie()`
+ *
+ * ### Getting a certain cookie configuration
+ *
+ * `$this->cookie('MyCookie')`
+ *
+ * ### Setting a cookie configuration
+ *
+ * `$this->cookie((array) $options)`
+ *
+ * @return mixed
+ */
+	public function cookie($options = null) {
+		if ($options === null) {
+			return $this->_cookies;
+		}
+
+		if (is_string($options)) {
+			if (!isset($this->_cookies[$options])) {
+				return null;
+			}
+			return $this->_cookies[$options];
+		}
+
+		$defaults = array(
+			'name' => 'CakeCookie[default]',
+			'value' => '',
+			'expire' => 0,
+			'path' => '/',
+			'domain' => '',
+			'secure' => false,
+			'httpOnly' => false
+		);
+		$options += $defaults;
+
+		$this->_cookies[$options['name']] = $options;
+	}
+
 }

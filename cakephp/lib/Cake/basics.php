@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Basic Cake functionality.
  *
@@ -8,12 +7,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @package       Cake
  * @since         CakePHP(tm) v 0.2.9
@@ -45,7 +44,7 @@ function config() {
 	$args = func_get_args();
 	foreach ($args as $arg) {
 		if (file_exists(APP . 'Config' . DS . $arg . '.php')) {
-			include_once(APP . 'Config' . DS . $arg . '.php');
+			include_once APP . 'Config' . DS . $arg . '.php';
 
 			if (count($args) == 1) {
 				return true;
@@ -72,13 +71,14 @@ function config() {
  */
 function debug($var = false, $showHtml = null, $showFrom = true) {
 	if (Configure::read('debug') > 0) {
+		App::uses('Debugger', 'Utility');
 		$file = '';
 		$line = '';
 		$lineInfo = '';
 		if ($showFrom) {
-			$calledFrom = debug_backtrace();
-			$file = substr(str_replace(ROOT, '', $calledFrom[0]['file']), 1);
-			$line = $calledFrom[0]['line'];
+			$trace = Debugger::trace(array('start' => 1, 'depth' => 2, 'format' => 'array'));
+			$file = str_replace(array(CAKE_CORE_INCLUDE_PATH, ROOT), '', $trace[0]['file']);
+			$line = $trace[0]['line'];
 		}
 		$html = <<<HTML
 <div class="cake-debug-output">
@@ -104,7 +104,7 @@ TEXT;
 		if ($showHtml === null && $template !== $text) {
 			$showHtml = true;
 		}
-		$var = print_r($var, true);
+		$var = Debugger::exportVar($var, 25);
 		if ($showHtml) {
 			$template = $html;
 			$var = h($var);
@@ -118,16 +118,16 @@ TEXT;
 
 if (!function_exists('sortByKey')) {
 
-	/**
-	 * Sorts given $array by key $sortby.
-	 *
-	 * @param array $array Array to sort
-	 * @param string $sortby Sort by this key
-	 * @param string $order  Sort order asc/desc (ascending or descending).
-	 * @param integer $type Type of sorting to perform
-	 * @return mixed Sorted array
-	 * @link http://book.cakephp.org/2.0/en/core-libraries/global-constants-and-functions.html#sortByKey
-	 */
+/**
+ * Sorts given $array by key $sortby.
+ *
+ * @param array $array Array to sort
+ * @param string $sortby Sort by this key
+ * @param string $order  Sort order asc/desc (ascending or descending).
+ * @param integer $type Type of sorting to perform
+ * @return mixed Sorted array
+ * @link http://book.cakephp.org/2.0/en/core-libraries/global-constants-and-functions.html#sortByKey
+ */
 	function sortByKey(&$array, $sortby, $order = 'asc', $type = SORT_NUMERIC) {
 		if (!is_array($array)) {
 			return null;
@@ -148,12 +148,13 @@ if (!function_exists('sortByKey')) {
 		}
 		return $out;
 	}
+
 }
 
 /**
  * Convenience method for htmlspecialchars.
  *
- * @param mixed $text Text to wrap through htmlspecialchars.  Also works with arrays, and objects.
+ * @param string|array|object $text Text to wrap through htmlspecialchars.  Also works with arrays, and objects.
  *    Arrays will be mapped and have all their elements escaped.  Objects will be string cast if they
  *    implement a `__toString` method.  Otherwise the class name will be used.
  * @param boolean $double Encode existing html entities
@@ -170,10 +171,12 @@ function h($text, $double = true, $charset = null) {
 		return $texts;
 	} elseif (is_object($text)) {
 		if (method_exists($text, '__toString')) {
-			$text = (string) $text;
+			$text = (string)$text;
 		} else {
 			$text = '(object)' . get_class($text);
 		}
+	} elseif (is_bool($text)) {
+		return $text;
 	}
 
 	static $defaultCharset = false;
@@ -307,14 +310,11 @@ function env($key) {
 			if (!strpos($name, '.php')) {
 				$offset = 4;
 			}
-			return substr($filename, 0, strlen($filename) - (strlen($name) + $offset));
-			break;
+			return substr($filename, 0, -(strlen($name) + $offset));
 		case 'PHP_SELF':
 			return str_replace(env('DOCUMENT_ROOT'), '', env('SCRIPT_FILENAME'));
-			break;
 		case 'CGI_MODE':
 			return (PHP_SAPI === 'cgi');
-			break;
 		case 'HTTP_BASE':
 			$host = env('HTTP_HOST');
 			$parts = explode('.', $host);
@@ -354,7 +354,6 @@ function env($key) {
 			}
 			array_shift($parts);
 			return '.' . implode('.', $parts);
-			break;
 	}
 	return null;
 }
@@ -394,19 +393,27 @@ function cache($path, $data = null, $expires = '+1 day', $target = 'cache') {
 	$filetime = false;
 
 	if (file_exists($filename)) {
+		//@codingStandardsIgnoreStart
 		$filetime = @filemtime($filename);
+		//@codingStandardsIgnoreEnd
 	}
 
 	if ($data === null) {
 		if (file_exists($filename) && $filetime !== false) {
 			if ($filetime + $timediff < $now) {
+				//@codingStandardsIgnoreStart
 				@unlink($filename);
+				//@codingStandardsIgnoreEnd
 			} else {
+				//@codingStandardsIgnoreStart
 				$data = @file_get_contents($filename);
+				//@codingStandardsIgnoreEnd
 			}
 		}
 	} elseif (is_writable(dirname($filename))) {
-		@file_put_contents($filename, $data);
+		//@codingStandardsIgnoreStart
+		@file_put_contents($filename, $data, LOCK_EX);
+		//@codingStandardsIgnoreEnd
 	}
 	return $data;
 }
@@ -414,7 +421,7 @@ function cache($path, $data = null, $expires = '+1 day', $target = 'cache') {
 /**
  * Used to delete files in the cache directories, or clear contents of cache directories
  *
- * @param mixed $params As String name to be searched for deletion, if name is a directory all files in
+ * @param string|array $params As String name to be searched for deletion, if name is a directory all files in
  *   directory will be deleted. If array, names to be searched for deletion. If clearCache() without params,
  *   all files in app/tmp/cache/views will be deleted
  * @param string $type Directory in tmp/cache defaults to view directory
@@ -427,7 +434,9 @@ function clearCache($params = null, $type = 'views', $ext = '.php') {
 		$cache = CACHE . $type . DS . $params;
 
 		if (is_file($cache . $ext)) {
+			//@codingStandardsIgnoreStart
 			@unlink($cache . $ext);
+			//@codingStandardsIgnoreEnd
 			return true;
 		} elseif (is_dir($cache)) {
 			$files = glob($cache . '*');
@@ -438,7 +447,9 @@ function clearCache($params = null, $type = 'views', $ext = '.php') {
 
 			foreach ($files as $file) {
 				if (is_file($file) && strrpos($file, DS . 'empty') !== strlen($file) - 6) {
+					//@codingStandardsIgnoreStart
 					@unlink($file);
+					//@codingStandardsIgnoreEnd
 				}
 			}
 			return true;
@@ -459,7 +470,9 @@ function clearCache($params = null, $type = 'views', $ext = '.php') {
 			}
 			foreach ($files as $file) {
 				if (is_file($file) && strrpos($file, DS . 'empty') !== strlen($file) - 6) {
+					//@codingStandardsIgnoreStart
 					@unlink($file);
+					//@codingStandardsIgnoreEnd
 				}
 			}
 			return true;

@@ -3,12 +3,12 @@
  * PHP 5
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright 2005-2011, Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @link          http://cakephp.org CakePHP(tm) Project
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
@@ -41,6 +41,7 @@ App::uses('BaseAuthenticate', 'Controller/Component/Auth');
  * @since 2.0
  */
 class BasicAuthenticate extends BaseAuthenticate {
+
 /**
  * Settings for this object.
  *
@@ -48,6 +49,8 @@ class BasicAuthenticate extends BaseAuthenticate {
  * - `userModel` The model name of the User, defaults to User.
  * - `scope` Additional conditions to use when looking up and authenticating users,
  *    i.e. `array('User.is_active' => 1).`
+ * - `recursive` The value of the recursive key passed to find(). Defaults to 0.
+ * - `contain` Extra models to contain and store in session.
  * - `realm` The realm authentication is for.  Defaults the server name.
  *
  * @var array
@@ -59,6 +62,8 @@ class BasicAuthenticate extends BaseAuthenticate {
 		),
 		'userModel' => 'User',
 		'scope' => array(),
+		'recursive' => 0,
+		'contain' => null,
 		'realm' => '',
 	);
 
@@ -119,4 +124,5 @@ class BasicAuthenticate extends BaseAuthenticate {
 	public function loginHeaders() {
 		return sprintf('WWW-Authenticate: Basic realm="%s"', $this->settings['realm']);
 	}
+
 }
