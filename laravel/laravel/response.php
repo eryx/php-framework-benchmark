@@ -1,5 +1,8 @@
 <?php namespace Laravel;
 
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\HttpFoundation\LaravelResponse as FoundationResponse;
+
 class Response {
 
 	/**
@@ -10,72 +13,11 @@ class Response {
 	public $content;
 
 	/**
-	 * The HTTP status code of the response.
+	 * The Symfony HttpFoundation Response instance.
 	 *
-	 * @var int
+	 * @var HttpFoundation\Response
 	 */
-	public $status;
-
-	/**
-	 * The response headers.
-	 *
-	 * @var array
-	 */
-	public $headers = array();
-
-	/**
-	 * HTTP status codes.
-	 *
-	 * @var array
-	 */
-	protected $statuses = array(
-		100 => 'Continue',
-		101 => 'Switching Protocols',
-		200 => 'OK',
-		201 => 'Created',
-		202 => 'Accepted',
-		203 => 'Non-Authoritative Information',
-		204 => 'No Content',
-		205 => 'Reset Content',
-		206 => 'Partial Content',
-		207 => 'Multi-Status',
-		300 => 'Multiple Choices',
-		301 => 'Moved Permanently',
-		302 => 'Found',
-		303 => 'See Other',
-		304 => 'Not Modified',
-		305 => 'Use Proxy',
-		307 => 'Temporary Redirect',
-		400 => 'Bad Request',
-		401 => 'Unauthorized',
-		402 => 'Payment Required',
-		403 => 'Forbidden',
-		404 => 'Not Found',
-		405 => 'Method Not Allowed',
-		406 => 'Not Acceptable',
-		407 => 'Proxy Authentication Required',
-		408 => 'Request Timeout',
-		409 => 'Conflict',
-		410 => 'Gone',
-		411 => 'Length Required',
-		412 => 'Precondition Failed',
-		413 => 'Request Entity Too Large',
-		414 => 'Request-URI Too Long',
-		415 => 'Unsupported Media Type',
-		416 => 'Requested Range Not Satisfiable',
-		417 => 'Expectation Failed',
-		422 => 'Unprocessable Entity',
-		423 => 'Locked',
-		424 => 'Failed Dependency',
-		500 => 'Internal Server Error',
-		501 => 'Not Implemented',
-		502 => 'Bad Gateway',
-		503 => 'Service Unavailable',
-		504 => 'Gateway Timeout',
-		505 => 'HTTP Version Not Supported',
-		507 => 'Insufficient Storage',
-		509 => 'Bandwidth Limit Exceeded'
-	);
+	public $foundation;
 
 	/**
 	 * Create a new response instance.
@@ -87,9 +29,9 @@ class Response {
 	 */
 	public function __construct($content, $status = 200, $headers = array())
 	{
-		$this->status = $status;
 		$this->content = $content;
-		$this->headers = $headers;
+
+		$this->foundation = new FoundationResponse('', $status, $headers);
 	}
 
 	/**
@@ -103,7 +45,7 @@ class Response {
 	 *		return Response::make('Not Found', 404);
 	 *
 	 *		// Create a response with some custom headers
-	 *		return Respone::make(json_encode($user), 200, array('content-type' => 'application/json'));
+	 *		return Response::make(json_encode($user), 200, array('header' => 'value'));
 	 * </code>
 	 *
 	 * @param  mixed     $content
@@ -137,23 +79,43 @@ class Response {
 	}
 
 	/**
-	 * Create a new response instance containing a named view.
+	 * Create a new JSON response.
 	 *
 	 * <code>
-	 *		// Create a response with the "layout" named view
-	 *		return Response::of('layout');
-	 *
-	 *		// Create a response with the "layout" named view and data
-	 *		return Response::of('layout', array('name' => 'Taylor'));
+	 *		// Create a response instance with JSON
+	 *		return Response::json($data, 200, array('header' => 'value'));
 	 * </code>
 	 *
-	 * @param  string    $name
-	 * @param  array     $data
+	 * @param  mixed     $data
+	 * @param  int       $status
+	 * @param  array     $headers
 	 * @return Response
 	 */
-	public static function of($name, $data = array())
+	public static function json($data, $status = 200, $headers = array())
 	{
-		return new static(View::of($name, $data));
+		$headers['Content-Type'] = 'application/json; charset=utf-8';
+
+		return new static(json_encode($data), $status, $headers);
+	}
+
+	/**
+	 * Create a new response of JSON'd Eloquent models.
+	 *
+	 * <code>
+	 *		// Create a new response instance with Eloquent models
+	 *		return Response::eloquent($data, 200, array('header' => 'value'));
+	 * </code>
+	 *
+	 * @param  Eloquent|array   $data
+	 * @param  int              $status
+	 * @param  array            $headers
+	 * @return Response
+	 */
+	public static function eloquent($data, $status = 200, $headers = array())
+	{
+		$headers['Content-Type'] = 'application/json; charset=utf-8';
+
+		return new static(eloquent_to_json($data), $status, $headers);
 	}
 
 	/**
@@ -161,7 +123,7 @@ class Response {
 	 *
 	 * The response status code will be set using the specified code.
 	 *
-	 * Note: The specified error should match a view in your views/error directory.
+	 * The specified error should match a view in your views/error directory.
 	 *
 	 * <code>
 	 *		// Create a 404 response
@@ -177,7 +139,7 @@ class Response {
 	 */
 	public static function error($code, $data = array())
 	{
-		return new static(View::make('error/'.$code, $data), $code);
+		return new static(View::make('error.'.$code, $data), $code);
 	}
 
 	/**
@@ -200,10 +162,12 @@ class Response {
 	{
 		if (is_null($name)) $name = basename($path);
 
+		// We'll set some sensible default headers, but merge the array given to
+		// us so that the developer has the chance to override any of these
+		// default headers with header values of their own liking.
 		$headers = array_merge(array(
 			'Content-Description'       => 'File Transfer',
 			'Content-Type'              => File::mime(File::extension($path)),
-			'Content-Disposition'       => 'attachment; filename="'.$name.'"',
 			'Content-Transfer-Encoding' => 'binary',
 			'Expires'                   => 0,
 			'Cache-Control'             => 'must-revalidate, post-check=0, pre-check=0',
@@ -211,73 +175,123 @@ class Response {
 			'Content-Length'            => File::size($path),
 		), $headers);
 
-		return new static(File::get($path), 200, $headers);
+		// Once we create the response, we need to set the content disposition
+		// header on the response based on the file's name. We'll pass this
+		// off to the HttpFoundation and let it create the header text.
+		$response = new static(File::get($path), 200, $headers);
+
+		$d = $response->disposition($name);
+
+		return $response->header('Content-Disposition', $d);
 	}
 
 	/**
-	 * Get the evaluated string contents of the response.
+	 * Create the proper Content-Disposition header.
 	 *
+	 * @param  string  $file
 	 * @return string
 	 */
-	public function render()
+	public function disposition($file)
 	{
-		return ($this->content instanceof View) ? $this->content->render() : (string) $this->content;
+		$type = ResponseHeaderBag::DISPOSITION_ATTACHMENT;
+
+		return $this->foundation->headers->makeDisposition($type, $file);
 	}
 
 	/**
-	 * Send the response to the browser.
+	 * Prepare a response from the given value.
 	 *
-	 * All of the response headers will be sent to the browser first, followed by
-	 * the content of the response instance, which will be evaluated and rendered
-	 * by the render method.
+	 * @param  mixed     $response
+	 * @return Response
+	 */
+	public static function prepare($response)
+	{
+		// We will need to force the response to be a string before closing
+		// the session since the developer may be utilizing the session
+		// within the view, and we can't age it until rendering.
+		if ( ! $response instanceof Response)
+		{
+			$response = new static($response);
+		}
+
+		return $response;
+	}
+
+	/**
+	 * Send the headers and content of the response to the browser.
 	 *
 	 * @return void
 	 */
 	public function send()
 	{
-		if ( ! headers_sent()) $this->send_headers();
+		$this->cookies();
 
-		echo $this->render();
+		$this->foundation->prepare(Request::foundation());
+
+		$this->foundation->send();
+	}
+
+	/**
+	 * Convert the content of the Response to a string and return it.
+	 *
+	 * @return string
+	 */
+	public function render()
+	{
+		// If the content is a stringable object, we'll go ahead and call
+		// the toString method so that we can get the string content of
+		// the content object. Otherwise we'll just cast to string.
+		if (str_object($this->content))
+		{
+			$this->content = $this->content->__toString();
+		}
+		else
+		{
+			$this->content = (string) $this->content;
+		}
+
+		// Once we obtain the string content, we can set the content on
+		// the HttpFoundation's Response instance in preparation for
+		// sending it back to client browser when all is finished.
+		$this->foundation->setContent($this->content);
+
+		return $this->content;
 	}
 
 	/**
 	 * Send all of the response headers to the browser.
 	 *
-	 * The developer may set response headers using the "header" method. All of
-	 * the headers set by the developer will be automatically sent to the browser
-	 * when the response is sent via the "send" method. There is no need to call
-	 * this method before calling the "send" method.
-	 *
-	 * The protocol and status header will be set automatically, as well as the
-	 * content-type and charset, unless those headers have been set explicitly.
-	 * The content-type charset used will be the application encoding.
-	 *
 	 * @return void
 	 */
 	public function send_headers()
 	{
-		if ( ! isset($this->headers['Content-Type']))
+		$this->foundation->prepare(Request::foundation());
+
+		$this->foundation->sendHeaders();
+	}
+
+	/**
+	 * Set the cookies on the HttpFoundation Response.
+	 *
+	 * @return void
+	 */
+	protected function cookies()
+	{
+		$ref = new \ReflectionClass('Symfony\Component\HttpFoundation\Cookie');
+
+		// All of the cookies for the response are actually stored on the
+		// Cookie class until we're ready to send the response back to
+		// the browser. This allows our cookies to be set easily.
+		foreach (Cookie::$jar as $name => $cookie)
 		{
-			$encoding = Config::$items['application']['encoding'];
+			$config = array_values($cookie);
 
-			$this->header('Content-Type', "text/html; charset={$encoding}");
-		}
-
-		header(Request::protocol().' '.$this->status.' '.$this->statuses[$this->status]);
-
-		foreach ($this->headers as $name => $value)
-		{	
-			header($name.': '.$value, true);
+			$this->headers()->setCookie($ref->newInstanceArgs($config));
 		}
 	}
 
 	/**
-	 * Add a header to the response.
-	 *
-	 * <code>
-	 *		// Add a header to a response instance
-	 *		return Response::make('foo')->header('content-type', 'application/json');
-	 * </code>
+	 * Add a header to the array of response headers.
 	 *
 	 * @param  string    $name
 	 * @param  string    $value
@@ -285,40 +299,49 @@ class Response {
 	 */
 	public function header($name, $value)
 	{
-		$this->headers[$name] = $value;
+		$this->foundation->headers->set($name, $value);
+
 		return $this;
 	}
 
 	/**
-	 * Set the response status code.
+	 * Get the HttpFoundation Response headers.
 	 *
-	 * @param  int       $status
-	 * @return Response
+	 * @return ResponseParameterBag
 	 */
-	public function status($status)
+	public function headers()
 	{
-		$this->status = $status;
-		return $this;
+		return $this->foundation->headers;
 	}
 
 	/**
-	 * Magic Method for handling the dynamic creation of Responses containing named views.
+	 * Get / set the response status code.
 	 *
-	 * <code>
-	 *		// Create a response instance with the "layout" named view
-	 *		return Response::of_layout();
-	 *
-	 *		// Create a response instance with a named view and data
-	 *		return Response::of_layout(array('name' => 'Taylor'));
-	 * </code>
+	 * @param  int    $status
+	 * @return mixed
 	 */
-	public static function __callStatic($method, $parameters)
+	public function status($status = null)
 	{
-		if (strpos($method, 'of_') === 0)
+		if (is_null($status))
 		{
-			return static::of(substr($method, 3), Arr::get($parameters, 0, array()));
+			return $this->foundation->getStatusCode();
 		}
-		throw new \BadMethodCallException("Method [$method] is not defined on the Response class.");
+		else
+		{
+			$this->foundation->setStatusCode($status);
+
+			return $this;
+		}
+	}
+
+	/**
+	 * Render the response when cast to string
+	 *
+	 * @return string
+	 */
+	public function __toString()
+	{
+		return $this->render();
 	}
 
 }

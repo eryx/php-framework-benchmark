@@ -10,10 +10,16 @@ class Messages {
 	public $messages;
 
 	/**
+	 * Default format for message output.
+	 *
+	 * @var string
+	 */	
+	public $format = ':message';
+
+	/**
 	 * Create a new Messages instance.
 	 *
-	 * The Messages class provides a convenient wrapper around an array of strings.
-	 *
+	 * @param  array  $messages
 	 * @return void
 	 */
 	public function __construct($messages = array())
@@ -53,61 +59,93 @@ class Messages {
 	/**
 	 * Determine if messages exist for a given key.
 	 *
+	 * <code>
+	 *		// Is there a message for the e-mail attribute
+	 *		return $messages->has('email');
+	 *
+	 *		// Is there a message for the any attribute
+	 *		echo $messages->has();
+	 * </code>
+	 *
 	 * @param  string  $key
 	 * @return bool
 	 */
-	public function has($key)
+	public function has($key = null)
 	{
 		return $this->first($key) !== '';
 	}
 
 	/**
-	 * Get the first message for a given key.
+	 * Set the default message format for output.
 	 *
 	 * <code>
-	 *		// Get the first message for the e-mail attribute
-	 *		$email = $messages->first('email');
+	 *		// Apply a new default format.
+	 *		$messages->format('email', '<p>this is my :message</p>');
+	 * </code>
+	 *
+	 * @param  string  $format
+	 */
+	public function format($format = ':message')
+	{
+		$this->format = $format;
+	}
+
+	/**
+	 * Get the first message from the container for a given key.
+	 *
+	 * <code>
+	 *		// Echo the first message out of all messages.
+	 *		echo $messages->first();
+	 *
+	 *		// Echo the first message for the e-mail attribute
+	 *		echo $messages->first('email');
 	 *
 	 *		// Format the first message for the e-mail attribute
-	 *		$email = $messages->first('email', '<p>:message</p>');
+	 *		echo $messages->first('email', '<p>:message</p>');
 	 * </code>
 	 *
 	 * @param  string  $key
 	 * @param  string  $format
 	 * @return string
 	 */
-	public function first($key, $format = ':message')
+	public function first($key = null, $format = null)
 	{
-		return (count($messages = $this->get($key, $format)) > 0) ? $messages[0] : '';
+		$format = ($format === null) ? $this->format : $format;
+
+		$messages = is_null($key) ? $this->all($format) : $this->get($key, $format);
+
+		return (count($messages) > 0) ? $messages[0] : '';
 	}
 
 	/**
-	 * Get all of the messages for a key.
+	 * Get all of the messages from the container for a given key.
 	 *
 	 * <code>
-	 *		// Get all of the messages for the e-mail attribute
-	 *		$email = $messages->get('email');
+	 *		// Echo all of the messages for the e-mail attribute
+	 *		echo $messages->get('email');
 	 *
 	 *		// Format all of the messages for the e-mail attribute
-	 *		$email = $messages->get('email', '<p>:message</p>');
+	 *		echo $messages->get('email', '<p>:message</p>');
 	 * </code>
 	 *
 	 * @param  string  $key
 	 * @param  string  $format
 	 * @return array
 	 */
-	public function get($key, $format = ':message')
+	public function get($key, $format = null)
 	{
+		$format = ($format === null) ? $this->format : $format;
+
 		if (array_key_exists($key, $this->messages))
 		{
-			return $this->format($this->messages[$key], $format);
+			return $this->transform($this->messages[$key], $format);
 		}
 
 		return array();
 	}
 
 	/**
-	 * Get all of the messages for every key.
+	 * Get all of the messages for every key in the container.
 	 *
 	 * <code>
 	 *		// Get all of the messages in the collector
@@ -120,13 +158,15 @@ class Messages {
 	 * @param  string  $format
 	 * @return array
 	 */
-	public function all($format = ':message')
+	public function all($format = null)
 	{
+		$format = ($format === null) ? $this->format : $format;
+
 		$all = array();
 
 		foreach ($this->messages as $messages)
 		{
-			$all = array_merge($all, $this->format($messages, $format));
+			$all = array_merge($all, $this->transform($messages, $format));
 		}
 
 		return $all;
@@ -139,7 +179,7 @@ class Messages {
 	 * @param  string  $format
 	 * @return array
 	 */
-	protected function format($messages, $format)
+	protected function transform($messages, $format)
 	{
 		$messages = (array) $messages;
 

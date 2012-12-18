@@ -3,7 +3,19 @@
 class Postgres extends Connector {
 
 	/**
-	 * Establish a PDO database connection for a given database configuration.
+	 * The PDO connection options.
+	 *
+	 * @var array
+	 */
+	protected $options = array(
+			PDO::ATTR_CASE => PDO::CASE_LOWER,
+			PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+			PDO::ATTR_ORACLE_NULLS => PDO::NULL_NATURAL,
+			PDO::ATTR_STRINGIFY_FETCHES => false,
+	);
+
+	/**
+	 * Establish a PDO database connection.
 	 *
 	 * @param  array  $config
 	 * @return PDO
@@ -12,27 +24,31 @@ class Postgres extends Connector {
 	{
 		extract($config);
 
-		// Format the initial Postgres PDO connection string. These options are required
-		// for every Postgres connection that is established. The connection strings
-		// have the following convention: "pgsql:host=hostname;dbname=database"
-		$dsn = sprintf('%s:host=%s;dbname=%s', $driver, $host, $database);
+		$dsn = "pgsql:host={$host};dbname={$database}";
 
-		// Check for any optional Postgres PDO options. These options are not required
-		// to establish a PDO connection; however, may be needed in certain server
-		// or hosting environments used by the developer.
-		foreach (array('port') as $key => $value)
+		// The developer has the freedom of specifying a port for the PostgresSQL
+		// database or the default port (5432) will be used by PDO to create the
+		// connection to the database for the developer.
+		if (isset($config['port']))
 		{
-			if (isset($config[$key]))
-			{
-				$dsn .= ";{$key}={$value}";
-			}
+			$dsn .= ";port={$config['port']}";
 		}
 
 		$connection = new PDO($dsn, $username, $password, $this->options($config));
 
+		// If a character set has been specified, we'll execute a query against
+		// the database to set the correct character set. By default, this is
+		// set to UTF-8 which should be fine for most scenarios.
 		if (isset($config['charset']))
 		{
-			$connection->prepare("SET NAMES '{$charset}'")->execute();
+			$connection->prepare("SET NAMES '{$config['charset']}'")->execute();
+		}
+
+		// If a schema has been specified, we'll execute a query against
+		// the database to set the search path.
+		if (isset($config['schema']))
+		{
+			$connection->prepare("SET search_path TO '{$config['schema']}'")->execute();
 		}
 
 		return $connection;

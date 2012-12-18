@@ -42,9 +42,8 @@ class File extends Driver {
 		if ( ! file_exists($this->path.$key)) return null;
 
 		// File based caches store have the expiration timestamp stored in
-		// UNIX format prepended to their contents. This timestamp is then
-		// extracted and removed when the cache is read to determine if
-		// the file is still valid.
+		// UNIX format prepended to their contents. We'll compare the
+		// timestamp to the current time when we read the file.
 		if (time() >= substr($cache = file_get_contents($this->path.$key), 0, 10))
 		{
 			return $this->forget($key);
@@ -68,9 +67,23 @@ class File extends Driver {
 	 */
 	public function put($key, $value, $minutes)
 	{
-		$value = (time() + ($minutes * 60)).serialize($value);
+		if ($minutes <= 0) return;
+
+		$value = $this->expiration($minutes).serialize($value);
 
 		file_put_contents($this->path.$key, $value, LOCK_EX);
+	}
+
+	/**
+	 * Write an item to the cache for five years.
+	 *
+	 * @param  string  $key
+	 * @param  mixed   $value
+	 * @return void
+	 */
+	public function forever($key, $value)
+	{
+		return $this->put($key, $value, 2628000);
 	}
 
 	/**
@@ -81,10 +94,7 @@ class File extends Driver {
 	 */
 	public function forget($key)
 	{
-		if (file_exists($this->path.$key))
-		{
-			@unlink($this->path.$key);
-		}
+		if (file_exists($this->path.$key)) @unlink($this->path.$key);
 	}
 
 }

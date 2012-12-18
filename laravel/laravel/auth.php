@@ -1,216 +1,93 @@
-<?php namespace Laravel;
+<?php namespace Laravel; use Closure;
 
 class Auth {
 
 	/**
-	 * The current user of the application.
+	 * The currently active authentication drivers.
 	 *
-	 * @var object
+	 * @var array
 	 */
-	protected static $user;
+	public static $drivers = array();
 
 	/**
-	 * The key used when storing the user ID in the session.
+	 * The third-party driver registrar.
 	 *
-	 * @var string
+	 * @var array
 	 */
-	const user_key = 'laravel_user_id';
+	public static $registrar = array();
 
 	/**
-	 * The key used when setting the "remember me" cookie.
+	 * Get an authentication driver instance.
 	 *
-	 * @var string
+	 * @param  string  $driver
+	 * @return Driver
 	 */
-	const remember_key = 'laravel_remember';
-
-	/**
-	 * Determine if the user of the application is not logged in.
-	 *
-	 * This method is the inverse of the "check" method.
-	 *
-	 * @return bool
-	 */
-	public static function guest()
+	public static function driver($driver = null)
 	{
-		return ! static::check();
+		if (is_null($driver)) $driver = Config::get('auth.driver');
+
+		if ( ! isset(static::$drivers[$driver]))
+		{
+			static::$drivers[$driver] = static::factory($driver);
+		}
+
+		return static::$drivers[$driver];
 	}
 
 	/**
-	 * Determine if the user of the application is logged in.
+	 * Create a new authentication driver instance.
 	 *
-	 * @return bool
+	 * @param  string  $driver
+	 * @return Driver
 	 */
-	public static function check()
+	protected static function factory($driver)
 	{
-		return ! is_null(static::user());
+		if (isset(static::$registrar[$driver]))
+		{
+			$resolver = static::$registrar[$driver];
+
+			return $resolver();
+		}
+
+		switch ($driver)
+		{
+			case 'fluent':
+				return new Auth\Drivers\Fluent(Config::get('auth.table'));
+
+			case 'eloquent':
+				return new Auth\Drivers\Eloquent(Config::get('auth.model'));
+
+			default:
+				throw new \Exception("Auth driver {$driver} is not supported.");
+		}
 	}
 
 	/**
-	 * Get the current user of the application.
+	 * Register a third-party authentication driver.
 	 *
-	 * This method will call the "user" closure in the auth configuration file.
-	 * If the user is not authenticated, null will be returned by the methd.
-	 *
-	 * If no user exists in the session, the method will check for a "remember me"
-	 * cookie and attempt to login the user based on the value of that cookie.
+	 * @param  string   $driver
+	 * @param  Closure  $resolver
+	 * @return void
+	 */
+	public static function extend($driver, Closure $resolver)
+	{
+		static::$registrar[$driver] = $resolver;
+	}
+
+	/**
+	 * Magic Method for calling the methods on the default cache driver.
 	 *
 	 * <code>
-	 *		// Get the current user of the application
+	 *		// Call the "user" method on the default auth driver
 	 *		$user = Auth::user();
 	 *
-	 *		// Access a property on the current user of the application
-	 *		$email = Auth::user()->email;
+	 *		// Call the "check" method on the default auth driver
+	 *		Auth::check();
 	 * </code>
-	 *
-	 * @return object
 	 */
-	public static function user()
+	public static function __callStatic($method, $parameters)
 	{
-		if ( ! is_null(static::$user)) return static::$user;
-
-		$id = IoC::core('session')->get(Auth::user_key);
-
-		static::$user = call_user_func(Config::get('auth.user'), $id);
-
-		// If the user was not found in the database, but a "remember me" cookie
-		// exists, we will attempt to recall the user based on the cookie value.
-		// Since all cookies contain a fingerprint hash verifying that the have
-		// not been modified on the client, we should be able to trust it.
-		$recaller = Cookie::get(Auth::remember_key);
-
-		if (is_null(static::$user) and ! is_null($recaller))
-		{
-			static::$user = static::recall($recaller);
-		}
-
-		return static::$user;
-	}
-
-	/**
-	 * Attempt to login a user based on a long-lived "remember me" cookie.
-	 *
-	 * @param  string  $recaller
-	 * @return mixed
-	 */
-	protected static function recall($recaller)
-	{
-		// When the "remember me" cookie is stored, it is encrypted and contains the
-		// user's ID and a long, random string. The ID and string are separated by
-		// a pipe character. Since we exploded the decrypted string, we can just
-		// pass the first item in the array to the user Closure.
-		$recaller = explode('|', Crypter::decrypt($recaller));
-
-		if ( ! is_null($user = call_user_func(Config::get('auth.user'), $recaller[0])))
-		{
-			static::login($user);
-
-			return $user;
-		}
-	}
-
-	/**
-	 * Attempt to log a user into the application.
-	 *
-	 * If the credentials are valid, the user will be logged into the application
-	 * and their user ID will be stored in the session via the "login" method.
-	 *
-	 * The user may also be "remembered", which will keep the user logged into the
-	 * application for one year or until they logout. The user is remembered via
-	 * an encrypted cookie.
-	 *
-	 * @param  string  $username
-	 * @param  string  $password
-	 * @param  bool    $remember
-	 * @return bool
-	 */
-	public static function attempt($username, $password = null, $remember = false)
-	{
-		$config = Config::get('auth');
-
-		$user = call_user_func($config['attempt'], $username, $password, $config);
-
-		if ( ! is_null($user))
-		{
-			static::login($user, $remember);
-
-			return true;
-		}
-
-		return false;
-	}
-
-	/**
-	 * Log a user into the application.
-	 *
-	 * An object representing the user or an integer user ID may be given to the method.
-	 * If an object is given, the object must have an "id" property containing the user
-	 * ID as it is stored in the database.
-	 *
-	 * <code>
-	 *		// Login a user by passing a user object
-	 *		Auth::login($user);
-	 *
-	 *		// Login the user with an ID of 15
-	 *		Auth::login(15);
-	 *
-	 *		// Login a user and set a "remember me" cookie
-	 *		Auth::login($user, true);
-	 * </code>
-	 *
-	 * @param  object|int  $user
-	 * @param  bool        $remember
-	 * @return void
-	 */
-	public static function login($user, $remember = false)
-	{
-		$id = (is_object($user)) ? $user->id : (int) $user;
-
-		if ($remember) static::remember($id);
-
-		IoC::core('session')->put(Auth::user_key, $id);
-	}
-
-	/**
-	 * Set a cookie so that users are "remembered" and don't need to login.
-	 *
-	 * @param  string  $id
-	 * @return void
-	 */
-	protected static function remember($id)
-	{
-		$recaller = Crypter::encrypt($id.'|'.Str::random(40));
-
-		// This method assumes the "remember me" cookie should have the same
-		// configuration as the session cookie. Since this cookie, like the
-		// session cookie, should be kept very secure, it's probably safe
-		// to assume the settings are the same.
-		$config = Config::get('session');
-
-		extract($config, EXTR_SKIP);
-
-		Cookie::forever(Auth::remember_key, $recaller, $path, $domain, $secure);
-	}
-
-	/**
-	 * Log the current user out of the application.
-	 *
-	 * The "logout" closure in the authenciation configuration file will be
-	 * called. All authentication cookies will be deleted and the user ID
-	 * will be removed from the session.
-	 *
-	 * @return void
-	 */
-	public static function logout()
-	{
-		call_user_func(Config::get('auth.logout'), static::user());
-
-		static::$user = null;
-
-		Cookie::forget(Auth::user_key);
-
-		Cookie::forget(Auth::remember_key);
-
-		IoC::core('session')->forget(Auth::user_key);
+		return call_user_func_array(array(static::driver(), $method), $parameters);
 	}
 
 }

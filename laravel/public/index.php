@@ -7,39 +7,29 @@ define('START_TIME', microtime(true));
 // System Start Memory
 define('START_MEMORY_USAGE', memory_get_usage());
 
-/**
- * Laravel - A PHP Framework For Web Artisans
- *
- * @package  Laravel
- * @version  2.0.2
- * @author   Taylor Otwell <taylorotwell@gmail.com>
- * @link     http://laravel.com
- */
 
-// --------------------------------------------------------------
-// Tick... Tock... Tick... Tock...
-// --------------------------------------------------------------
+
 define('LARAVEL_START', microtime(true));
 
 // --------------------------------------------------------------
-// The path to the application directory.
+// Indicate that the request is from the web.
 // --------------------------------------------------------------
-$application = '../application';
+$web = true;
 
 // --------------------------------------------------------------
-// The path to the Laravel directory.
+// Set the core Laravel path constants.
 // --------------------------------------------------------------
-$laravel = '../laravel';
+require '../paths.php';
 
 // --------------------------------------------------------------
-// The path to the public directory.
+// Unset the temporary web variable.
 // --------------------------------------------------------------
-$public = __DIR__;
+unset($web);
 
 // --------------------------------------------------------------
 // Launch Laravel.
 // --------------------------------------------------------------
-require $laravel.'/laravel.php';
+require path('sys').'laravel.php';
 
 
 

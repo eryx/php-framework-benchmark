@@ -3,11 +3,11 @@
 class Input {
 
 	/**
-	 * The applicable input for the request.
+	 * The JSON payload for applications using Backbone.js or similar.
 	 *
-	 * @var array
+	 * @var object
 	 */
-	public static $input;
+	public static $json;
 
 	/**
 	 * The key used to store old input in the session.
@@ -17,21 +17,23 @@ class Input {
 	const old_input = 'laravel_old_input';
 
 	/**
-	 * Get all of the input data for the request.
-	 *
-	 * This method returns a merged array containing Input::get() and Input::files().
+	 * Get all of the input data for the request, including files.
 	 *
 	 * @return array
 	 */
 	public static function all()
 	{
-		return array_merge(static::get(), static::file());
+		$input = array_merge(static::get(), static::query(), static::file());
+
+		unset($input[Request::spoofer]);
+
+		return $input;
 	}
 
 	/**
 	 * Determine if the input data contains an item.
 	 *
-	 * If the item is in the input array, but is an empty string, false will be returned.
+	 * If the input item is an empty string, false will be returned.
 	 *
 	 * @param  string  $key
 	 * @return bool
@@ -44,7 +46,7 @@ class Input {
 	/**
 	 * Get an item from the input data.
 	 *
-	 * This method should be used for all request methods (GET, POST, PUT, and DELETE).
+	 * This method is used for all request verbs (GET, POST, PUT, and DELETE).
 	 *
 	 * <code>
 	 *		// Get the "email" item from the input array
@@ -60,56 +62,92 @@ class Input {
 	 */
 	public static function get($key = null, $default = null)
 	{
-		return Arr::get(static::$input, $key, $default);
+		$input = Request::foundation()->request->all();
+
+		if (is_null($key))
+		{
+			return array_merge($input, static::query());
+		}
+
+		$value = array_get($input, $key);
+
+		if (is_null($value))
+		{
+			return array_get(static::query(), $key, $default);
+		}
+
+		return $value;
 	}
 
 	/**
-	 * Flash the input for the current request to the session.
-	 *
-	 * The input data to be flashed may be controlled by using a filter and an array
-	 * of included or excluded input data. This provides a convenient way of keeping
-	 * sensitive information like passwords out of the session.
+	 * Get an item from the query string.
 	 *
 	 * <code>
-	 *		// Flash all of the input data to the session
-	 *		Input::flash();
+	 *		// Get the "email" item from the query string
+	 *		$email = Input::query('email');
 	 *
-	 *		// Flash only a few input items to the session
-	 *		Input::flash('only', array('name', 'email'));
-	 *
-	 *		// Flash all but a few input items to the session
-	 *		Input::flash('except', array('password'));
+	 *		// Return a default value if the specified item doesn't exist
+	 *		$email = Input::query('name', 'Taylor');
 	 * </code>
 	 *
-	 * @return void
+	 * @param  string  $key
+	 * @param  mixed   $default
+	 * @return mixed
 	 */
-	public static function flash($filter = null, $items = array())
+	public static function query($key = null, $default = null)
 	{
-		$flash = static::get();
-
-		// Since the items flashed to the session can be filtered, we will iterate
-		// all of the input data and either remove or include the input item based
-		// on the specified filter and array of items to be flashed.
-		if ($filter == 'only')
-		{
-			$flash = array_intersect_key($flash, array_flip($items));
-		}
-		elseif ($filter == 'except')
-		{
-			$flash = array_diff_key($flash, array_flip($items));
-		}
-
-		IoC::core('session')->flash(Input::old_input, $flash);
+		return array_get(Request::foundation()->query->all(), $key, $default);
 	}
 
 	/**
-	 * Flush the old input from the session.
+	 * Get the JSON payload for the request.
 	 *
-	 * @return void
+	 * @param  bool    $as_array
+	 * @return object
 	 */
-	public static function flush()
+	public static function json($as_array = false)
 	{
-		IoC::core('session')->flash(Input::old_input, array());
+		if ( ! is_null(static::$json)) return static::$json;
+
+		return static::$json = json_decode(Request::foundation()->getContent(), $as_array);
+	}
+
+	/**
+	 * Get a subset of the items from the input data.
+	 *
+	 * <code>
+	 *		// Get only the email from the input data
+	 *		$value = Input::only('email');
+	 *
+	 *		// Get only the username and email from the input data
+	 *		$input = Input::only(array('username', 'email'));
+	 * </code>
+	 *
+	 * @param  array  $keys
+	 * @return array
+	 */
+	public static function only($keys)
+	{
+ 		return array_only(static::get(), $keys);
+	}
+
+	/**
+	 * Get all of the input data except for a specified array of items.
+	 *
+	 * <code>
+	 *		// Get all of the input data except for username
+	 *		$input = Input::except('username');
+	 *
+	 *		// Get all of the input data except for username and email
+	 *		$input = Input::except(array('username', 'email'));
+	 * </code>
+	 *
+	 * @param  array  $keys
+	 * @return array
+	 */
+	public static function except($keys)
+	{
+		return array_except(static::get(), $keys);
 	}
 
 	/**
@@ -140,9 +178,7 @@ class Input {
 	 */
 	public static function old($key = null, $default = null)
 	{
-		$old = IoC::core('session')->get(Input::old_input, array());
-
-		return Arr::get($old, $key, $default);
+		return array_get(Session::get(Input::old_input, array()), $key, $default);
 	}
 
 	/**
@@ -151,18 +187,26 @@ class Input {
 	 * <code>
 	 *		// Get the array of information for the "picture" upload
 	 *		$picture = Input::file('picture');
-	 *
-	 *		// Get a specific element from the file array
-	 *		$size = Input::file('picture.size');
 	 * </code>
 	 *
-	 * @param  string  $key
-	 * @param  mixed   $default
-	 * @return array
+	 * @param  string        $key
+	 * @param  mixed         $default
+	 * @return UploadedFile
 	 */
 	public static function file($key = null, $default = null)
 	{
-		return Arr::get($_FILES, $key, $default);
+		return array_get($_FILES, $key, $default);
+	}
+
+	/**
+	 * Determine if the uploaded data contains a file.
+	 *
+	 * @param  string  $key
+	 * @return bool
+	 */
+	public static function has_file($key)
+	{
+		return strlen(static::file("{$key}.tmp_name", "")) > 0;
 	}
 
 	/**
@@ -171,17 +215,86 @@ class Input {
 	 * This method is simply a convenient wrapper around move_uploaded_file.
 	 *
 	 * <code>
-	 *		// Move the "picture" item from the $_FILES array to a permanent location
-	 *		Input::upload('picture', 'path/to/storage/picture.jpg');
+	 *		// Move the "picture" file to a new permanent location on disk
+	 *		Input::upload('picture', 'path/to/photos', 'picture.jpg');
 	 * </code>
 	 *
 	 * @param  string  $key
-	 * @param  string  $path
+	 * @param  string  $directory
+	 * @param  string  $name
 	 * @return bool
 	 */
-	public static function upload($key, $path)
+	public static function upload($key, $directory, $name = null)
 	{
-		return File::upload($key, $path);
+		if (is_null(static::file($key))) return false;
+
+		return Request::foundation()->files->get($key)->move($directory, $name);
+	}
+
+	/**
+	 * Flash the input for the current request to the session.
+	 *
+	 * <code>
+	 *		// Flash all of the input to the session
+	 *		Input::flash();
+	 *
+	 *		// Flash only a few input items to the session
+	 *		Input::flash('only', array('name', 'email'));
+	 *
+	 *		// Flash all but a few input items to the session
+	 *		Input::flash('except', array('password', 'social_number'));
+	 * </code>
+	 *
+	 * @param  string  $filter
+	 * @param  array   $keys
+	 * @return void
+	 */
+	public static function flash($filter = null, $keys = array())
+	{
+		$flash = ( ! is_null($filter)) ? static::$filter($keys) : static::get();
+
+		Session::flash(Input::old_input, $flash);
+	}
+
+	/**
+	 * Flush all of the old input from the session.
+	 *
+	 * @return void
+	 */
+	public static function flush()
+	{
+		Session::flash(Input::old_input, array());
+	}
+
+	/**
+	 * Merge new input into the current request's input array.
+	 *
+	 * @param  array  $input
+	 * @return void
+	 */
+	public static function merge(array $input)
+	{
+		Request::foundation()->request->add($input);
+	}
+
+	/**
+	 * Replace the input for the current request.
+	 *
+	 * @param  array  $input
+	 * @return void
+	 */
+	public static function replace(array $input)
+	{
+		Request::foundation()->request->replace($input);
+	}
+
+	/**
+	 * Clear the input for the current request.
+	 * @return void
+	 */
+	public static function clear()
+	{
+		Request::foundation()->request->replace(array());
 	}
 
 }

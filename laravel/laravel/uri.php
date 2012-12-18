@@ -14,14 +14,20 @@ class URI {
 	 *
 	 * @var array
 	 */
-	protected static $segments = array();
+	public static $segments = array();
+
+	/**
+	 * Get the full URI including the query string.
+	 *
+	 * @return string
+	 */
+	public static function full()
+	{
+		return Request::getUri();
+	}
 
 	/**
 	 * Get the URI for the current request.
-	 *
-	 * If the request is to the root of the application, a single forward slash
-	 * will be returned. Otherwise, the URI will be returned with all of the
-	 * leading and trailing slashes removed.
 	 *
 	 * @return string
 	 */
@@ -29,27 +35,40 @@ class URI {
 	{
 		if ( ! is_null(static::$uri)) return static::$uri;
 
-		$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+		// We'll simply get the path info from the Symfony Request instance and then
+		// format to meet our needs in the router. If the URI is root, we'll give
+		// back a single slash, otherwise we'll strip all of the slashes off.
+		$uri = static::format(Request::getPathInfo());
 
-		// Remove the root application URL from the request URI. If the application
-		// is nested within a sub-directory of the web document root, this will get
-		// rid of all of the the sub-directories from the request URI.
-		$uri = static::remove($uri, parse_url(Config::$items['application']['url'], PHP_URL_PATH));
+		static::segments($uri);
 
-		if (($index = '/'.Config::$items['application']['index']) !== '/')
-		{
-			$uri = static::remove($uri, $index);
-		}
-
-		static::$uri = static::format($uri);
-
-		static::$segments = explode('/', static::$uri);
-
-		return static::$uri;
+		return static::$uri = $uri;
 	}
 
 	/**
-	 * Get a specific segment of the request URI via an one-based index.
+	 * Format a given URI.
+	 *
+	 * @param  string  $uri
+	 * @return string
+	 */
+	protected static function format($uri)
+	{
+		return trim($uri, '/') ?: '/';
+	}
+
+	/**
+	 * Determine if the current URI matches a given pattern.
+	 *
+	 * @param  string  $pattern
+	 * @return bool
+	 */
+	public static function is($pattern)
+	{
+		return Str::is($pattern, static::current());
+	}
+
+	/**
+	 * Get a specific segment of the request URI via a one-based index.
 	 *
 	 * <code>
 	 *		// Get the first segment of the request URI
@@ -67,37 +86,20 @@ class URI {
 	{
 		static::current();
 
-		return Arr::get(static::$segments, $index - 1, $default);
+		return array_get(static::$segments, $index - 1, $default);
 	}
 
 	/**
-	 * Remove a given value from the URI.
+	 * Set the URI segments for the request.
 	 *
 	 * @param  string  $uri
-	 * @param  string  $value
-	 * @return string
+	 * @return void
 	 */
-	protected static function remove($uri, $value)
+	protected static function segments($uri)
 	{
-		if (strpos($uri, $value) === 0)
-		{
-			return substr($uri, strlen($value));
-		}
-		return $uri;
-	}
+		$segments = explode('/', trim($uri, '/'));
 
-	/**
-	 * Format a given URI.
-	 *
-	 * If the URI is an empty string, a single forward slash will be returned.
-	 * Otherwise, we will trim the URI's leading and trailing slashes.
-	 *
-	 * @param  string  $uri
-	 * @return string
-	 */
-	protected static function format($uri)
-	{
-		return (($uri = trim($uri, '/')) !== '') ? $uri : '/';
+		static::$segments = array_diff($segments, array(''));
 	}
 
 }

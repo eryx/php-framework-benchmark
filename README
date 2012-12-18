@@ -53,6 +53,14 @@ How to run this benchmark
 * Optimized configuration for symfony2 (Commit By https://github.com/Smart-Core)
   Patch https://github.com/eryx/php-framework-benchmark/pull/2
 
+@2012-12-18
+fuelphp 1.4
+ci 2.1.3
+cola -
+doophp -
+kohana 3.3.0
+
+
 @2012-02-29
 -----------------------------------------------
 * FuelPHP: Simple, Flexible, Community driven Web Framework

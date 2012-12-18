@@ -1,39 +1,32 @@
 <?php namespace Laravel\Database\Eloquent;
 
 use Laravel\Str;
-use Laravel\Inflector;
-use Laravel\Paginator;
-use Laravel\Database\Manager as DB;
+use Laravel\Event;
+use Laravel\Database;
+use Laravel\Database\Eloquent\Relationships\Has_Many_And_Belongs_To;
 
 abstract class Model {
 
 	/**
-	 * The connection that should be used for the model.
+	 * All of the model's attributes.
 	 *
-	 * @var string
+	 * @var array
 	 */
-	public static $connection;
+	public $attributes = array();
 
 	/**
-	 * Indicates if the model has creation and update timestamps.
+	 * The model's attributes in their original state.
 	 *
-	 * @var bool
+	 * @var array
 	 */
-	public static $timestamps = false;
+	public $original = array();
 
 	/**
-	 * The name of the auto-incrementing sequence associated with the model.
+	 * The relationships that have been loaded for the query.
 	 *
-	 * @var string
+	 * @var array
 	 */
-	public static $sequence = null;
-
-	/**
-	 * The model query instance.
-	 *
-	 * @var Query
-	 */
-	public $query;
+	public $relationships = array();
 
 	/**
 	 * Indicates if the model exists in the database.
@@ -43,32 +36,6 @@ abstract class Model {
 	public $exists = false;
 
 	/**
-	 * The model's attributes. 
-	 *
-	 * Typically, a model has an attribute for each column on the table.
-	 *
-	 * @var array
-	 */
-	public $attributes = array();
-
-	/**
-	 * The model's dirty attributes.
-	 *
-	 * @var array
-	 */
-	public $dirty = array();
-
-	/**
-	 * The model's ignored attributes.
-	 *
-	 * Ignored attributes will not be saved to the database, and are
-	 * primarily used to hold relationships.
-	 *
-	 * @var array
-	 */
-	public $ignore = array();
-
-	/**
 	 * The relationships that should be eagerly loaded.
 	 *
 	 * @var array
@@ -76,463 +43,765 @@ abstract class Model {
 	public $includes = array();
 
 	/**
-	 * The relationship type the model is currently resolving.
+	 * The primary key for the model on the database table.
 	 *
 	 * @var string
 	 */
-	public $relating;
+	public static $key = 'id';
 
 	/**
-	 * The foreign key of the "relating" relationship.
+	 * The attributes that are accessible for mass assignment.
 	 *
-	 * @var string
+	 * @var array
 	 */
-	public $relating_key;
+	public static $accessible;
 
 	/**
-	 * The table name of the model being resolved. 
+	 * The attributes that should be excluded from to_array.
 	 *
-	 * This is used during many-to-many eager loading.
+	 * @var array
+	 */
+	public static $hidden = array();
+
+	/**
+	 * Indicates if the model has update and creation timestamps.
+	 *
+	 * @var bool
+	 */
+	public static $timestamps = true;
+
+	/**
+	 * The name of the table associated with the model.
 	 *
 	 * @var string
 	 */
-	public $relating_table;
+	public static $table;
+
+	/**
+	 * The name of the database connection that should be used for the model.
+	 *
+	 * @var string
+	 */
+	public static $connection;
+
+	/**
+	 * The name of the sequence associated with the model.
+	 *
+	 * @var string
+	 */
+	public static $sequence;
+
+	/**
+	 * The default number of models to show per page when paginating.
+	 *
+	 * @var int
+	 */
+	public static $per_page = 20;
 
 	/**
 	 * Create a new Eloquent model instance.
 	 *
 	 * @param  array  $attributes
+	 * @param  bool   $exists
 	 * @return void
 	 */
-	public function __construct($attributes = array())
+	public function __construct($attributes = array(), $exists = false)
 	{
+		$this->exists = $exists;
+
 		$this->fill($attributes);
 	}
 
 	/**
-	 * Set the attributes of the model using an array.
+	 * Hydrate the model with an array of attributes.
 	 *
 	 * @param  array  $attributes
+	 * @param  bool   $raw
 	 * @return Model
 	 */
-	public function fill($attributes)
+	public function fill(array $attributes, $raw = false)
 	{
 		foreach ($attributes as $key => $value)
 		{
-			$this->$key = $value;
+			// If the "raw" flag is set, it means that we'll just load every value from
+			// the array directly into the attributes, without any accessibility or
+			// mutators being accounted for. What you pass in is what you get.
+			if ($raw)
+			{
+				$this->set_attribute($key, $value);
+
+				continue;
+			}
+
+			// If the "accessible" property is an array, the developer is limiting the
+			// attributes that may be mass assigned, and we need to verify that the
+			// current attribute is included in that list of allowed attributes.
+			if (is_array(static::$accessible))
+			{
+				if (in_array($key, static::$accessible))
+				{
+					$this->$key = $value;
+				}
+			}
+
+			// If the "accessible" property is not an array, no attributes have been
+			// white-listed and we are free to set the value of the attribute to
+			// the value that has been passed into the method without a check.
+			else
+			{
+				$this->$key = $value;
+			}
+		}
+
+		// If the original attribute values have not been set, we will set
+		// them to the values passed to this method allowing us to easily
+		// check if the model has changed since hydration.
+		if (count($this->original) === 0)
+		{
+			$this->original = $this->attributes;
 		}
 
 		return $this;
 	}
 
 	/**
-	 * Set the eagerly loaded models on the queryable model.
+	 * Fill the model with the contents of the array.
 	 *
+	 * No mutators or accessibility checks will be accounted for.
+	 *
+	 * @param  array  $attributes
 	 * @return Model
 	 */
-	private function _with()
+	public function fill_raw(array $attributes)
 	{
-		$this->includes = func_get_args();
-
-		return $this;
+		return $this->fill($attributes, true);
 	}
 
 	/**
-	 * Factory for creating queryable Eloquent model instances.
+	 * Set the accessible attributes for the given model.
 	 *
-	 * @param  string  $class
-	 * @return object
+	 * @param  array  $attributes
+	 * @return void
 	 */
-	public static function query($class)
+	public static function accessible($attributes = null)
 	{
-		$model = new $class;
+		if (is_null($attributes)) return static::$accessible;
 
-		// Since this method is only used for instantiating models for querying
-		// purposes, we will go ahead and set the Query instance on the model.
-		$model->query = DB::connection(static::$connection)->table(static::table($class));
-
-		return $model;
+		static::$accessible = $attributes;
 	}
 
 	/**
-	 * Get the table name for a model.
+	 * Create a new model and store it in the database.
 	 *
-	 * @param  string  $class
-	 * @return string
-	 */
-	public static function table($class)
-	{
-		if (property_exists($class, 'table')) return $class::$table;
-
-		return strtolower(Inflector::plural(static::model_name($class)));
-	}
-
-	/**
-	 * Get an Eloquent model name without any namespaces.
+	 * If save is successful, the model will be returned, otherwise false.
 	 *
-	 * @param  string|Model  $model
-	 * @return string
+	 * @param  array        $attributes
+	 * @return Model|false
 	 */
-	public static function model_name($model)
+	public static function create($attributes)
 	{
-		$class = (is_object($model)) ? get_class($model) : $model;
+		$model = new static($attributes);
 
-		$segments = array_reverse(explode('\\', $class));
+		$success = $model->save();
 
-		return $segments[0];
+		return ($success) ? $model : false;
 	}
 
 	/**
-	 * Get all of the models from the database.
+	 * Update a model instance in the database.
+	 *
+	 * @param  mixed  $id
+	 * @param  array  $attributes
+	 * @return int
+	 */
+	public static function update($id, $attributes)
+	{
+		$model = new static(array(), true);
+
+		$model->fill($attributes);
+
+		if (static::$timestamps) $model->timestamp();
+
+		return $model->query()->where($model->key(), '=', $id)->update($model->attributes);
+	}
+
+	/**
+	 * Find a model by its primary key.
+	 *
+	 * @param  string  $id
+	 * @param  array   $columns
+	 * @return Model
+	 */
+	public function _find($id, $columns = array('*'))
+	{
+		return $this->query()->where(static::$key, '=', $id)->first($columns);
+	}
+
+	/**
+	 * Get all of the models in the database.
 	 *
 	 * @return array
 	 */
 	public static function all()
 	{
-		return Hydrator::hydrate(static::query(get_called_class()));
+		return with(new static)->query()->get();
 	}
 
 	/**
-	 * Get a model by the primary key.
+	 * The relationships that should be eagerly loaded by the query.
 	 *
-	 * @param  int  $id
-	 * @return mixed
+	 * @param  array  $includes
+	 * @return Model
 	 */
-	public static function find($id)
+	public function _with($includes)
 	{
-		return static::query(get_called_class())->where('id', '=', $id)->first();
-	}
-
-	/**
-	 * Get an array of models from the database.
-	 *
-	 * @return array
-	 */
-	private function _get()
-	{
-		return Hydrator::hydrate($this);
-	}
-
-	/**
-	 * Get the first model result
-	 *
-	 * @return mixed
-	 */
-	private function _first()
-	{
-		return (count($results = $this->take(1)->_get()) > 0) ? reset($results) : null;
-	}
-
-	/**
-	 * Get paginated model results as a Paginator instance.
-	 *
-	 * @param  int        $per_page
-	 * @return Paginator
-	 */
-	private function _paginate($per_page = null)
-	{
-		$total = $this->query->count();
-
-		// The number of models to show per page may be specified as a static property
-		// on the model. The models shown per page may also be overriden for the model
-		// by passing the number into this method. If the models to show per page is
-		// not available via either of these avenues, a default number will be shown.
-		if (is_null($per_page))
-		{
-			$per_page = (property_exists(get_class($this), 'per_page')) ? static::$per_page : 20;
-		}
-
-		return Paginator::make($this->for_page(Paginator::page($total, $per_page), $per_page)->get(), $total, $per_page);
-	}
-
-	/**
-	 * Retrieve the query for a 1:1 relationship.
-	 *
-	 * @param  string  $model
-	 * @param  string  $foreign_key
-	 * @return mixed
-	 */
-	public function has_one($model, $foreign_key = null)
-	{
-		$this->relating = __FUNCTION__;
-
-		return $this->has_one_or_many($model, $foreign_key);
-	}
-
-	/**
-	 * Retrieve the query for a 1:* relationship.
-	 *
-	 * @param  string  $model
-	 * @param  string  $foreign_key
-	 * @return mixed
-	 */
-	public function has_many($model, $foreign_key = null)
-	{
-		$this->relating = __FUNCTION__;
-
-		return $this->has_one_or_many($model, $foreign_key);
-	}
-
-	/**
-	 * Retrieve the query for a 1:1 or 1:* relationship.
-	 *
-	 * The default foreign key for has one and has many relationships is the name
-	 * of the model with an appended _id. For example, the foreign key for a
-	 * User model would be user_id. Photo would be photo_id, etc.
-	 *
-	 * @param  string  $model
-	 * @param  string  $foreign_key
-	 * @return mixed
-	 */
-	private function has_one_or_many($model, $foreign_key)
-	{
-		$this->relating_key = (is_null($foreign_key)) ? strtolower(static::model_name($this)).'_id' : $foreign_key;
-
-		return static::query($model)->where($this->relating_key, '=', $this->id);
-	}
-
-	/**
-	 * Retrieve the query for a 1:1 belonging relationship.
-	 *
-	 * The default foreign key for belonging relationships is the name of the
-	 * relationship method name with _id. So, if a model has a "manager" method
-	 * returning a belongs_to relationship, the key would be manager_id.
-	 *
-	 * @param  string  $model
-	 * @param  string  $foreign_key
-	 * @return mixed
-	 */
-	public function belongs_to($model, $foreign_key = null)
-	{
-		$this->relating = __FUNCTION__;
-
-		if ( ! is_null($foreign_key))
-		{
-			$this->relating_key = $foreign_key;
-		}
-		else
-		{
-			list(, $caller) = debug_backtrace(false);
-
-			$this->relating_key = $caller['function'].'_id';
-		}
-
-		return static::query($model)->where('id', '=', $this->attributes[$this->relating_key]);
-	}
-
-	/**
-	 * Retrieve the query for a *:* relationship.
-	 *
-	 * The default foreign key for many-to-many relations is the name of the model
-	 * with an appended _id. This is the same convention as has_one and has_many.
-	 *
-	 * @param  string  $model
-	 * @param  string  $table
-	 * @param  string  $foreign_key
-	 * @param  string  $associated_key
-	 * @return mixed
-	 */
-	public function has_and_belongs_to_many($model, $table = null, $foreign_key = null, $associated_key = null)
-	{
-		$this->relating = __FUNCTION__;
-
-		$this->relating_table = (is_null($table)) ? $this->intermediate_table($model) : $table;
-
-		// Allowing the overriding of the foreign and associated keys provides
-		// the flexibility for self-referential many-to-many relationships.
-		$this->relating_key = (is_null($foreign_key)) ? strtolower(static::model_name($this)).'_id' : $foreign_key;
-
-		// The associated key is the foreign key name of the related model. 
-		// If the related model is "Role", the key would be "role_id".
-		$associated_key = (is_null($associated_key)) ? strtolower(static::model_name($model)).'_id' : $associated_key;
-
-		return static::query($model)
-                             ->select(array(static::table($model).'.*'))
-                             ->join($this->relating_table, static::table($model).'.id', '=', $this->relating_table.'.'.$associated_key)
-                             ->where($this->relating_table.'.'.$this->relating_key, '=', $this->id);
-	}
-
-	/**
-	 * Determine the intermediate table name for a given model.
-	 *
-	 * By default, the intermediate table name is the plural names of the models
-	 * arranged alphabetically and concatenated with an underscore.
-	 *
-	 * @param  string  $model
-	 * @return string
-	 */
-	private function intermediate_table($model)
-	{
-		$models = array(Inflector::plural(static::model_name($model)), Inflector::plural(static::model_name($this)));
-
-		sort($models);
-
-		return strtolower($models[0].'_'.$models[1]);
-	}
-
-	/**
-	 * Save the model to the database.
-	 *
-	 * @return bool
-	 */
-	public function save()
-	{
-		// If the model does not have any dirty attributes, there is no reason
-		// to save it to the database.
-		if ($this->exists and count($this->dirty) == 0) return true;
-
-		$model = get_class($this);
-
-		// Since the model was instantiated using "new", a query instance has not been set.
-		// Only models being used for querying have their query instances set by default.
-		$this->query = DB::connection(static::$connection)->table(static::table($model));
-
-		if (property_exists($model, 'timestamps') and $model::$timestamps)
-		{
-			$this->timestamp();
-		}
-
-		// If the model already exists in the database, we will just update it.
-		// Otherwise, we will insert the model and set the ID attribute.
-		if ($this->exists)
-		{
-			$success = ($this->query->where_id($this->attributes['id'])->update($this->dirty) === 1);
-		}
-		else
-		{
-			$success = is_numeric($this->attributes['id'] = $this->query->insert_get_id($this->attributes, static::$sequence));
-		}
-
-		($this->exists = true) and $this->dirty = array();
-
-		return $success;
-	}
-
-	/**
-	 * Set the creation and update timestamps on the model.
-	 *
-	 * @return void
-	 */
-	private function timestamp()
-	{
-		$this->updated_at = date('Y-m-d H:i:s');
-
-		if ( ! $this->exists) $this->created_at = $this->updated_at;
-	}
-
-	/**
-	 * Delete a model from the database.
-	 *
-	 * @param  int  $id
-	 * @return int
-	 */
-	public function delete($id = null)
-	{
-		// If the delete method is being called on an existing model, we only want to delete
-		// that model. If it is being called from an Eloquent query model, it is probably
-		// the developer's intention to delete more than one model, so we will pass the
-		// delete statement to the query instance.
-		if ( ! $this->exists) return $this->query->delete();
-
-		$table = static::table(get_class($this));
-
-		return DB::connection(static::$connection)->table($table)->delete($this->id);
-	}
-
-	/**
-	 * Magic method for retrieving model attributes.
-	 */
-	public function __get($key)
-	{
-		if (array_key_exists($key, $this->attributes))
-		{
-			return $this->attributes[$key];
-		}
-		// Is the requested item a model relationship that has already been loaded?
-		// All of the loaded relationships are stored in the "ignore" array.
-		elseif (array_key_exists($key, $this->ignore))
-		{
-			return $this->ignore[$key];
-		}
-		// Is the requested item a model relationship? If it is, we will dynamically
-		// load it and return the results of the relationship query.
-		elseif (method_exists($this, $key))
-		{
-			$query = $this->$key();
-
-			return $this->ignore[$key] = (in_array($this->relating, array('has_one', 'belongs_to'))) ? $query->first() : $query->get();
-		}
-	}
-
-	/**
-	 * Magic Method for setting model attributes.
-	 */
-	public function __set($key, $value)
-	{
-		// If the key is a relationship, add it to the ignored attributes.
-		// Ignored attributes are not stored in the database.
-		if (method_exists($this, $key))
-		{
-			$this->ignore[$key] = $value;
-		}
-		else
-		{
-			$this->attributes[$key] = $value;
-			$this->dirty[$key] = $value;
-		}
-	}
-
-	/**
-	 * Magic Method for determining if a model attribute is set.
-	 */
-	public function __isset($key)
-	{
-		return (array_key_exists($key, $this->attributes) or array_key_exists($key, $this->ignore));
-	}
-
-	/**
-	 * Magic Method for unsetting model attributes.
-	 */
-	public function __unset($key)
-	{
-		unset($this->attributes[$key], $this->ignore[$key], $this->dirty[$key]);
-	}
-
-	/**
-	 * Magic Method for handling dynamic method calls.
-	 */
-	public function __call($method, $parameters)
-	{
-		// To allow the "with", "get", "first", and "paginate" methods to be called both
-		// staticly and on an instance, we need to have private, underscored versions
-		// of the methods and handle them dynamically.
-		if (in_array($method, array('with', 'get', 'first', 'paginate')))
-		{
-			return call_user_func_array(array($this, '_'.$method), $parameters);
-		}
-
-		// All of the aggregate and persistance functions can be passed directly to the query
-		// instance. For these functions, we can simply return the response of the query.
-		if (in_array($method, array('insert', 'update', 'increment', 'decrement', 'abs', 'count', 'sum', 'min', 'max', 'avg')))
-		{
-			return call_user_func_array(array($this->query, $method), $parameters);
-		}
-
-		// Pass the method to the query instance. This allows the chaining of methods
-		// from the query builder, providing the same convenient query API as the
-		// query builder itself.
-		call_user_func_array(array($this->query, $method), $parameters);
+		$this->includes = (array) $includes;
 
 		return $this;
 	}
 
 	/**
-	 * Magic Method for handling dynamic static method calls.
+	 * Get the query for a one-to-one association.
+	 *
+	 * @param  string        $model
+	 * @param  string        $foreign
+	 * @return Relationship
+	 */
+	public function has_one($model, $foreign = null)
+	{
+		return $this->has_one_or_many(__FUNCTION__, $model, $foreign);
+	}
+
+	/**
+	 * Get the query for a one-to-many association.
+	 *
+	 * @param  string        $model
+	 * @param  string        $foreign
+	 * @return Relationship
+	 */
+	public function has_many($model, $foreign = null)
+	{
+		return $this->has_one_or_many(__FUNCTION__, $model, $foreign);
+	}
+
+	/**
+	 * Get the query for a one-to-one / many association.
+	 *
+	 * @param  string        $type
+	 * @param  string        $model
+	 * @param  string        $foreign
+	 * @return Relationship
+	 */
+	protected function has_one_or_many($type, $model, $foreign)
+	{
+		if ($type == 'has_one')
+		{
+			return new Relationships\Has_One($this, $model, $foreign);
+		}
+		else
+		{
+			return new Relationships\Has_Many($this, $model, $foreign);
+		}
+	}
+
+	/**
+	 * Get the query for a one-to-one (inverse) relationship.
+	 *
+	 * @param  string        $model
+	 * @param  string        $foreign
+	 * @return Relationship
+	 */
+	public function belongs_to($model, $foreign = null)
+	{
+		// If no foreign key is specified for the relationship, we will assume that the
+		// name of the calling function matches the foreign key. For example, if the
+		// calling function is "manager", we'll assume the key is "manager_id".
+		if (is_null($foreign))
+		{
+			list(, $caller) = debug_backtrace(false);
+
+			$foreign = "{$caller['function']}_id";
+		}
+
+		return new Relationships\Belongs_To($this, $model, $foreign);
+	}
+
+	/**
+	 * Get the query for a many-to-many relationship.
+	 *
+	 * @param  string        $model
+	 * @param  string        $table
+	 * @param  string        $foreign
+	 * @param  string        $other
+	 * @return Has_Many_And_Belongs_To
+	 */
+	public function has_many_and_belongs_to($model, $table = null, $foreign = null, $other = null)
+	{
+		return new Has_Many_And_Belongs_To($this, $model, $table, $foreign, $other);
+	}
+
+	/**
+	 * Save the model and all of its relations to the database.
+	 *
+	 * @return bool
+	 */
+	public function push()
+	{
+		$this->save();
+
+		// To sync all of the relationships to the database, we will simply spin through
+		// the relationships, calling the "push" method on each of the models in that
+		// given relationship, this should ensure that each model is saved.
+		foreach ($this->relationships as $name => $models)
+		{
+			if ( ! is_array($models))
+			{
+				$models = array($models);
+			}
+
+			foreach ($models as $model)
+			{
+				$model->push();
+			}
+		}
+	}
+
+	/**
+	 * Save the model instance to the database.
+	 *
+	 * @return bool
+	 */
+	public function save()
+	{
+		if ( ! $this->dirty()) return true;
+
+		if (static::$timestamps)
+		{
+			$this->timestamp();
+		}
+
+		$this->fire_event('saving');
+
+		// If the model exists, we only need to update it in the database, and the update
+		// will be considered successful if there is one affected row returned from the
+		// fluent query instance. We'll set the where condition automatically.
+		if ($this->exists)
+		{
+			$query = $this->query()->where(static::$key, '=', $this->get_key());
+
+			$result = $query->update($this->get_dirty()) === 1;
+
+			if ($result) $this->fire_event('updated');
+		}
+
+		// If the model does not exist, we will insert the record and retrieve the last
+		// insert ID that is associated with the model. If the ID returned is numeric
+		// then we can consider the insert successful.
+		else
+		{
+			$id = $this->query()->insert_get_id($this->attributes, $this->key());
+
+			$this->set_key($id);
+
+			$this->exists = $result = is_numeric($this->get_key());
+
+			if ($result) $this->fire_event('created');
+		}
+
+		// After the model has been "saved", we will set the original attributes to
+		// match the current attributes so the model will not be viewed as being
+		// dirty and subsequent calls won't hit the database.
+		$this->original = $this->attributes;
+
+		if ($result)
+		{
+			$this->fire_event('saved');
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Delete the model from the database.
+	 *
+	 * @return int
+	 */
+	public function delete()
+	{
+		if ($this->exists)
+		{
+			$this->fire_event('deleting');
+
+			$result = $this->query()->where(static::$key, '=', $this->get_key())->delete();
+
+			$this->fire_event('deleted');
+
+			return $result;
+		}
+	}
+
+	/**
+	 * Set the update and creation timestamps on the model.
+	 *
+	 * @return void
+	 */
+	public function timestamp()
+	{
+		$this->updated_at = new \DateTime;
+
+		if ( ! $this->exists) $this->created_at = $this->updated_at;
+	}
+
+	/**
+	 *Updates the timestamp on the model and immediately saves it.
+	 *
+	 * @return void
+	 */
+	public function touch()
+	{
+		$this->timestamp();
+		$this->save();
+	}
+
+	/**
+	 * Get a new fluent query builder instance for the model.
+	 *
+	 * @return Query
+	 */
+	protected function query()
+	{
+		return new Query($this);
+	}
+
+	/**
+	 * Sync the original attributes with the current attributes.
+	 *
+	 * @return bool
+	 */
+	final public function sync()
+	{
+		$this->original = $this->attributes;
+
+		return true;
+	}
+
+	/**
+	 * Determine if a given attribute has changed from its original state.
+	 *
+	 * @param  string  $attribute
+	 * @return bool
+	 */
+	public function changed($attribute)
+	{
+		return array_get($this->attributes, $attribute) != array_get($this->original, $attribute);
+	}
+
+	/**
+	 * Determine if the model has been changed from its original state.
+	 *
+	 * Models that haven't been persisted to storage are always considered dirty.
+	 *
+	 * @return bool
+	 */
+	public function dirty()
+	{
+		return ! $this->exists or count($this->get_dirty()) > 0;
+	}
+
+	/**
+	 * Get the name of the table associated with the model.
+	 *
+	 * @return string
+	 */
+	public function table()
+	{
+		return static::$table ?: strtolower(Str::plural(class_basename($this)));
+	}
+
+	/**
+	 * Get the dirty attributes for the model.
+	 *
+	 * @return array
+	 */
+	public function get_dirty()
+	{
+		$dirty = array();
+
+		foreach ($this->attributes as $key => $value)
+		{
+			if ( ! array_key_exists($key, $this->original) or $value != $this->original[$key])
+			{
+				$dirty[$key] = $value;
+			}
+		}
+
+		return $dirty;
+	}
+
+	/**
+	 * Get the value of the primary key for the model.
+	 *
+	 * @return int
+	 */
+	public function get_key()
+	{
+		return array_get($this->attributes, static::$key);
+	}
+
+	/**
+	 * Set the value of the primary key for the model.
+	 *
+	 * @param  int   $value
+	 * @return void
+	 */
+	public function set_key($value)
+	{
+		return $this->set_attribute(static::$key, $value);
+	}
+
+	/**
+	 * Get a given attribute from the model.
+	 *
+	 * @param  string  $key
+	 */
+	public function get_attribute($key)
+	{
+		return array_get($this->attributes, $key);
+	}
+
+	/**
+	 * Set an attribute's value on the model.
+	 *
+	 * @param  string  $key
+	 * @param  mixed   $value
+	 * @return void
+	 */
+	public function set_attribute($key, $value)
+	{
+		$this->attributes[$key] = $value;
+	}
+
+	/**
+	 * Remove an attribute from the model.
+	 *
+	 * @param  string  $key
+	 */
+	final public function purge($key)
+	{
+		unset($this->original[$key]);
+
+		unset($this->attributes[$key]);
+	}
+
+	/**
+	 * Get the model attributes and relationships in array form.
+	 *
+	 * @return array
+	 */
+	public function to_array()
+	{
+		$attributes = array();
+
+		// First we need to gather all of the regular attributes. If the attribute
+		// exists in the array of "hidden" attributes, it will not be added to
+		// the array so we can easily exclude things like passwords, etc.
+		foreach (array_keys($this->attributes) as $attribute)
+		{
+			if ( ! in_array($attribute, static::$hidden))
+			{
+				$attributes[$attribute] = $this->$attribute;
+			}
+		}
+
+		foreach ($this->relationships as $name => $models)
+		{
+			// If the relationship is not a "to-many" relationship, we can just
+			// to_array the related model and add it as an attribute to the
+			// array of existing regular attributes we gathered.
+			if ($models instanceof Model)
+			{
+				$attributes[$name] = $models->to_array();
+			}
+
+			// If the relationship is a "to-many" relationship we need to spin
+			// through each of the related models and add each one with the
+			// to_array method, keying them both by name and ID.
+			elseif (is_array($models))
+			{
+				$attributes[$name] = array();
+
+				foreach ($models as $id => $model)
+				{
+					$attributes[$name][$id] = $model->to_array();
+				}
+			}
+			elseif (is_null($models))
+			{
+				$attributes[$name] = $models;
+			}
+		}
+
+		return $attributes;
+	}
+
+	/**
+	 * Fire a given event for the model.
+	 *
+	 * @param  string  $event
+	 * @return array
+	 */
+	protected function fire_event($event)
+	{
+		$events = array("eloquent.{$event}", "eloquent.{$event}: ".get_class($this));
+
+		Event::fire($events, array($this));
+	}
+
+	/**
+	 * Handle the dynamic retrieval of attributes and associations.
+	 *
+	 * @param  string  $key
+	 * @return mixed
+	 */
+	public function __get($key)
+	{
+		// First we will check to see if the requested key is an already loaded
+		// relationship and return it if it is. All relationships are stored
+		// in the special relationships array so they are not persisted.
+		if (array_key_exists($key, $this->relationships))
+		{
+			return $this->relationships[$key];
+		}
+
+		// Next we'll check if the requested key is in the array of attributes
+		// for the model. These are simply regular properties that typically
+		// correspond to a single column on the database for the model.
+		elseif (array_key_exists($key, $this->attributes))
+		{
+			return $this->{"get_{$key}"}();
+		}
+
+		// If the item is not a loaded relationship, it may be a relationship
+		// that hasn't been loaded yet. If it is, we will lazy load it and
+		// set the value of the relationship in the relationship array.
+		elseif (method_exists($this, $key))
+		{
+			return $this->relationships[$key] = $this->$key()->results();
+		}
+
+		// Finally we will just assume the requested key is just a regular
+		// attribute and attempt to call the getter method for it, which
+		// will fall into the __call method if one doesn't exist.
+		else
+		{
+			return $this->{"get_{$key}"}();
+		}
+	}
+
+	/**
+	 * Handle the dynamic setting of attributes.
+	 *
+	 * @param  string  $key
+	 * @param  mixed   $value
+	 * @return void
+	 */
+	public function __set($key, $value)
+	{
+		$this->{"set_{$key}"}($value);
+	}
+
+	/**
+	 * Determine if an attribute exists on the model.
+	 *
+	 * @param  string  $key
+	 * @return bool
+	 */
+	public function __isset($key)
+	{
+		foreach (array('attributes', 'relationships') as $source)
+		{
+			if (array_key_exists($key, $this->$source)) return true;
+		}
+
+		if (method_exists($this, $key)) return true;
+	}
+
+	/**
+	 * Remove an attribute from the model.
+	 *
+	 * @param  string  $key
+	 * @return void
+	 */
+	public function __unset($key)
+	{
+		foreach (array('attributes', 'relationships') as $source)
+		{
+			unset($this->$source[$key]);
+		}
+	}
+
+	/**
+	 * Handle dynamic method calls on the model.
+	 *
+	 * @param  string  $method
+	 * @param  array   $parameters
+	 * @return mixed
+	 */
+	public function __call($method, $parameters)
+	{
+		$meta = array('key', 'table', 'connection', 'sequence', 'per_page', 'timestamps');
+
+		// If the method is actually the name of a static property on the model we'll
+		// return the value of the static property. This makes it convenient for
+		// relationships to access these values off of the instances.
+		if (in_array($method, $meta))
+		{
+			return static::$$method;
+		}
+
+		$underscored = array('with', 'find');
+
+		// Some methods need to be accessed both staticly and non-staticly so we'll
+		// keep underscored methods of those methods and intercept calls to them
+		// here so they can be called either way on the model instance.
+		if (in_array($method, $underscored))
+		{
+			return call_user_func_array(array($this, '_'.$method), $parameters);
+		}
+
+		// First we want to see if the method is a getter / setter for an attribute.
+		// If it is, we'll call the basic getter and setter method for the model
+		// to perform the appropriate action based on the method.
+		if (starts_with($method, 'get_'))
+		{
+			return $this->get_attribute(substr($method, 4));
+		}
+		elseif (starts_with($method, 'set_'))
+		{
+			$this->set_attribute(substr($method, 4), $parameters[0]);
+		}
+
+		// Finally we will assume that the method is actually the beginning of a
+		// query, such as "where", and will create a new query instance and
+		// call the method on the query instance, returning it after.
+		else
+		{
+			return call_user_func_array(array($this->query(), $method), $parameters);
+		}
+	}
+
+	/**
+	 * Dynamically handle static method calls on the model.
+	 *
+	 * @param  string  $method
+	 * @param  array   $parameters
+	 * @return mixed
 	 */
 	public static function __callStatic($method, $parameters)
 	{
-		// Just pass the method to a model instance and let the __call method take care of it.
-		return call_user_func_array(array(static::query(get_called_class()), $method), $parameters);
+		$model = get_called_class();
+
+		return call_user_func_array(array(new $model, $method), $parameters);
 	}
 
 }

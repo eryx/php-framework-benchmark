@@ -3,6 +3,25 @@
 class HTML {
 
 	/**
+	 * The registered custom macros.
+	 *
+	 * @var array
+	 */
+	public static $macros = array();
+
+	/**
+	 * Registers a custom macro.
+	 *
+	 * @param  string   $name
+	 * @param  Closure  $macro
+	 * @return void
+	 */
+	public static function macro($name, $macro)
+	{
+		static::$macros[$name] = $macro;
+	}
+
+	/**
 	 * Convert HTML characters to entities.
 	 *
 	 * The encoding specified in the application configuration file will be used.
@@ -12,7 +31,31 @@ class HTML {
 	 */
 	public static function entities($value)
 	{
-		return htmlentities($value, ENT_QUOTES, Config::$items['application']['encoding'], false);
+		return htmlentities($value, ENT_QUOTES, Config::get('application.encoding'), false);
+	}
+
+	/**
+	 * Convert entities to HTML characters.
+	 *
+	 * @param  string  $value
+	 * @return string
+	 */
+	public static function decode($value)
+	{
+		return html_entity_decode($value, ENT_QUOTES, Config::get('application.encoding'));
+	}
+
+	/**
+	 * Convert HTML special characters.
+	 *
+	 * The encoding specified in the application configuration file will be used.
+	 *
+	 * @param  string  $value
+	 * @return string
+	 */
+	public static function specialchars($value)
+	{
+		return htmlspecialchars($value, ENT_QUOTES, Config::get('application.encoding'), false);
 	}
 
 	/**
@@ -32,7 +75,7 @@ class HTML {
 	 */
 	public static function script($url, $attributes = array())
 	{
-		$url = static::entities(URL::to_asset($url));
+		$url = URL::to_asset($url);
 
 		return '<script src="'.$url.'"'.static::attributes($attributes).'></script>'.PHP_EOL;
 	}
@@ -58,15 +101,9 @@ class HTML {
 	{
 		$defaults = array('media' => 'all', 'type' => 'text/css', 'rel' => 'stylesheet');
 
-		foreach ($defaults as $attribute => $default)
-		{
-			if ( ! array_key_exists($attribute, $attributes))
-			{
-				$attributes[$attribute] = $default;
-			}
-		}
+		$attributes = $attributes + $defaults;
 
-		$url = static::entities(URL::to_asset($url));
+		$url = URL::to_asset($url);
 
 		return '<link href="'.$url.'"'.static::attributes($attributes).'>'.PHP_EOL;
 	}
@@ -100,9 +137,11 @@ class HTML {
 	 * @param  bool    $https
 	 * @return string
 	 */
-	public static function link($url, $title, $attributes = array(), $https = false)
+	public static function link($url, $title = null, $attributes = array(), $https = null)
 	{
-		$url = static::entities(URL::to($url, $https));
+		$url = URL::to($url, $https);
+
+		if (is_null($title)) $title = $url;
 
 		return '<a href="'.$url.'"'.static::attributes($attributes).'>'.static::entities($title).'</a>';
 	}
@@ -115,7 +154,7 @@ class HTML {
 	 * @param  array   $attributes
 	 * @return string
 	 */
-	public static function link_to_secure($url, $title, $attributes = array())
+	public static function link_to_secure($url, $title = null, $attributes = array())
 	{
 		return static::link($url, $title, $attributes, true);
 	}
@@ -131,9 +170,11 @@ class HTML {
 	 * @param  bool    $https
 	 * @return string
 	 */
-	public static function link_to_asset($url, $title, $attributes = array(), $https = null)
+	public static function link_to_asset($url, $title = null, $attributes = array(), $https = null)
 	{
-		$url = static::entities(URL::to_asset($url, $https));
+		$url = URL::to_asset($url, $https);
+		
+		if (is_null($title)) $title = $url;
 
 		return '<a href="'.$url.'"'.static::attributes($attributes).'>'.static::entities($title).'</a>';
 	}
@@ -146,7 +187,7 @@ class HTML {
 	 * @param  array   $attributes
 	 * @return string
 	 */
-	public static function link_to_secure_asset($url, $title, $attributes = array())
+	public static function link_to_secure_asset($url, $title = null, $attributes = array())
 	{
 		return static::link_to_asset($url, $title, $attributes, true);
 	}
@@ -170,23 +211,33 @@ class HTML {
 	 * @param  array   $attributes
 	 * @return string
 	 */
-	public static function link_to_route($name, $title, $parameters = array(), $attributes = array(), $https = false)
+	public static function link_to_route($name, $title = null, $parameters = array(), $attributes = array())
 	{
-		return static::link(URL::to_route($name, $parameters, $https), $title, $attributes);
+		return static::link(URL::to_route($name, $parameters), $title, $attributes);
 	}
 
 	/**
-	 * Generate an HTTPS HTML link to a route.
+	 * Generate an HTML link to a controller action.
 	 *
-	 * @param  string  $name
+	 * An array of parameters may be specified to fill in URI segment wildcards.
+	 *
+	 * <code>
+	 *		// Generate a link to the "home@index" action
+	 *		echo HTML::link_to_action('home@index', 'Home');
+	 *
+	 *		// Generate a link to the "user@profile" route and add some parameters
+	 *		echo HTML::link_to_action('user@profile', 'Profile', array('taylor'));
+	 * </code>
+	 *
+	 * @param  string  $action
 	 * @param  string  $title
 	 * @param  array   $parameters
 	 * @param  array   $attributes
 	 * @return string
 	 */
-	public static function link_to_secure_route($name, $title, $parameters = array(), $attributes = array())
+	public static function link_to_action($action, $title = null, $parameters = array(), $attributes = array())
 	{
-		return static::link_to_route($name, $title, $parameters, $attributes, true);
+		return static::link(URL::to_action($action, $parameters), $title, $attributes);
 	}
 
 	/**
@@ -233,7 +284,7 @@ class HTML {
 	{
 		$attributes['alt'] = $alt;
 
-		return '<img src="'.static::entities(URL::to_asset($url)).'"'.static::attributes($attributes).'>';
+		return '<img src="'.URL::to_asset($url).'"'.static::attributes($attributes).'>';
 	}
 
 	/**
@@ -272,11 +323,23 @@ class HTML {
 	{
 		$html = '';
 
+		if (count($list) == 0) return $html;
+
 		foreach ($list as $key => $value)
 		{
+			// If the value is an array, we will recurse the function so that we can
+			// produce a nested list within the list being built. Of course, nested
+			// lists may exist within nested lists, etc.
 			if (is_array($value))
 			{
-				$html .= static::listing($type, $value);
+				if (is_int($key))
+				{
+					$html .= static::listing($type, $value);
+				}
+				else
+				{
+					$html .= '<li>'.$key.static::listing($type, $value).'</li>';
+				}
 			}
 			else
 			{
@@ -286,12 +349,31 @@ class HTML {
 
 		return '<'.$type.static::attributes($attributes).'>'.$html.'</'.$type.'>';
 	}
+	
+	/**
+	 * Generate a definition list.
+	 *
+	 * @param  array   $list
+	 * @param  array   $attributes
+	 * @return string
+	 */
+	public static function dl($list, $attributes = array())
+	{
+		$html = '';
+
+		if (count($list) == 0) return $html;
+		
+		foreach ($list as $term => $description)
+		{
+			$html .= '<dt>'.static::entities($term).'</dt>';
+			$html .= '<dd>'.static::entities($description).'</dd>';
+		}
+		
+		return '<dl'.static::attributes($attributes).'>'.$html.'</dl>';
+	}
 
 	/**
 	 * Build a list of HTML attributes from an array.
-	 *
-	 * Numeric-keyed attributes will be assigned the same key and value to handle
-	 * attributes such as "autofocus" and "required".
 	 *
 	 * @param  array   $attributes
 	 * @return string
@@ -302,6 +384,9 @@ class HTML {
 
 		foreach ((array) $attributes as $key => $value)
 		{
+			// For numeric keys, we will assume that the key and the value are the
+			// same, as this will convert HTML attributes such as "required" that
+			// may be specified as required="required", etc.
 			if (is_numeric($key)) $key = $value;
 
 			if ( ! is_null($value))
@@ -325,19 +410,19 @@ class HTML {
 
 		foreach (str_split($value) as $letter)
 		{
+			// To properly obfuscate the value, we will randomly convert each
+			// letter to its entity or hexadecimal representation, keeping a
+			// bot from sniffing the randomly obfuscated letters.
 			switch (rand(1, 3))
 			{
-				// Convert the letter to its entity representation.
 				case 1:
 					$safe .= '&#'.ord($letter).';';
 					break;
 
-				// Convert the letter to a Hex character code.
 				case 2:
 					$safe .= '&#x'.dechex(ord($letter)).';';
 					break;
 
-				// No encoding.
 				case 3:
 					$safe .= $letter;
 			}
@@ -347,38 +432,20 @@ class HTML {
 	}
 
 	/**
-	 * Magic Method for handling dynamic static methods.
+	 * Dynamically handle calls to custom macros.
 	 *
-	 * This method primarily handles dynamic calls to create links to named routes.
-	 *
-	 * <code>
-	 *		// Generate a link to the "profile" named route
-	 *		echo HTML::link_to_profile('Profile');
-	 *
-	 *		// Generate a link to the "profile" route and add some parameters
-	 *		echo HTML::link_to_profile('Profile', array('taylor'));
-	 *
-	 *		// Generate a link to the "profile" named route using HTTPS
-	 *		echo HTML::link_to_secure_profile('Profile');
-	 * </code>
+	 * @param  string  $method
+	 * @param  array   $parameters
+	 * @return mixed
 	 */
 	public static function __callStatic($method, $parameters)
 	{
-		if (strpos($method, 'link_to_secure_') === 0)
-		{
-			array_unshift($parameters, substr($method, 15));
+	    if (isset(static::$macros[$method]))
+	    {
+	        return call_user_func_array(static::$macros[$method], $parameters);
+	    }
 
-			return forward_static_call_array('HTML::link_to_secure_route', $parameters);
-		}
-
-		if (strpos($method, 'link_to_') === 0)
-		{
-			array_unshift($parameters, substr($method, 8));
-
-			return forward_static_call_array('HTML::link_to_route', $parameters);
-		}
-
-		throw new \BadMethodCallException("Method [$method] is not defined on the HTML class.");
+	    throw new \Exception("Method [$method] does not exist.");
 	}
 
 }

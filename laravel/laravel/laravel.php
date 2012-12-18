@@ -1,203 +1,237 @@
 <?php namespace Laravel;
 
-/**
- * Bootstrap the core framework components like the IoC container,
- * configuration class, and the class auto-loader. Once this file
- * has run, the framework is essentially ready for use.
- */
+use Router;
+
+/*
+|--------------------------------------------------------------------------
+| Bootstrap The Framework Core
+|--------------------------------------------------------------------------
+|
+| By including this file, the core of the framework will be setup which
+| includes the class auto-loader, and the registration of any bundles.
+| Basically, once this file has been included, the entire framework
+| may be used by the developer.
+|
+*/
+
 require 'core.php';
 
-/**
- * Create the exception logging function. All of the error logging
- * is routed through here to avoid duplicate code. This Closure
- * will determine if the actual logging Closure should be called.
- */
-$logger = function($exception)
+/*
+|--------------------------------------------------------------------------
+| Setup Error & Exception Handling
+|--------------------------------------------------------------------------
+|
+| Next we'll register custom handlers for all errors and exceptions so we
+| can display a clean error message for all errors, as well as do any
+| custom error logging that may be setup by the developer.
+|
+*/
+
+set_exception_handler(function($e)
 {
-	if (Config::$items['error']['log'])
-	{
-		call_user_func(Config::$items['error']['logger'], $exception);
-	}
-};
+	require_once path('sys').'error'.EXT;
 
-/**
- * Create the exception handler function. All of the error handlers
- * registered by the framework call this closure to avoid duplicate
- * code. This Closure will pass the exception to the developer
- * defined handler in the configuration file.
- */
-$handler = function($exception) use ($logger)
-{
-	$logger($exception);
-
-	if (Config::$items['error']['detail'])
-	{
-		echo "<html><h2>Unhandled Exception</h2>
-			  <h3>Message:</h3>
-			  <pre>".$exception->getMessage()."</pre>
-			  <h3>Location:</h3>
-			  <pre>".$exception->getFile()." on line ".$exception->getLine()."</pre>
-			  <h3>Stack Trace:</h3>
-			  <pre>".$exception->getTraceAsString()."</pre></html>";
-	}
-	else
-	{
-		Response::error('500')->send();
-	}
-
-	exit(1);
-};
-
-/**
- * Register the PHP exception handler. The framework throws exceptions
- * on every error that cannot be handled. All of those exceptions will
- * be sent through this closure for processing.
- */
-set_exception_handler(function($exception) use ($handler)
-{
-	$handler($exception);
+	Error::exception($e);
 });
 
-/**
- * Register the PHP error handler. All PHP errors will fall into this
- * handler, which will convert the error into an ErrorException object
- * and pass the exception into the common exception handler. Suppressed
- * errors are ignored and errors in the developer configured whitelist
- * are silently logged.
- */
-set_error_handler(function($code, $error, $file, $line) use ($logger)
+
+set_error_handler(function($code, $error, $file, $line)
 {
-	if (error_reporting() === 0) return;
+	require_once path('sys').'error'.EXT;
 
-	$exception = new \ErrorException($error, $code, 0, $file, $line);
-
-	if (in_array($code, Config::$items['error']['ignore']))
-	{
-		return $logger($exception);
-	}
-
-	throw $exception;
+	Error::native($code, $error, $file, $line);
 });
 
-/**
- * Register the PHP shutdown handler. This function will be called
- * at the end of the PHP script or on a fatal PHP error. If an error
- * has occured, we will convert it to an ErrorException and pass it
- * to the common exception handler for the framework.
- */
-register_shutdown_function(function() use ($handler)
-{
-	if ( ! is_null($error = error_get_last()))
-	{
-		extract($error, EXTR_SKIP);
 
-		$handler(new \ErrorException($message, $type, 0, $file, $line));
-	}	
+register_shutdown_function(function()
+{
+	require_once path('sys').'error'.EXT;
+
+	Error::shutdown();
 });
 
-/**
- * Setting the PHP error reporting level to -1 essentially forces
- * PHP to report every error, and is guranteed to show every error
- * on future versions of PHP.
- *
- * If error detail is turned off, we will turn off all PHP error
- * reporting and display since the framework will be displaying a
- * generic message and we don't want any sensitive details about
- * the exception leaking into the views.
- */
+/*
+|--------------------------------------------------------------------------
+| Report All Errors
+|--------------------------------------------------------------------------
+|
+| By setting error reporting to -1, we essentially force PHP to report
+| every error, and this is guaranteed to show every error on future
+| releases of PHP. This allows everything to be fixed early!
+|
+*/
+
 error_reporting(-1);
 
-ini_set('display_errors', 'Off');
+/*
+|--------------------------------------------------------------------------
+| Start The Application Bundle
+|--------------------------------------------------------------------------
+|
+| The application "bundle" is the default bundle for the installation and
+| we'll fire it up first. In this bundle's bootstrap, more configuration
+| will take place and the developer can hook into some of the core
+| framework events such as the configuration loader.
+|
+*/
 
-/**
- * Load the session and session manager instance. The session
- * payload will be registered in the IoC container as an instance
- * so it can be retrieved easily throughout the application.
- */
-if (Config::$items['session']['driver'] !== '')
+Bundle::start(DEFAULT_BUNDLE);
+
+/*
+|--------------------------------------------------------------------------
+| Auto-Start Other Bundles
+|--------------------------------------------------------------------------
+|
+| Bundles that are used throughout the application may be auto-started
+| so they are immediately available on every request without needing
+| to explicitly start them within the application.
+|
+*/
+
+foreach (Bundle::$bundles as $bundle => $config)
 {
-	$driver = Session\Drivers\Factory::make(Config::$items['session']['driver']);
-
-	$session = new Session\Payload($driver);
-
-	$session->load(Cookie::get(Config::$items['session']['cookie']));
-
-	IoC::instance('laravel.session', $session);
+	if ($config['auto']) Bundle::start($bundle);
 }
 
-/**
- * Gather the input to the application based on the current request.
- * The input will be gathered based on the current request method and
- * will be set on the Input manager.
- */
-$input = array();
+/*
+|--------------------------------------------------------------------------
+| Register The Catch-All Route
+|--------------------------------------------------------------------------
+|
+| This route will catch all requests that do not hit another route in
+| the application, and will raise the 404 error event so the error
+| can be handled by the developer in their 404 event listener.
+|
+*/
 
-switch (Request::method())
+Router::register('*', '(:all)', function()
 {
-	case 'GET':
-		$input = $_GET;
-		break;
+	return Event::first('404');
+});
 
-	case 'POST':
-		$input = $_POST;
-		break;
+/*
+|--------------------------------------------------------------------------
+| Gather The URI And Locales
+|--------------------------------------------------------------------------
+|
+| When routing, we'll need to grab the URI and the supported locales for
+| the route so we can properly set the language and route the request
+| to the proper end-point in the application.
+|
+*/
 
-	case 'PUT':
-	case 'DELETE':
-		if (Request::spoofed())
-		{
-			$input = $_POST;
-		}
-		else
-		{
-			parse_str(file_get_contents('php://input'), $input);
-		}
+$uri = URI::current();
+
+$languages = Config::get('application.languages', array());
+
+$languages[] = Config::get('application.language');
+
+/*
+|--------------------------------------------------------------------------
+| Set The Locale Based On The Route
+|--------------------------------------------------------------------------
+|
+| If the URI starts with one of the supported languages, we will set
+| the default lagnauge to match that URI segment and shorten the
+| URI we'll pass to the router to not include the lang segment.
+|
+*/
+
+foreach ($languages as $language)
+{
+	if (preg_match("#^{$language}(?:$|/)#i", $uri))
+	{
+		Config::set('application.language', $language);
+
+		$uri = trim(substr($uri, strlen($language)), '/'); break;
+	}
 }
 
-/**
- * The spoofed request method is removed from the input so it is not
- * unexpectedly included in Input::all() or Input::get(). Leaving it
- * in the input array could cause unexpected results if the developer
- * fills an Eloquent model with the input.
- */
-unset($input[Request::spoofer]);
+if ($uri == '') $uri = '/';
 
-Input::$input = $input;
+URI::$uri = $uri;
 
-/**
- * Route the request to the proper route in the application. If a
- * route is found, the route will be called with the current request
- * instance. If no route is found, the 404 response will be returned
- * to the browser.
- */
-Routing\Filter::register(require APP_PATH.'filters'.EXT);
+/*
+|--------------------------------------------------------------------------
+| Route The Incoming Request
+|--------------------------------------------------------------------------
+|
+| Phew! We can finally route the request to the appropriate route and
+| execute the route to get the response. This will give an instance
+| of the Response object that we can send back to the browser
+|
+*/
 
-$loader = new Routing\Loader(APP_PATH, ROUTE_PATH);
+Request::$route = Router::route(Request::method(), $uri);
 
-$router = new Routing\Router($loader, CONTROLLER_PATH);
+$response = Request::$route->call();
 
-IoC::instance('laravel.routing.router', $router);
+/*
+|--------------------------------------------------------------------------
+| "Render" The Response
+|--------------------------------------------------------------------------
+|
+| The render method evaluates the content of the response and converts it
+| to a string. This evaluates any views and sub-responses within the
+| content and sets the raw string result as the new response.
+|
+*/
 
-Request::$route = $router->route(Request::method(), URI::current());
+$response->render();
 
-if ( ! is_null(Request::$route))
+/*
+|--------------------------------------------------------------------------
+| Persist The Session To Storage
+|--------------------------------------------------------------------------
+|
+| If a session driver has been configured, we will save the session to
+| storage so it is available for the next request. This will also set
+| the session cookie in the cookie jar to be sent to the user.
+|
+*/
+
+if (Config::get('session.driver') !== '')
 {
-	$response = Request::$route->call();
-}
-else
-{
-	$response = Response::error('404');
+	Session::save();
 }
 
-/**
- * Close the session and write the active payload to persistent
- * storage. The session cookie will also be written and if the
- * driver is a sweeper, session garbage collection might be
- * performed depending on the "sweepage" probability.
- */
-if (Config::$items['session']['driver'] !== '')
-{
-	IoC::core('session')->save();
-}
+/*
+|--------------------------------------------------------------------------
+| Send The Response To The Browser
+|--------------------------------------------------------------------------
+|
+| We'll send the response back to the browser here. This method will also
+| send all of the response headers to the browser as well as the string
+| content of the Response. This should make the view available to the
+| browser and show something pretty to the user.
+|
+*/
 
 $response->send();
+
+/*
+|--------------------------------------------------------------------------
+| And We're Done!
+|--------------------------------------------------------------------------
+|
+| Raise the "done" event so extra output can be attached to the response.
+| This allows the adding of debug toolbars, etc. to the view, or may be
+| used to do some kind of logging by the application.
+|
+*/
+
+Event::fire('laravel.done', array($response));
+
+/*
+|--------------------------------------------------------------------------
+| Finish the request for PHP-FastCGI
+|--------------------------------------------------------------------------
+|
+| Stopping the PHP process for PHP-FastCGI users to speed up some
+| PHP queries. Acceleration is possible when there are actions in the
+| process of script execution that do not affect server response.
+| For example, saving the session in memcached can occur after the page
+| has been formed and passed to a web server.
+*/
+
+$response->foundation->finish();
