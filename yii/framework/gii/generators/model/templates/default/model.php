@@ -54,12 +54,23 @@ class <?php echo $modelClass; ?> extends <?php echo $this->baseClass."\n"; ?>
 {
 	/**
 	 * Returns the static model of the specified AR class.
+	 * @param string $className active record class name.
 	 * @return <?php echo $modelClass; ?> the static model class
 	 */
 	public static function model($className=__CLASS__)
 	{
 		return parent::model($className);
 	}
+<?php if($connectionId!='db'):?>
+
+	/**
+	 * @return CDbConnection database connection
+	 */
+	public function getDbConnection()
+	{
+		return Yii::app()-><?php echo $connectionId ?>;
+	}
+<?php endif?>
 
 	/**
 	 * @return string the associated database table name

@@ -2,6 +2,7 @@
 
 class ModelCode extends CCodeModel
 {
+	public $connectionId='db';
 	public $tablePrefix;
 	public $tableName;
 	public $modelClass;
@@ -18,15 +19,16 @@ class ModelCode extends CCodeModel
 	public function rules()
 	{
 		return array_merge(parent::rules(), array(
-			array('tablePrefix, baseClass, tableName, modelClass, modelPath', 'filter', 'filter'=>'trim'),
-			array('tableName, modelPath, baseClass', 'required'),
+			array('tablePrefix, baseClass, tableName, modelClass, modelPath, connectionId', 'filter', 'filter'=>'trim'),
+			array('connectionId, tableName, modelPath, baseClass', 'required'),
 			array('tablePrefix, tableName, modelPath', 'match', 'pattern'=>'/^(\w+[\w\.]*|\*?|\w+\.\*)$/', 'message'=>'{attribute} should only contain word characters, dots, and an optional ending asterisk.'),
+			array('connectionId', 'validateConnectionId', 'skipOnError'=>true),
 			array('tableName', 'validateTableName', 'skipOnError'=>true),
 			array('tablePrefix, modelClass, baseClass', 'match', 'pattern'=>'/^[a-zA-Z_]\w*$/', 'message'=>'{attribute} should only contain word characters.'),
 			array('modelPath', 'validateModelPath', 'skipOnError'=>true),
 			array('baseClass, modelClass', 'validateReservedWord', 'skipOnError'=>true),
 			array('baseClass', 'validateBaseClass', 'skipOnError'=>true),
-			array('tablePrefix, modelPath, baseClass, buildRelations', 'sticky'),
+			array('connectionId, tablePrefix, modelPath, baseClass, buildRelations', 'sticky'),
 		));
 	}
 
@@ -39,6 +41,7 @@ class ModelCode extends CCodeModel
 			'modelClass'=>'Model Class',
 			'baseClass'=>'Base Class',
 			'buildRelations'=>'Build Relations',
+			'connectionId'=>'Database Connection',
 		));
 	}
 
@@ -51,9 +54,9 @@ class ModelCode extends CCodeModel
 
 	public function init()
 	{
-		if(Yii::app()->db===null)
-			throw new CHttpException(500,'An active "db" connection is required to run this generator.');
-		$this->tablePrefix=Yii::app()->db->tablePrefix;
+		if(Yii::app()->{$this->connectionId}===null)
+			throw new CHttpException(500,'A valid database connection is required to run this generator.');
+		$this->tablePrefix=Yii::app()->{$this->connectionId}->tablePrefix;
 		parent::init();
 	}
 
@@ -71,7 +74,7 @@ class ModelCode extends CCodeModel
 		}
 		if($tableName[strlen($tableName)-1]==='*')
 		{
-			$tables=Yii::app()->db->schema->getTables($schema);
+			$tables=Yii::app()->{$this->connectionId}->schema->getTables($schema);
 			if($this->tablePrefix!='')
 			{
 				foreach($tables as $i=>$table)
@@ -99,6 +102,7 @@ class ModelCode extends CCodeModel
 				'labels'=>$this->generateLabels($table),
 				'rules'=>$this->generateRules($table),
 				'relations'=>isset($this->relations[$className]) ? $this->relations[$className] : array(),
+				'connectionId'=>$this->connectionId,
 			);
 			$this->files[]=new CCodeFile(
 				Yii::getPathOfAlias($this->modelPath).'/'.$className.'.php',
@@ -109,6 +113,10 @@ class ModelCode extends CCodeModel
 
 	public function validateTableName($attribute,$params)
 	{
+		if($this->hasErrors())
+			return;
+
+		$invalidTables=array();
 		$invalidColumns=array();
 
 		if($this->tableName[strlen($this->tableName)-1]==='*')
@@ -119,11 +127,13 @@ class ModelCode extends CCodeModel
 				$schema='';
 
 			$this->modelClass='';
-			$tables=Yii::app()->db->schema->getTables($schema);
+			$tables=Yii::app()->{$this->connectionId}->schema->getTables($schema);
 			foreach($tables as $table)
 			{
 				if($this->tablePrefix=='' || strpos($table->name,$this->tablePrefix)===0)
 				{
+					if(in_array(strtolower($table->name),self::$keywords))
+						$invalidTables[]=$table->name;
 					if(($invalidColumn=$this->checkColumns($table))!==null)
 						$invalidColumns[]=$invalidColumn;
 				}
@@ -140,8 +150,10 @@ class ModelCode extends CCodeModel
 					$invalidColumns[]=$invalidColumn;
 		}
 
+		if($invalidTables!=array())
+			$this->addError('tableName', 'Model class cannot take a reserved PHP keyword! Table name: '.implode(', ', $invalidTables).".");
 		if($invalidColumns!=array())
-			$this->addError('tableName',"Column names that does not follow PHP variable naming convention: ".implode(', ', $invalidColumns)."."	);
+			$this->addError('tableName', 'Column names that does not follow PHP variable naming convention: '.implode(', ', $invalidColumns).".");
 	}
 
 	/*
@@ -176,7 +188,7 @@ class ModelCode extends CCodeModel
 
 	public function getTableSchema($tableName)
 	{
-		return Yii::app()->db->getSchema()->getTable($tableName);
+		return Yii::app()->{$this->connectionId}->getSchema()->getTable($tableName);
 	}
 
 	public function generateLabels($table)
@@ -243,14 +255,14 @@ class ModelCode extends CCodeModel
 
 	protected function removePrefix($tableName,$addBrackets=true)
 	{
-		if($addBrackets && Yii::app()->db->tablePrefix=='')
+		if($addBrackets && Yii::app()->{$this->connectionId}->tablePrefix=='')
 			return $tableName;
-		$prefix=$this->tablePrefix!='' ? $this->tablePrefix : Yii::app()->db->tablePrefix;
+		$prefix=$this->tablePrefix!='' ? $this->tablePrefix : Yii::app()->{$this->connectionId}->tablePrefix;
 		if($prefix!='')
 		{
-			if($addBrackets && Yii::app()->db->tablePrefix!='')
+			if($addBrackets && Yii::app()->{$this->connectionId}->tablePrefix!='')
 			{
-				$prefix=Yii::app()->db->tablePrefix;
+				$prefix=Yii::app()->{$this->connectionId}->tablePrefix;
 				$lb='{{';
 				$rb='}}';
 			}
@@ -274,7 +286,7 @@ class ModelCode extends CCodeModel
 		if(!$this->buildRelations)
 			return array();
 		$relations=array();
-		foreach(Yii::app()->db->schema->getTables() as $table)
+		foreach(Yii::app()->{$this->connectionId}->schema->getTables() as $table)
 		{
 			if($this->tablePrefix!='' && strpos($table->name,$this->tablePrefix)!==0)
 				continue;
@@ -380,11 +392,17 @@ class ModelCode extends CCodeModel
 			$name.=ucfirst($names[$i]);
 
 		$rawName=$name;
-		$table=Yii::app()->db->schema->getTable($tableName);
+		$table=Yii::app()->{$this->connectionId}->schema->getTable($tableName);
 		$i=0;
 		while(isset($table->columns[$name]))
 			$name=$rawName.($i++);
 
 		return $name;
+	}
+
+	public function validateConnectionId($attribute, $params)
+	{
+		if(Yii::app()->hasComponent($this->connectionId)===false || !(Yii::app()->getComponent($this->connectionId) instanceof CDbConnection))
+			$this->addError('connectionId','A valid database connection is required to run this generator.');
 	}
 }

@@ -11,8 +11,16 @@
 /**
  * CUniqueValidator validates that the attribute value is unique in the corresponding database table.
  *
+ * When using the {@link message} property to define a custom error message, the message
+ * may contain additional placeholders that will be replaced with the actual content. In addition
+ * to the "{attribute}" placeholder, recognized by all validators (see {@link CValidator}),
+ * CUniqueValidator allows for the following placeholders to be specified:
+ * <ul>
+ * <li>{value}: replaced with current value of the attribute.</li>
+ * </ul>
+ *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: CUniqueValidator.php 3260 2011-06-13 20:56:54Z alexander.makarow $
+ * @version $Id$
  * @package system.validators
  * @since 1.0
  */
@@ -34,7 +42,6 @@ class CUniqueValidator extends CValidator
 	 * the class of the object currently being validated.
 	 * You may use path alias to reference a class name here.
 	 * @see attributeName
-	 * @since 1.0.8
 	 */
 	public $className;
 	/**
@@ -42,14 +49,13 @@ class CUniqueValidator extends CValidator
 	 * used to look for the attribute value being validated. Defaults to null,
 	 * meaning using the name of the attribute being validated.
 	 * @see className
-	 * @since 1.0.8
 	 */
 	public $attributeName;
 	/**
-	 * @var array additional query criteria. This will be combined with the condition
-	 * that checks if the attribute value exists in the corresponding table column.
+	 * @var mixed additional query criteria. Either an array or CDbCriteria.
+	 * This will be combined with the condition that checks if the attribute
+	 * value exists in the corresponding table column.
 	 * This array will be used to instantiate a {@link CDbCriteria} object.
-	 * @since 1.0.8
 	 */
 	public $criteria=array();
 	/**
@@ -86,12 +92,13 @@ class CUniqueValidator extends CValidator
 				array('{column}'=>$attributeName,'{table}'=>$table->name)));
 
 		$columnName=$column->rawName;
-		$criteria=new CDbCriteria(array(
-			'condition'=>$this->caseSensitive ? "$columnName=:value" : "LOWER($columnName)=LOWER(:value)",
-			'params'=>array(':value'=>$value),
-		));
+		$criteria=new CDbCriteria();
 		if($this->criteria!==array())
 			$criteria->mergeWith($this->criteria);
+		$tableAlias = empty($criteria->alias) ? $finder->getTableAlias(true) : $criteria->alias;
+		$valueParamName = CDbCriteria::PARAM_PREFIX.CDbCriteria::$paramCount++;
+		$criteria->addCondition($this->caseSensitive ? "{$tableAlias}.{$columnName}={$valueParamName}" : "LOWER({$tableAlias}.{$columnName})=LOWER({$valueParamName})");
+		$criteria->params[$valueParamName] = $value;
 
 		if(!$object instanceof CActiveRecord || $object->isNewRecord || $object->tableName()!==$finder->tableName())
 			$exists=$finder->exists($criteria);
@@ -117,7 +124,7 @@ class CUniqueValidator extends CValidator
 		if($exists)
 		{
 			$message=$this->message!==null?$this->message:Yii::t('yii','{attribute} "{value}" has already been taken.');
-			$this->addError($object,$attribute,$message,array('{value}'=>$value));
+			$this->addError($object,$attribute,$message,array('{value}'=>CHtml::encode($value)));
 		}
 	}
 }

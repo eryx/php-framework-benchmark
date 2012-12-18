@@ -1,6 +1,17 @@
 <?php
 $class=get_class($model);
 Yii::app()->clientScript->registerScript('gii.model',"
+$('#{$class}_connectionId').change(function(){
+	var tableName=$('#{$class}_tableName');
+	tableName.autocomplete('option', 'source', []);
+	$.ajax({
+		url: '".Yii::app()->getUrlManager()->createUrl('gii/model/getTableNames')."',
+		data: {db: this.value},
+		dataType: 'json'
+	}).done(function(data){
+		tableName.autocomplete('option', 'source', data);
+	});
+});
 $('#{$class}_modelClass').change(function(){
 	$(this).data('changed',$(this).val()!='');
 });
@@ -39,6 +50,14 @@ $('.form .row.model-class').toggle($('#{$class}_tableName').val().substring($('#
 <?php $form=$this->beginWidget('CCodeForm', array('model'=>$model)); ?>
 
 	<div class="row sticky">
+		<?php echo $form->labelEx($model, 'connectionId')?>
+		<?php echo $form->textField($model, 'connectionId', array('size'=>65))?>
+		<div class="tooltip">
+		The database component that should be used.
+		</div>
+		<?php echo $form->error($model,'connectionId'); ?>
+	</div>
+	<div class="row sticky">
 		<?php echo $form->labelEx($model,'tablePrefix'); ?>
 		<?php echo $form->textField($model,'tablePrefix', array('size'=>65)); ?>
 		<div class="tooltip">
@@ -53,7 +72,23 @@ $('.form .row.model-class').toggle($('#{$class}_tableName').val().substring($('#
 	</div>
 	<div class="row">
 		<?php echo $form->labelEx($model,'tableName'); ?>
-		<?php echo $form->textField($model,'tableName', array('size'=>65)); ?>
+		<?php $this->widget('zii.widgets.jui.CJuiAutoComplete',array(
+			'model'=>$model,
+			'attribute'=>'tableName',
+			'name'=>'tableName',
+			'source'=>Yii::app()->hasComponent($model->connectionId) ? array_keys(Yii::app()->{$model->connectionId}->schema->getTables()) : array(),
+			'options'=>array(
+				'minLength'=>'0',
+				'focus'=>new CJavaScriptExpression('function(event,ui) {
+					$("#'.CHtml::activeId($model,'tableName').'").val(ui.item.label);
+					return false;
+				}')
+			),
+			'htmlOptions'=>array(
+				'id'=>'ModelCode_tableName',
+				'size'=>'65'
+			),
+		)); ?>
 		<div class="tooltip">
 		This refers to the table name that a new model class should be generated for
 		(e.g. <code>tbl_user</code>). It can contain schema name, if needed (e.g. <code>public.tbl_post</code>).

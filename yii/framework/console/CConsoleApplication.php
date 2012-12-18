@@ -23,7 +23,7 @@
  *
  * The command classes reside in the directory {@link getCommandPath commandPath}.
  * The name of the class follows the pattern: &lt;command-name&gt;Command, and its
- * file name is the same the class name. For example, the 'ShellCommand' class defines
+ * file name is the same as the class name. For example, the 'ShellCommand' class defines
  * a 'shell' command and the class file name is 'ShellCommand.php'.
  *
  * To run the console application, enter the following on the command line:
@@ -36,8 +36,11 @@
  * php path/to/entry_script.php help <command name>
  * </pre>
  *
+ * @property string $commandPath The directory that contains the command classes. Defaults to 'protected/commands'.
+ * @property CConsoleCommandRunner $commandRunner The command runner.
+ *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: CConsoleApplication.php 3213 2011-05-12 23:19:59Z alexander.makarow $
+ * @version $Id$
  * @package system.console
  * @since 1.0
  */
@@ -81,11 +84,14 @@ class CConsoleApplication extends CApplication
 
 	/**
 	 * Processes the user request.
-	 * This method creates a console command runner to handle the particular user command.
+	 * This method uses a console command runner to handle the particular user command.
+	 * Since version 1.1.11 this method will exit application with an exit code if one is returned by the user command.
 	 */
 	public function processRequest()
 	{
-		$this->_runner->run($_SERVER['argv']);
+		$exitCode=$this->_runner->run($_SERVER['argv']);
+		if(is_int($exitCode))
+			$this->end($exitCode);
 	}
 
 	/**

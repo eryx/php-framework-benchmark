@@ -8,6 +8,7 @@
  * @license http://www.yiiframework.com/license/
  */
 
+Yii::import('system.test.CTestCase');
 require_once('PHPUnit/Extensions/SeleniumTestCase.php');
 
 /**
@@ -16,8 +17,10 @@ require_once('PHPUnit/Extensions/SeleniumTestCase.php');
  * It extends PHPUnit_Extensions_SeleniumTestCase and provides the database
  * fixture management feature like {@link CDbTestCase}.
  *
+ * @property CDbFixtureManager $fixtureManager The database fixture manager.
+ *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: CWebTestCase.php 2799 2011-01-01 19:31:13Z qiang.xue $
+ * @version $Id$
  * @package system.test
  * @since 1.1
  */

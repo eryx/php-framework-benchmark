@@ -25,7 +25,7 @@
  * {@link caseSensitive} property of the collection.
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: CAttributeCollection.php 3001 2011-02-24 16:42:44Z alexander.makarow $
+ * @version $Id$
  * @package system.collections
  * @since 1.0
  */
@@ -71,7 +71,6 @@ class CAttributeCollection extends CMap
 	 * if the key exists in the collection and contains a non-null value.
 	 * @param string $name the property name or the event name
 	 * @return boolean whether the property value is null
-	 * @since 1.0.1
 	 */
 	public function __isset($name)
 	{
@@ -86,7 +85,6 @@ class CAttributeCollection extends CMap
 	 * This method overrides the parent implementation by clearing
 	 * the specified key value.
 	 * @param string $name the property name or the event name
-	 * @since 1.0.1
 	 */
 	public function __unset($name)
 	{
@@ -183,5 +181,34 @@ class CAttributeCollection extends CMap
 	public function canSetProperty($name)
 	{
 		return true;
+	}
+
+	/**
+	 * Merges iterable data into the map.
+	 *
+	 * Existing elements in the map will be overwritten if their keys are the same as those in the source.
+	 * If the merge is recursive, the following algorithm is performed:
+	 * <ul>
+	 * <li>the map data is saved as $a, and the source data is saved as $b;</li>
+	 * <li>if $a and $b both have an array indexed at the same string key, the arrays will be merged using this algorithm;</li>
+	 * <li>any integer-indexed elements in $b will be appended to $a and reindexed accordingly;</li>
+	 * <li>any string-indexed elements in $b will overwrite elements in $a with the same index;</li>
+	 * </ul>
+	 *
+	 * @param mixed $data the data to be merged with, must be an array or object implementing Traversable
+	 * @param boolean $recursive whether the merging should be recursive.
+	 *
+	 * @throws CException If data is neither an array nor an iterator.
+	 */
+	public function mergeWith($data,$recursive=true)
+	{
+		if(!$this->caseSensitive && (is_array($data) || $data instanceof Traversable))
+		{
+            $d=array();
+            foreach($data as $key=>$value)
+                $d[strtolower($key)]=$value;
+            return parent::mergeWith($d,$recursive);
+		}
+    parent::mergeWith($data,$recursive);
 	}
 }

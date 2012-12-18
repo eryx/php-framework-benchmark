@@ -4,13 +4,13 @@ $(document).ready(function() {
 	}
 
 	$('table.preview input[name="checkAll"]').click(function() {
-		$('table.preview .confirm input').attr('checked', this.checked);
+		$('table.preview .confirm input').prop('checked', this.checked);
 	});
 
 	$('table.preview td.confirm input').click(function() {
-		$('table.preview input[name="checkAll"]').attr('checked', !$('table.preview td.confirm input:not(:checked)').length);
+		$('table.preview input[name="checkAll"]').prop('checked', !$('table.preview td.confirm input:not(:checked)').length);
 	});
-	$('table.preview input[name="checkAll"]').attr('checked', !$('table.preview td.confirm input:not(:checked)').length);
+	$('table.preview input[name="checkAll"]').prop('checked', !$('table.preview td.confirm input:not(:checked)').length);
 
 	$('.form .row.sticky input:not(.error), .form .row.sticky select:not(.error), .form .row.sticky textarea:not(.error)').each(function(){
 		var value;
@@ -25,14 +25,14 @@ $(document).ready(function() {
 		$(this).before('<div class="value">'+value+'</div>').hide();
 	});
 
-	$('.form.gii .row.sticky .value').live('click', function(){
+	$(document).on('click', '.form.gii .row.sticky .value', function(){
 		$(this).hide();
 		$(this).next().show().get(0).focus();
 	});
 
 
 	$('.form.gii .row input, .form.gii .row textarea, .form.gii .row select, .with-tooltip').not('.no-tooltip, .no-tooltip *').tooltip({
-	    position: "center right",
+		position: "center right",
 		offset: [-2, 10]
 	});
 
@@ -72,7 +72,7 @@ $(document).ready(function() {
 		return false;
 	});
 
-	$('#fancybox-inner .close-code').live('click', function(){
+	$(document).on('click', '#fancybox-inner .close-code', function(){
 		$.fancybox.close();
 		return false;
 	});

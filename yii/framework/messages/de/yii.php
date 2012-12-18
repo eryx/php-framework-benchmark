@@ -16,12 +16,10 @@
  *
  * NOTE, this file must be saved in UTF-8 encoding.
  *
- * @version $Id: yii.php 3322 2011-06-26 17:38:50Z qiang.xue $
+ * @version $Id$
  */
 return array (
-  'Failed to set unsafe attribute "{attribute}" of "{class}".' => 'Ungesichertes Attribut "{attribute}" konnte nicht gesetzt werden.',
-  'Failed to start session.' => 'Session konnte nicht gestartet werden.',
-  '{class} and its behaviors do not have a method or closure named "{name}".' => 'Weder {class} noch zugehörige Behavior haben einen Scope "{name}".',
+  'Powered by {yii}.' => 'Powered by {yii}.',
   '"{path}" is not a valid directory.' => '"{path}" ist kein gültiges Verzeichnis.',
   '&lt; Previous' => '&lt; Vorherige',
   '&lt;&lt; First' => '&lt;&lt; Erste',
@@ -30,7 +28,7 @@ return array (
   'Active record "{class}" has an invalid configuration for relation "{relation}". It must specify the relation type, the related active record class and the foreign key.' => 'ActiveRecord-Klasse "{class}" hat eine ungültige Konfiguration für die Relation "{relation}". Relations-Typ, verknüpftes ActiveRecord und Fremdschlüssel müssen angegeben werden.',
   'Active record "{class}" is trying to select an invalid column "{column}". Note, the column must exist in the table or be an expression with alias.' => 'ActiveRecord "{class}" benutzt das ungültige Feld "{column}" in SELECT. Beachten Sie, dass dieses Feld in der Tabelle existieren oder ein Alias-Ausdruck sein muss.',
   'Adding a foreign key constraint to an existing table is not supported by SQLite.' => 'SQLite unterstützt das Hinzufügen eines Fremdschüssel zu einer bestehenden Tabelle nicht.',
-  'Alias "{alias}" is invalid. Make sure it points to an existing PHP file.' => 'Alias "{alias}" ist ungültig. Stellen Sie sicher, dass er auf eine existierende PHP-Datei verweist.',
+  'Alias "{alias}" is invalid. Make sure it points to an existing PHP file and the file is readable.' => 'Alias "{alias}" ist ungültig. Stellen Sie sicher, dass er auf eine existierende PHP-Datei verweist und die Datei lesbar ist.',
   'Alias "{alias}" is invalid. Make sure it points to an existing directory or file.' => 'Der Alias "{alias}" ist ungültig. Stellen Sie sicher, dass er auf ein existierendes Verzeichnis oder eine existierende Datei verweist.',
   'Alias "{alias}" is invalid. Make sure it points to an existing directory.' => 'Alias "{alias}" ist ungültig. Stellen Sie sicher, dass er auf ein existierendes Verzeichnis verweist.',
   'Altering a DB column is not supported by SQLite.' => 'SQLite unterstützt das Verändern einer DB-Spalte nicht.',
@@ -104,6 +102,8 @@ return array (
   'Event "{class}.{event}" is not defined.' => 'Ereignis "{class}.{event} ist nicht definiert.',
   'Extension path "{path}" does not exist.' => 'Erweiterungs-Pfad "{path}" existiert nicht.',
   'Failed to initialize the mcrypt module.' => 'Initialisierung des mcrypt-Moduls ist fehlgeschlagen.',
+  'Failed to set unsafe attribute "{attribute}" of "{class}".' => 'Ungesichertes Attribut "{attribute}" konnte nicht gesetzt werden.',
+  'Failed to start session.' => 'Session konnte nicht gestartet werden.',
   'Failed to write the uploaded file "{file}" to disk.' => 'Hochgeladene Datei "{file}" konnte nicht auf die Festplatte gespeichert werden.',
   'File upload was stopped by extension.' => 'Datei-Upload wurde von einer Erweiterung angehalten.',
   'Filter "{filter}" is invalid. Controller "{class}" does not have the filter method "filter{filter}".' => 'Filter "{filter}" ist ungültig. Controller "{class}" hat keine Filter-Methode "filter{filter}".',
@@ -212,7 +212,6 @@ return array (
   'Yii application can only be created once.' => 'Eine Yii Applikation kann nur einmal erzeugt werden.',
   'You are not authorized to perform this action.' => 'Sie sind nicht berechtigt, diese Aktion auszuführen.',
   'Your request is invalid.' => 'Ihre Anfrage ist ungültig.',
-  'Your request is not valid.' => 'Ihre Anfrage ist ungültig.',
   '{attribute} "{value}" has already been taken.' => '{attribute} "{value}" ist bereits vergeben.',
   '{attribute} "{value}" is invalid.' => '{attribute} "{value}" ist ungültig.',
   '{attribute} cannot accept more than {limit} files.' => '{attribute} akzeptiert nicht mehr als {limit} Dateien.',
@@ -243,6 +242,7 @@ return array (
   '{className} does not support flushValues() functionality.' => '{className} unterstützt die flushValues()-Funktion nicht.',
   '{className} does not support get() functionality.' => '{className} unterstützt die Funktionalität get() nicht.',
   '{className} does not support set() functionality.' => '{className} unterstützt die Funktionalität set() nicht.',
+  '{class} and its behaviors do not have a method or closure named "{name}".' => 'Weder {class} noch zugehörige Behavior haben einen Scope "{name}".',
   '{class} does not have relation "{name}".' => '{class} hat keine Relation "{name}".',
   '{class} does not support fetching all table names.' => '{class} unterstützt das Beziehen aller Tabellennamen nicht.',
   '{class} has an invalid validation rule. The rule must specify attributes to be validated and the validator name.' => '{class} hat eine ungültige Validierungs-Regel. Die Regel muss die zu validierenden Attribute und den Validatornamen enthalten.',

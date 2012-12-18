@@ -12,7 +12,7 @@
  * CMysqlSchema is the class for retrieving metadata information from a MySQL database (version 4.1.x and 5.x).
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: CMysqlSchema.php 3304 2011-06-23 14:53:50Z qiang.xue $
+ * @version $Id$
  * @package system.db.schema.mysql
  * @since 1.0
  */
@@ -22,21 +22,21 @@ class CMysqlSchema extends CDbSchema
 	 * @var array the abstract column types mapped to physical column types.
 	 * @since 1.1.6
 	 */
-    public $columnTypes=array(
-        'pk' => 'int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY',
-        'string' => 'varchar(255)',
-        'text' => 'text',
-        'integer' => 'int(11)',
-        'float' => 'float',
-        'decimal' => 'decimal',
-        'datetime' => 'datetime',
-        'timestamp' => 'timestamp',
-        'time' => 'time',
-        'date' => 'date',
-        'binary' => 'blob',
-        'boolean' => 'tinyint(1)',
+	public $columnTypes=array(
+		'pk' => 'int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY',
+		'string' => 'varchar(255)',
+		'text' => 'text',
+		'integer' => 'int(11)',
+		'float' => 'float',
+		'decimal' => 'decimal',
+		'datetime' => 'datetime',
+		'timestamp' => 'timestamp',
+		'time' => 'time',
+		'date' => 'date',
+		'binary' => 'blob',
+		'boolean' => 'tinyint(1)',
 		'money' => 'decimal(19,4)',
-    );
+	);
 
 	/**
 	 * Quotes a table name for use in a query.
@@ -244,7 +244,6 @@ class CMysqlSchema extends CDbSchema
 	 * @param string $schema the schema of the tables. Defaults to empty string, meaning the current or default schema.
 	 * If not empty, the returned table names will be prefixed with the schema name.
 	 * @return array all table names in the database.
-	 * @since 1.0.2
 	 */
 	protected function findTableNames($schema='')
 	{

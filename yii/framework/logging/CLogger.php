@@ -14,8 +14,19 @@
  * CLogger implements the methods to retrieve the messages with
  * various filter conditions, including log levels and log categories.
  *
+ * @property array $logs List of messages. Each array element represents one message
+ * with the following structure:
+ * array(
+ *   [0] => message (string)
+ *   [1] => level (string)
+ *   [2] => category (string)
+ *   [3] => timestamp (float, obtained by microtime(true));.
+ * @property float $executionTime The total time for serving the current request.
+ * @property integer $memoryUsage Memory usage of the application (in bytes).
+ * @property array $profilingResults The profiling results.
+ *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: CLogger.php 3206 2011-05-09 09:26:24Z qiang.xue $
+ * @version $Id$
  * @package system.logging
  * @since 1.0
  */
@@ -61,9 +72,13 @@ class CLogger extends CComponent
 	private $_categories;
 	/**
 	 * @var array the profiling results (category, token => time in seconds)
-	 * @since 1.0.6
 	 */
 	private $_timings;
+	/**
+	* @var boolean if we are processing the log or still accepting new log messages
+	* @since 1.1.9
+	*/
+	private $_processing=false;
 
 	/**
 	 * Logs a message.
@@ -77,8 +92,12 @@ class CLogger extends CComponent
 	{
 		$this->_logs[]=array($message,$level,$category,microtime(true));
 		$this->_logCount++;
-		if($this->autoFlush>0 && $this->_logCount>=$this->autoFlush)
+		if($this->autoFlush>0 && $this->_logCount>=$this->autoFlush && !$this->_processing)
+		{
+			$this->_processing=true;
 			$this->flush($this->autoDump);
+			$this->_processing=false;
+		}
 	}
 
 	/**
@@ -99,7 +118,7 @@ class CLogger extends CComponent
 	 *
 	 * @param string $levels level filter
 	 * @param string $categories category filter
-	 * @return array list of messages. Each array elements represents one message
+	 * @return array list of messages. Each array element represents one message
 	 * with the following structure:
 	 * array(
 	 *   [0] => message (string)
@@ -114,20 +133,20 @@ class CLogger extends CComponent
 		if(empty($levels) && empty($categories))
 			return $this->_logs;
 		else if(empty($levels))
-			return array_values(array_filter(array_filter($this->_logs,array($this,'filterByCategory'))));
+			return array_values(array_filter($this->_logs,array($this,'filterByCategory')));
 		else if(empty($categories))
-			return array_values(array_filter(array_filter($this->_logs,array($this,'filterByLevel'))));
+			return array_values(array_filter($this->_logs,array($this,'filterByLevel')));
 		else
 		{
-			$ret=array_values(array_filter(array_filter($this->_logs,array($this,'filterByLevel'))));
-			return array_values(array_filter(array_filter($ret,array($this,'filterByCategory'))));
+			$ret=array_filter($this->_logs,array($this,'filterByLevel'));
+			return array_values(array_filter($ret,array($this,'filterByCategory')));
 		}
 	}
 
 	/**
 	 * Filter function used by {@link getLogs}
 	 * @param array $value element to be filtered
-	 * @return array valid log, false if not.
+	 * @return boolean true if valid log, false if not.
 	 */
 	private function filterByCategory($value)
 	{
@@ -135,7 +154,23 @@ class CLogger extends CComponent
 		{
 			$cat=strtolower($value[2]);
 			if($cat===$category || (($c=rtrim($category,'.*'))!==$category && strpos($cat,$c)===0))
-				return $value;
+				return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Filter function used by {@link getProfilingResults}
+	 * @param array $value element to be filtered
+	 * @return boolean true if valid timing entry, false if not.
+	 */
+	private function filterTimingByCategory($value)
+	{
+		foreach($this->_categories as $category)
+		{
+			$cat=strtolower($value[1]);
+			if($cat===$category || (($c=rtrim($category,'.*'))!==$category && strpos($cat,$c)===0))
+				return true;
 		}
 		return false;
 	}
@@ -143,11 +178,11 @@ class CLogger extends CComponent
 	/**
 	 * Filter function used by {@link getLogs}
 	 * @param array $value element to be filtered
-	 * @return array valid log, false if not.
+	 * @return boolean true if valid log, false if not.
 	 */
 	private function filterByLevel($value)
 	{
-		return in_array(strtolower($value[1]),$this->_levels)?$value:false;
+		return in_array(strtolower($value[1]),$this->_levels);
 	}
 
 	/**
@@ -199,23 +234,32 @@ class CLogger extends CComponent
 	 * If no filter is specified, the returned results would be an array with each element
 	 * being array($token,$category,$time).
 	 * If a filter is specified, the results would be an array of timings.
+	 * 
+	 * Since 1.1.11, filtering results by category supports the same format used for filtering logs in
+	 * {@link getLogs}, and similarly supports filtering by multiple categories and wildcard.
 	 * @param string $token token filter. Defaults to null, meaning not filtered by token.
-	 * @param string $category category filter. Defaults to null, meaning not filtered by category.
+	 * @param string $categories category filter. Defaults to null, meaning not filtered by category.
 	 * @param boolean $refresh whether to refresh the internal timing calculations. If false,
 	 * only the first time calling this method will the timings be calculated internally.
 	 * @return array the profiling results.
-	 * @since 1.0.6
 	 */
-	public function getProfilingResults($token=null,$category=null,$refresh=false)
+	public function getProfilingResults($token=null,$categories=null,$refresh=false)
 	{
 		if($this->_timings===null || $refresh)
 			$this->calculateTimings();
-		if($token===null && $category===null)
+		if($token===null && $categories===null)
 			return $this->_timings;
+
+		$timings = $this->_timings;
+		if($categories!==null) {
+			$this->_categories=preg_split('/[\s,]+/',strtolower($categories),-1,PREG_SPLIT_NO_EMPTY);
+			$timings=array_filter($timings,array($this,'filterTimingByCategory'));
+		}
+
 		$results=array();
-		foreach($this->_timings as $timing)
+		foreach($timings as $timing)
 		{
-			if(($category===null || $timing[1]===$category) && ($token===null || $timing[0]===$token))
+			if($token===null || $timing[0]===$token)
 				$results[]=$timing[2];
 		}
 		return $results;
@@ -262,7 +306,7 @@ class CLogger extends CComponent
 	 * Removes all recorded messages from the memory.
 	 * This method will raise an {@link onFlush} event.
 	 * The attached event handlers can process the log messages before they are removed.
-	 * @param boolean $dumpLogs whether to process the logs
+	 * @param boolean $dumpLogs whether to process the logs immediately as they are passed to log route
 	 * @since 1.1.0
 	 */
 	public function flush($dumpLogs=false)

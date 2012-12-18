@@ -38,8 +38,27 @@
  *     ->queryRow();
  * </pre>
  *
+ * @property string $text The SQL statement to be executed.
+ * @property CDbConnection $connection The connection associated with this command.
+ * @property PDOStatement $pdoStatement The underlying PDOStatement for this command
+ * It could be null if the statement is not prepared yet.
+ * @property string $select The SELECT part (without 'SELECT') in the query.
+ * @property boolean $distinct A value indicating whether SELECT DISTINCT should be used.
+ * @property string $from The FROM part (without 'FROM' ) in the query.
+ * @property string $where The WHERE part (without 'WHERE' ) in the query.
+ * @property mixed $join The join part in the query. This can be an array representing
+ * multiple join fragments, or a string representing a single jojin fragment.
+ * Each join fragment will contain the proper join operator (e.g. LEFT JOIN).
+ * @property string $group The GROUP BY part (without 'GROUP BY' ) in the query.
+ * @property string $having The HAVING part (without 'HAVING' ) in the query.
+ * @property string $order The ORDER BY part (without 'ORDER BY' ) in the query.
+ * @property string $limit The LIMIT part (without 'LIMIT' ) in the query.
+ * @property string $offset The OFFSET part (without 'OFFSET' ) in the query.
+ * @property mixed $union The UNION part (without 'UNION' ) in the query.
+ * This can be either a string or an array representing multiple union parts.
+ *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: CDbCommand.php 3240 2011-05-25 19:22:47Z qiang.xue $
+ * @version $Id$
  * @package system.db
  * @since 1.0
  */
@@ -220,7 +239,7 @@ class CDbCommand extends CComponent
 	 * @param integer $dataType SQL data type of the parameter. If null, the type is determined by the PHP type of the value.
 	 * @param integer $length length of the data type
 	 * @param mixed $driverOptions the driver-specific options (this is available since version 1.1.6)
-	 * @return CDbCommand the current command being executed (this is available since version 1.0.8)
+	 * @return CDbCommand the current command being executed
 	 * @see http://www.php.net/manual/en/function.PDOStatement-bindParam.php
 	 */
 	public function bindParam($name, &$value, $dataType=null, $length=null, $driverOptions=null)
@@ -246,7 +265,7 @@ class CDbCommand extends CComponent
 	 * placeholders, this will be the 1-indexed position of the parameter.
 	 * @param mixed $value The value to bind to the parameter
 	 * @param integer $dataType SQL data type of the parameter. If null, the type is determined by the PHP type of the value.
-	 * @return CDbCommand the current command being executed (this is available since version 1.0.8)
+	 * @return CDbCommand the current command being executed
 	 * @see http://www.php.net/manual/en/function.PDOStatement-bindValue.php
 	 */
 	public function bindValue($name, $value, $dataType=null)
@@ -290,7 +309,6 @@ class CDbCommand extends CComponent
 	 * them in this way can improve the performance. Note that if you pass parameters in this way,
 	 * you cannot bind parameters or values using {@link bindParam} or {@link bindValue}, and vice versa.
 	 * binding methods and  the input parameters this way can improve the performance.
-	 * This parameter has been available since version 1.0.10.
 	 * @return integer number of rows affected by the execution.
 	 * @throws CException execution failed
 	 */
@@ -309,7 +327,7 @@ class CDbCommand extends CComponent
 		try
 		{
 			if($this->_connection->enableProfiling)
-				Yii::beginProfile('system.db.CDbCommand.execute('.$this->getText().')','system.db.CDbCommand.execute');
+				Yii::beginProfile('system.db.CDbCommand.execute('.$this->getText().$par.')','system.db.CDbCommand.execute');
 
 			$this->prepare();
 			if($params===array())
@@ -319,14 +337,14 @@ class CDbCommand extends CComponent
 			$n=$this->_statement->rowCount();
 
 			if($this->_connection->enableProfiling)
-				Yii::endProfile('system.db.CDbCommand.execute('.$this->getText().')','system.db.CDbCommand.execute');
+				Yii::endProfile('system.db.CDbCommand.execute('.$this->getText().$par.')','system.db.CDbCommand.execute');
 
 			return $n;
 		}
 		catch(Exception $e)
 		{
 			if($this->_connection->enableProfiling)
-				Yii::endProfile('system.db.CDbCommand.execute('.$this->getText().')','system.db.CDbCommand.execute');
+				Yii::endProfile('system.db.CDbCommand.execute('.$this->getText().$par.')','system.db.CDbCommand.execute');
             $errorInfo = $e instanceof PDOException ? $e->errorInfo : null;
             $message = $e->getMessage();
 			Yii::log(Yii::t('yii','CDbCommand::execute() failed: {error}. The SQL statement executed was: {sql}.',
@@ -346,7 +364,6 @@ class CDbCommand extends CComponent
 	 * them in this way can improve the performance. Note that if you pass parameters in this way,
 	 * you cannot bind parameters or values using {@link bindParam} or {@link bindValue}, and vice versa.
 	 * binding methods and  the input parameters this way can improve the performance.
-	 * This parameter has been available since version 1.0.10.
 	 * @return CDbDataReader the reader object for fetching the query result
 	 * @throws CException execution failed
 	 */
@@ -364,7 +381,6 @@ class CDbCommand extends CComponent
 	 * them in this way can improve the performance. Note that if you pass parameters in this way,
 	 * you cannot bind parameters or values using {@link bindParam} or {@link bindValue}, and vice versa.
 	 * binding methods and  the input parameters this way can improve the performance.
-	 * This parameter has been available since version 1.0.10.
 	 * @return array all rows of the query result. Each array element is an array representing a row.
 	 * An empty array is returned if the query results in nothing.
 	 * @throws CException execution failed
@@ -384,7 +400,6 @@ class CDbCommand extends CComponent
 	 * them in this way can improve the performance. Note that if you pass parameters in this way,
 	 * you cannot bind parameters or values using {@link bindParam} or {@link bindValue}, and vice versa.
 	 * binding methods and  the input parameters this way can improve the performance.
-	 * This parameter has been available since version 1.0.10.
 	 * @return mixed the first row (in terms of an array) of the query result, false if no result.
 	 * @throws CException execution failed
 	 */
@@ -402,7 +417,6 @@ class CDbCommand extends CComponent
 	 * them in this way can improve the performance. Note that if you pass parameters in this way,
 	 * you cannot bind parameters or values using {@link bindParam} or {@link bindValue}, and vice versa.
 	 * binding methods and  the input parameters this way can improve the performance.
-	 * This parameter has been available since version 1.0.10.
 	 * @return mixed the value of the first column in the first row of the query result. False is returned if there is no value.
 	 * @throws CException execution failed
 	 */
@@ -424,7 +438,6 @@ class CDbCommand extends CComponent
 	 * them in this way can improve the performance. Note that if you pass parameters in this way,
 	 * you cannot bind parameters or values using {@link bindParam} or {@link bindValue}, and vice versa.
 	 * binding methods and  the input parameters this way can improve the performance.
-	 * This parameter has been available since version 1.0.10.
 	 * @return array the first column of the query result. Empty array if no result.
 	 * @throws CException execution failed
 	 */
@@ -441,7 +454,6 @@ class CDbCommand extends CComponent
 	 * them in this way can improve the performance. Note that you pass parameters in this way,
 	 * you cannot bind parameters or values using {@link bindParam} or {@link bindValue}, and vice versa.
 	 * binding methods and  the input parameters this way can improve the performance.
-	 * This parameter has been available since version 1.0.10.
 	 * @return mixed the method execution result
 	 */
 	private function queryInternal($method,$mode,$params=array())
@@ -529,27 +541,27 @@ class CDbCommand extends CComponent
 	 */
 	public function buildQuery($query)
 	{
-		$sql=isset($query['distinct']) && $query['distinct'] ? 'SELECT DISTINCT' : 'SELECT';
-		$sql.=' '.(isset($query['select']) ? $query['select'] : '*');
+		$sql=!empty($query['distinct']) ? 'SELECT DISTINCT' : 'SELECT';
+		$sql.=' '.(!empty($query['select']) ? $query['select'] : '*');
 
-		if(isset($query['from']))
+		if(!empty($query['from']))
 			$sql.="\nFROM ".$query['from'];
 		else
 			throw new CDbException(Yii::t('yii','The DB query must contain the "from" portion.'));
 
-		if(isset($query['join']))
+		if(!empty($query['join']))
 			$sql.="\n".(is_array($query['join']) ? implode("\n",$query['join']) : $query['join']);
 
-		if(isset($query['where']))
+		if(!empty($query['where']))
 			$sql.="\nWHERE ".$query['where'];
 
-		if(isset($query['group']))
+		if(!empty($query['group']))
 			$sql.="\nGROUP BY ".$query['group'];
 
-		if(isset($query['having']))
+		if(!empty($query['having']))
 			$sql.="\nHAVING ".$query['having'];
 
-		if(isset($query['order']))
+		if(!empty($query['order']))
 			$sql.="\nORDER BY ".$query['order'];
 
 		$limit=isset($query['limit']) ? (int)$query['limit'] : -1;
@@ -557,7 +569,7 @@ class CDbCommand extends CComponent
 		if($limit>=0 || $offset>0)
 			$sql=$this->_connection->getCommandBuilder()->applyLimit($sql,$limit,$offset);
 
-		if(isset($query['union']))
+		if(!empty($query['union']))
 			$sql.="\nUNION (\n".(is_array($query['union']) ? implode("\n) UNION (\n",$query['union']) : $query['union']) . ')';
 
 		return $sql;

@@ -41,8 +41,10 @@ if(!class_exists('HTMLPurifier_Bootstrap',false))
  * <li>{@link http://michelf.com/projects/php-markdown/extra/ markdown extra syntax}</li>
  * </ul>
  *
+ * @property string $defaultCssFile The default CSS file that is used to highlight code blocks.
+ *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: CMarkdownParser.php 2886 2011-01-17 13:34:11Z qiang.xue $
+ * @version $Id$
  * @package system.utils
  * @since 1.0
  */
@@ -71,7 +73,6 @@ class CMarkdownParser extends MarkdownExtra_Parser
 	 * to avoid XSS attacks.
 	 * @param string $content the markdown content
 	 * @return string the purified HTML content
-	 * @since 1.0.1
 	 */
 	public function safeTransform($content)
 	{
@@ -159,7 +160,7 @@ class CMarkdownParser extends MarkdownExtra_Parser
 		$lang = current(preg_split('/\s+/', substr(substr($options,1), 0,-1),2));
 		$highlighter = Text_Highlighter::factory($lang);
 		if($highlighter)
-			$highlighter->setRenderer(new Text_Highlighter_Renderer_Html($this->getHiglightConfig($options)));
+			$highlighter->setRenderer(new Text_Highlighter_Renderer_Html($this->getHighlightConfig($options)));
 		return $highlighter;
 	}
 
@@ -168,13 +169,27 @@ class CMarkdownParser extends MarkdownExtra_Parser
 	 * @param string $options user-entered options
 	 * @return array the highlighter config
 	 */
-	public function getHiglightConfig($options)
+	public function getHighlightConfig($options)
 	{
-		$config['use_language'] = true;
+		$config = array('use_language'=>true);
 		if( $this->getInlineOption('showLineNumbers', $options, false) )
 			$config['numbers'] = HL_NUMBERS_LI;
 		$config['tabsize'] = $this->getInlineOption('tabSize', $options, 4);
 		return $config;
+	}
+
+	/**
+	 * Generates the config for the highlighter.
+	 * 
+	 * NOTE: This method is deprecated due to a mistake in the method name. 
+	 * Use {@link getHighlightConfig} instead of this.
+	 * 
+	 * @param string $options user-entered options
+	 * @return array the highlighter config
+	 */
+	public function getHiglightConfig($options)
+	{
+		return $this->getHighlightConfig($options);
 	}
 
 	/**

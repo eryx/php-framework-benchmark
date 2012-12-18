@@ -20,7 +20,7 @@
  */
 return array (
   'Adding a foreign key constraint to an existing table is not supported by SQLite.' => 'L\'ajout d\'une clef étrangère sur une table existante n\'est pas supporté par SQLite.',
-  'Alias "{alias}" is invalid. Make sure it points to an existing PHP file.' => 'L\'alias « {alias} » est invalide. Vérifiez qu\'il pointe vers un fichier PHP existant.',
+  'Alias "{alias}" is invalid. Make sure it points to an existing PHP file and the file is readable.' => 'L\'alias « {alias} » est invalide. Vérifiez qu\'il pointe vers un fichier PHP existant.',
   'Alias "{alias}" is invalid. Make sure it points to an existing directory.' => 'L\'alias « {alias} » est invalide. Vérifiez qu\'il pointe vers un dossier existant.',
   'Altering a DB column is not supported by SQLite.' => 'Modifier une colonne n\'est pas supporté par SQLite.',
   'Application Log' => 'Log applicatif',
@@ -231,7 +231,7 @@ return array (
   '{attribute} must be either {true} or {false}.' => '{attribute} doit être soit {true} soit {false}.',
   '{attribute} must be greater than "{compareValue}".' => '{attribute} doit être supérieur à « {compareValue} ».',
   '{attribute} must be greater than or equal to "{compareValue}".' => '{attribute} doit être supérieur ou égal à « {compareValue} ».',
-  '{attribute} must be less than "{compareValue}".' => '{attribute} doit être supérieur à « {compareValue} ».',
+  '{attribute} must be less than "{compareValue}".' => '{attribute} doit être inférieur à « {compareValue} ».',
   '{attribute} must be less than or equal to "{compareValue}".' => '{attribute} doit être inférieur ou égal à « {compareValue} ».',
   '{attribute} must be repeated exactly.' => '{attribute} doit être répété à l\'identique.',
   '{attribute} must be {type}.' => '{attribute} doit être {type}.',

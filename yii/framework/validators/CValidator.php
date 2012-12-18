@@ -50,7 +50,7 @@
  * </ul>
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: CValidator.php 3160 2011-04-03 01:08:23Z qiang.xue $
+ * @version $Id$
  * @package system.validators
  * @since 1.0
  */
@@ -92,7 +92,7 @@ abstract class CValidator extends CComponent
 	 */
 	public $message;
 	/**
-	 * @var boolean whether this validation rule should be skipped if when there is already a validation
+	 * @var boolean whether this validation rule should be skipped when there is already a validation
 	 * error for the current attribute. Defaults to false.
 	 * @since 1.1.1
 	 */
@@ -102,6 +102,12 @@ abstract class CValidator extends CComponent
 	 * Each array value refers to a scenario name with the same name as its array key.
 	 */
 	public $on;
+	/**
+	 * @var array list of scenarios that the validator should not be applied to.
+	 * Each array value refers to a scenario name with the same name as its array key.
+	 * @since 1.1.11
+	 */
+	public $except;
 	/**
 	 * @var boolean whether attributes listed with this validator should be considered safe for massive assignment.
 	 * Defaults to true.
@@ -148,11 +154,26 @@ abstract class CValidator extends CComponent
 		else
 			$on=array();
 
+		if(isset($params['except']))
+		{
+			if(is_array($params['except']))
+				$except=$params['except'];
+			else
+				$except=preg_split('/[\s,]+/',$params['except'],-1,PREG_SPLIT_NO_EMPTY);
+		}
+		else
+			$except=array();
+
 		if(method_exists($object,$name))
 		{
 			$validator=new CInlineValidator;
 			$validator->attributes=$attributes;
 			$validator->method=$name;
+			if(isset($params['clientValidate']))
+			{
+				$validator->clientValidate=$params['clientValidate'];
+				unset($params['clientValidate']);
+			}
 			$validator->params=$params;
 			if(isset($params['skipOnError']))
 				$validator->skipOnError=$params['skipOnError'];
@@ -170,6 +191,7 @@ abstract class CValidator extends CComponent
 		}
 
 		$validator->on=empty($on) ? array() : array_combine($on,$on);
+		$validator->except=empty($except) ? array() : array_combine($except,$except);
 
 		return $validator;
 	}
@@ -220,10 +242,11 @@ abstract class CValidator extends CComponent
 	 * </ul>
 	 * @param string $scenario scenario name
 	 * @return boolean whether the validator applies to the specified scenario.
-	 * @since 1.0.2
 	 */
 	public function applyTo($scenario)
 	{
+		if(isset($this->except[$scenario]))
+			return false;
 		return empty($this->on) || isset($this->on[$scenario]);
 	}
 
@@ -248,7 +271,6 @@ abstract class CValidator extends CComponent
 	 * @param mixed $value the value to be checked
 	 * @param boolean $trim whether to perform trimming before checking if the string is empty. Defaults to false.
 	 * @return boolean whether the value is empty
-	 * @since 1.0.9
 	 */
 	protected function isEmpty($value,$trim=false)
 	{
