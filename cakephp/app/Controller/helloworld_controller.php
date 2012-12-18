@@ -1,4 +1,7 @@
 <?php
+
+App::uses('Controller', 'Controller');
+
 class HelloWorldController extends Controller
 {
     public $name    = 'HelloWorld';
