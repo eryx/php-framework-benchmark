@@ -1,0 +1,27 @@
+#!/bin/sh
+
+cd vendor
+
+# find . -depth -type d -name "Tests" -delete
+
+find . -depth -type d -name "Tests" -exec rm -vrf {} \;
+find . -depth -type d -name "test*" -exec rm -vrf {} \;
+find . -depth -type d -name "doc" -exec rm -vrf {} \;
+find . -depth -type d -name "docs" -exec rm -vrf {} \;
+find . -depth -type d -name "notes" -exec rm -vrf {} \;
+
+find . -depth -type f -name ".editorconfig" -exec rm -vrf {} \;
+find . -depth -type f -name ".gitignore" -exec rm -vrf {} \;
+find . -depth -type f -name ".gitmodules" -exec rm -vrf {} \;
+find . -depth -type f -name ".travis.yml" -exec rm -vrf {} \;
+find . -depth -type f -name "composer.json" -exec rm -vrf {} \;
+find . -depth -type f -name "composer.lock" -exec rm -vrf {} \;
+find . -depth -type f -name "phpunit.xml.dist" -exec rm -vrf {} \;
+find . -depth -type f -name "Ladybug.zip" -exec rm -vrf {} \;
+find . -depth -type f -name "LICENSE" -exec rm -vrf {} \;
+find . -depth -type f -name "readme.md" -exec rm -vrf {} \;
+find . -depth -type f -name "README*" -exec rm -vrf {} \;
+find . -depth -type f -name "UPGRADE*" -exec rm -vrf {} \;
+find . -depth -type f -name "CHANGES" -exec rm -vrf {} \;
+find . -depth -type f -name "CHANGELOG*" -exec rm -vrf {} \;
+find . -depth -type f -name "changelog*" -exec rm -vrf {} \;
