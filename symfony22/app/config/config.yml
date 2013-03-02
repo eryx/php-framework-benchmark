@@ -1,0 +1,18 @@
+imports:
+    - { resource: parameters.yml }
+
+framework:
+    #translator:      { fallback: %locale% }
+    secret:          %secret%
+    router:
+        resource: "%kernel.root_dir%/config/routing.yml"
+        strict_requirements: %kernel.debug%
+    form:            false
+    csrf_protection: false
+    templating:
+        engines: ['php']
+    default_locale:  "%locale%"
+    trusted_proxies: ~
+    session:         false
+    fragments:       false
+    profiler:        false
