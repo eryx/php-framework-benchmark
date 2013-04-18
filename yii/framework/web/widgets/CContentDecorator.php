@@ -25,7 +25,6 @@
  * accessed with variable <code>$content</code>.
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: CContentDecorator.php 2799 2011-01-01 19:31:13Z qiang.xue $
  * @package system.web.widgets
  * @since 1.0
  */
@@ -42,7 +41,6 @@ class CContentDecorator extends COutputProcessor
 	public $view;
 	/**
 	 * @var array the variables (name=>value) to be extracted and made available in the decorative view.
-	 * @since 1.0.4
 	 */
 	public $data=array();
 

@@ -47,8 +47,9 @@ Yii::import('CHtml',true);
  * CErrorHandler is a core application component that can be accessed via
  * {@link CApplication::getErrorHandler()}.
  *
+ * @property array $error The error details. Null if there is no error.
+ *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: CErrorHandler.php 3314 2011-06-24 14:47:47Z qiang.xue $
  * @package system.base
  * @since 1.0
  */
@@ -77,7 +78,6 @@ class CErrorHandler extends CApplicationComponent
 	 * @var string the route (eg 'site/error') to the controller action that will be used to display external errors.
 	 * Inside the action, it can retrieve the error information by Yii::app()->errorHandler->error.
 	 * This property defaults to null, meaning CErrorHandler will handle the error display.
-	 * @since 1.0.6
 	 */
 	public $errorAction;
 
@@ -96,8 +96,33 @@ class CErrorHandler extends CApplicationComponent
 
 		if($this->discardOutput)
 		{
-			while (ob_get_length())
-				@ob_end_clean();
+			$gzHandler=false;
+			foreach(ob_list_handlers() as $h)
+			{
+				if(strpos($h,'gzhandler')!==false)
+					$gzHandler=true;
+			}
+			// the following manual level counting is to deal with zlib.output_compression set to On
+			// for an output buffer created by zlib.output_compression set to On ob_end_clean will fail
+			for($level=ob_get_level();$level>0;--$level)
+			{
+				if(!@ob_end_clean())
+					ob_clean();
+			}
+			// reset headers in case there was an ob_start("ob_gzhandler") before
+			if($gzHandler && !headers_sent() && ob_list_handlers()===array())
+			{
+				if(function_exists('header_remove')) // php >= 5.3
+				{
+					header_remove('Vary');
+					header_remove('Content-Encoding');
+				}
+				else
+				{
+					header('Vary:');
+					header('Content-Encoding:');
+				}
+			}
 		}
 
 		if($event instanceof CExceptionEvent)
@@ -119,7 +144,6 @@ class CErrorHandler extends CApplicationComponent
 	 * <li>source - the context source code where the error occurs</li>
 	 * </ul>
 	 * @return array the error details. Null if there is no error.
-	 * @since 1.0.6
 	 */
 	public function getError()
 	{
@@ -174,13 +198,17 @@ class CErrorHandler extends CApplicationComponent
 			);
 
 			if(!headers_sent())
-				header("HTTP/1.0 {$data['code']} ".get_class($exception));
-			if($this->isAjaxRequest())
-				$app->displayException($exception);
-			else if($exception instanceof CHttpException || !YII_DEBUG)
+				header("HTTP/1.0 {$data['code']} ".$this->getHttpHeader($data['code'], get_class($exception)));
+
+			if($exception instanceof CHttpException || !YII_DEBUG)
 				$this->render('error',$data);
 			else
-				$this->render('exception',$data);
+			{
+				if($this->isAjaxRequest())
+					$app->displayException($exception);
+				else
+					$this->render('exception',$data);
+			}
 		}
 		else
 			$app->displayException($exception);
@@ -219,9 +247,32 @@ class CErrorHandler extends CApplicationComponent
 		$app=Yii::app();
 		if($app instanceof CWebApplication)
 		{
+			switch($event->code)
+			{
+				case E_WARNING:
+					$type = 'PHP warning';
+					break;
+				case E_NOTICE:
+					$type = 'PHP notice';
+					break;
+				case E_USER_ERROR:
+					$type = 'User error';
+					break;
+				case E_USER_WARNING:
+					$type = 'User warning';
+					break;
+				case E_USER_NOTICE:
+					$type = 'User notice';
+					break;
+				case E_RECOVERABLE_ERROR:
+					$type = 'Recoverable error';
+					break;
+				default:
+					$type = 'PHP error';
+			}
 			$this->_error=$data=array(
 				'code'=>500,
-				'type'=>'PHP Error',
+				'type'=>$type,
 				'message'=>$event->message,
 				'file'=>$event->file,
 				'line'=>$event->line,
@@ -229,10 +280,10 @@ class CErrorHandler extends CApplicationComponent
 				'traces'=>$trace,
 			);
 			if(!headers_sent())
-				header("HTTP/1.0 500 PHP Error");
+				header("HTTP/1.0 500 Internal Server Error");
 			if($this->isAjaxRequest())
 				$app->displayError($event->code,$event->message,$event->file,$event->line);
-			else if(YII_DEBUG)
+			elseif(YII_DEBUG)
 				$this->render('exception',$data);
 			else
 				$this->render('error',$data);
@@ -362,6 +413,9 @@ class CErrorHandler extends CApplicationComponent
 	protected function argumentsToString($args)
 	{
 		$count=0;
+
+		$isAssoc=$args!==array_values($args);
+
 		foreach($args as $key => $value)
 		{
 			$count++;
@@ -376,24 +430,30 @@ class CErrorHandler extends CApplicationComponent
 
 			if(is_object($value))
 				$args[$key] = get_class($value);
-			else if(is_bool($value))
+			elseif(is_bool($value))
 				$args[$key] = $value ? 'true' : 'false';
-			else if(is_string($value))
+			elseif(is_string($value))
 			{
 				if(strlen($value)>64)
 					$args[$key] = '"'.substr($value,0,64).'..."';
 				else
 					$args[$key] = '"'.$value.'"';
 			}
-			else if(is_array($value))
+			elseif(is_array($value))
 				$args[$key] = 'array('.$this->argumentsToString($value).')';
-			else if($value===null)
+			elseif($value===null)
 				$args[$key] = 'null';
-			else if(is_resource($value))
+			elseif(is_resource($value))
 				$args[$key] = 'resource';
 
 			if(is_string($key))
+			{
 				$args[$key] = '"'.$key.'" => '.$args[$key];
+			}
+			elseif($isAssoc)
+			{
+				$args[$key] = $key.' => '.$args[$key];
+			}
 		}
 		$out = implode(", ", $args);
 
@@ -444,5 +504,75 @@ class CErrorHandler extends CApplicationComponent
 				$output.='<span class="error">'.$code.'</span>';
 		}
 		return '<div class="code"><pre>'.$output.'</pre></div>';
+	}
+	/**
+	 * Return correct message for each known http error code
+	 * @param integer $httpCode error code to map
+	 * @param string $replacement replacement error string that is returned if code is unknown
+	 * @return string the textual representation of the given error code or the replacement string if the error code is unknown
+	 */
+	protected function getHttpHeader($httpCode, $replacement='')
+	{
+		$httpCodes = array(
+			100 => 'Continue',
+			101 => 'Switching Protocols',
+			102 => 'Processing',
+			118 => 'Connection timed out',
+			200 => 'OK',
+			201 => 'Created',
+			202 => 'Accepted',
+			203 => 'Non-Authoritative',
+			204 => 'No Content',
+			205 => 'Reset Content',
+			206 => 'Partial Content',
+			207 => 'Multi-Status',
+			210 => 'Content Different',
+			300 => 'Multiple Choices',
+			301 => 'Moved Permanently',
+			302 => 'Found',
+			303 => 'See Other',
+			304 => 'Not Modified',
+			305 => 'Use Proxy',
+			307 => 'Temporary Redirect',
+			310 => 'Too many Redirect',
+			400 => 'Bad Request',
+			401 => 'Unauthorized',
+			402 => 'Payment Required',
+			403 => 'Forbidden',
+			404 => 'Not Found',
+			405 => 'Method Not Allowed',
+			406 => 'Not Acceptable',
+			407 => 'Proxy Authentication Required',
+			408 => 'Request Time-out',
+			409 => 'Conflict',
+			410 => 'Gone',
+			411 => 'Length Required',
+			412 => 'Precondition Failed',
+			413 => 'Request Entity Too Large',
+			414 => 'Request-URI Too Long',
+			415 => 'Unsupported Media Type',
+			416 => 'Requested range unsatisfiable',
+			417 => 'Expectation failed',
+			418 => 'I’m a teapot',
+			422 => 'Unprocessable entity',
+			423 => 'Locked',
+			424 => 'Method failure',
+			425 => 'Unordered Collection',
+			426 => 'Upgrade Required',
+			449 => 'Retry With',
+			450 => 'Blocked by Windows Parental Controls',
+			500 => 'Internal Server Error',
+			501 => 'Not Implemented',
+			502 => 'Bad Gateway ou Proxy Error',
+			503 => 'Service Unavailable',
+			504 => 'Gateway Time-out',
+			505 => 'HTTP Version not supported',
+			507 => 'Insufficient storage',
+			509 => 'Bandwidth Limit Exceeded',
+		);
+		if(isset($httpCodes[$httpCode]))
+			return $httpCodes[$httpCode];
+		else
+			return $replacement;
 	}
 }

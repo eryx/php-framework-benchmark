@@ -30,15 +30,18 @@
  * at appropriate places in the application code to check if the current user
  * has the needed permission for an operation.
  *
+ * @property array $roles Roles (name=>CAuthItem).
+ * @property array $tasks Tasks (name=>CAuthItem).
+ * @property array $operations Operations (name=>CAuthItem).
+ *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: CAuthManager.php 2799 2011-01-01 19:31:13Z qiang.xue $
  * @package system.web.auth
  * @since 1.0
  */
 abstract class CAuthManager extends CApplicationComponent implements IAuthManager
 {
 	/**
-	 * @var boolean Enable error reporting for bizRules.	 
+	 * @var boolean Enable error reporting for bizRules.
 	 * @since 1.1.3
 	 */
 	public $showErrors = false;
@@ -52,7 +55,6 @@ abstract class CAuthManager extends CApplicationComponent implements IAuthManage
 	 * it with a biz rule which checks if the current user is authenticated.
 	 * And then declare 'authenticated' in this property so that it can be applied to
 	 * every authenticated user.
-	 * @since 1.0.3
 	 */
 	public $defaultRoles=array();
 

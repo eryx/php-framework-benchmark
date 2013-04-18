@@ -11,8 +11,9 @@
 /**
  * CClientScript manages JavaScript and CSS stylesheets for views.
  *
+ * @property string $coreScriptUrl The base URL of all core javascript files.
+ *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: CClientScript.php 3231 2011-05-21 06:50:35Z mdomba $
  * @package system.web
  * @since 1.0
  */
@@ -48,11 +49,10 @@ class CClientScript extends CApplicationComponent
 	 * The array keys are script file names (without directory part) and the array values are the corresponding URLs.
 	 * If an array value is false, the corresponding script file will not be rendered.
 	 * If an array key is '*.js' or '*.css', the corresponding URL will replace all
-	 * all JavaScript files or CSS files, respectively.
+	 * JavaScript files or CSS files, respectively.
 	 *
 	 * This property is mainly used to optimize the generated HTML pages
 	 * by merging different scripts files into fewer and optimized script files.
-	 * @since 1.0.3
 	 */
 	public $scriptMap=array();
 	/**
@@ -114,20 +114,17 @@ class CClientScript extends CApplicationComponent
 	 */
 	public $corePackages;
 	/**
+	 * @var array the registered JavaScript code blocks (position, key => code)
+	 */
+	public $scripts=array();
+	/**
 	 * @var array the registered CSS files (CSS URL=>media type).
-	 * @since 1.0.4
 	 */
 	protected $cssFiles=array();
 	/**
 	 * @var array the registered JavaScript files (position, key => URL)
-	 * @since 1.0.4
 	 */
 	protected $scriptFiles=array();
-	/**
-	 * @var array the registered JavaScript code blocks (position, key => code)
-	 * @since 1.0.5
-	 */
-	protected $scripts=array();
 	/**
 	 * @var array the registered head meta tags. Each array element represents an option array
 	 * that will be passed as the last parameter of {@link CHtml::metaTag}.
@@ -162,6 +159,20 @@ class CClientScript extends CApplicationComponent
 	 * @since 1.1.3
 	 */
 	public $coreScriptPosition=self::POS_HEAD;
+	/**
+	 * @var integer Where the scripts registered using {@link registerScriptFile} will be inserted in the page.
+	 * This can be one of the CClientScript::POS_* constants.
+	 * Defaults to CClientScript::POS_HEAD.
+	 * @since 1.1.11
+	 */
+	public $defaultScriptFilePosition=self::POS_HEAD;
+	/**
+	 * @var integer Where the scripts registered using {@link registerScript} will be inserted in the page.
+	 * This can be one of the CClientScript::POS_* constants.
+	 * Defaults to CClientScript::POS_READY.
+	 * @since 1.1.11
+	 */
+	public $defaultScriptPosition=self::POS_READY;
 
 	private $_baseUrl;
 
@@ -244,7 +255,6 @@ class CClientScript extends CApplicationComponent
 
 	/**
 	 * Uses {@link scriptMap} to re-map the registered scripts.
-	 * @since 1.0.3
 	 */
 	protected function remapScripts()
 	{
@@ -257,7 +267,7 @@ class CClientScript extends CApplicationComponent
 				if($this->scriptMap[$name]!==false)
 					$cssFiles[$this->scriptMap[$name]]=$media;
 			}
-			else if(isset($this->scriptMap['*.css']))
+			elseif(isset($this->scriptMap['*.css']))
 			{
 				if($this->scriptMap['*.css']!==false)
 					$cssFiles[$this->scriptMap['*.css']]=$media;
@@ -279,7 +289,7 @@ class CClientScript extends CApplicationComponent
 					if($this->scriptMap[$name]!==false)
 						$jsFiles[$position][$this->scriptMap[$name]]=$this->scriptMap[$name];
 				}
-				else if(isset($this->scriptMap['*.js']))
+				elseif(isset($this->scriptMap['*.js']))
 				{
 					if($this->scriptMap['*.js']!==false)
 						$jsFiles[$position][$this->scriptMap['*.js']]=$this->scriptMap['*.js'];
@@ -293,7 +303,6 @@ class CClientScript extends CApplicationComponent
 
 	/**
 	 * Renders the specified core javascript library.
-	 * @since 1.0.3
 	 */
 	public function renderCoreScripts()
 	{
@@ -426,7 +435,7 @@ class CClientScript extends CApplicationComponent
 		if(isset($this->scripts[self::POS_LOAD]))
 		{
 			if($fullPage)
-				$scripts[]="jQuery(window).load(function() {\n".implode("\n",$this->scripts[self::POS_LOAD])."\n});";
+				$scripts[]="jQuery(window).on('load',function() {\n".implode("\n",$this->scripts[self::POS_LOAD])."\n});";
 			else
 				$scripts[]=implode("\n",$this->scripts[self::POS_LOAD]);
 		}
@@ -484,7 +493,7 @@ class CClientScript extends CApplicationComponent
 				$baseUrl=Yii::app()->getRequest()->getBaseUrl().'/'.$baseUrl;
 			$baseUrl=rtrim($baseUrl,'/');
 		}
-		else if(isset($package['basePath']))
+		elseif(isset($package['basePath']))
 			$baseUrl=Yii::app()->getAssetManager()->publish(Yii::getPathOfAlias($package['basePath']));
 		else
 			$baseUrl=$this->getCoreScriptUrl();
@@ -581,8 +590,10 @@ class CClientScript extends CApplicationComponent
 	 * </ul>
 	 * @return CClientScript the CClientScript object itself (to support method chaining, available since version 1.1.5).
 	 */
-	public function registerScriptFile($url,$position=self::POS_HEAD)
+	public function registerScriptFile($url,$position=null)
 	{
+		if($position===null)
+			$position=$this->defaultScriptFilePosition;
 		$this->hasScripts=true;
 		$this->scriptFiles[$position][$url]=$url;
 		$params=func_get_args();
@@ -604,8 +615,10 @@ class CClientScript extends CApplicationComponent
 	 * </ul>
 	 * @return CClientScript the CClientScript object itself (to support method chaining, available since version 1.1.5).
 	 */
-	public function registerScript($id,$script,$position=self::POS_READY)
+	public function registerScript($id,$script,$position=null)
 	{
+		if($position===null)
+			$position=$this->defaultScriptPosition;
 		$this->hasScripts=true;
 		$this->scripts[$position][$id]=$script;
 		if($position===self::POS_READY || $position===self::POS_LOAD)
@@ -617,10 +630,10 @@ class CClientScript extends CApplicationComponent
 
 	/**
 	 * Registers a meta tag that will be inserted in the head section (right before the title element) of the resulting page.
-	 * 
+	 *
 	 * <b>Note:</b>
-	 * Meta tags with same attributes will be rendered more then once if called with different values.
-	 * 
+	 * Each call of this method will cause a rendering of new meta tag, even if their attributes are equal.
+	 *
 	 * <b>Example:</b>
 	 * <pre>
 	 *    $cs->registerMetaTag('example', 'description', null, array('lang' => 'en'));
@@ -630,10 +643,10 @@ class CClientScript extends CApplicationComponent
 	 * @param string $name name attribute of the meta tag. If null, the attribute will not be generated
 	 * @param string $httpEquiv http-equiv attribute of the meta tag. If null, the attribute will not be generated
 	 * @param array $options other options in name-value pairs (e.g. 'scheme', 'lang')
+	 * @param string $id Optional id of the meta tag to avoid duplicates
 	 * @return CClientScript the CClientScript object itself (to support method chaining, available since version 1.1.5).
-	 * @since 1.0.1
 	 */
-	public function registerMetaTag($content,$name=null,$httpEquiv=null,$options=array())
+	public function registerMetaTag($content,$name=null,$httpEquiv=null,$options=array(),$id=null)
 	{
 		$this->hasScripts=true;
 		if($name!==null)
@@ -641,7 +654,7 @@ class CClientScript extends CApplicationComponent
 		if($httpEquiv!==null)
 			$options['http-equiv']=$httpEquiv;
 		$options['content']=$content;
-		$this->metaTags[serialize($options)]=$options;
+		$this->metaTags[null===$id?count($this->metaTags):$id]=$options;
 		$params=func_get_args();
 		$this->recordCachingAction('clientScript','registerMetaTag',$params);
 		return $this;
@@ -655,7 +668,6 @@ class CClientScript extends CApplicationComponent
 	 * @param string $media media attribute of the link tag. If null, the attribute will not be generated.
 	 * @param array $options other options in name-value pairs
 	 * @return CClientScript the CClientScript object itself (to support method chaining, available since version 1.1.5).
-	 * @since 1.0.1
 	 */
 	public function registerLinkTag($relation=null,$type=null,$href=null,$media=null,$options=array())
 	{
@@ -737,11 +749,26 @@ class CClientScript extends CApplicationComponent
 	 * @param string $method the method name
 	 * @param array $params parameters passed to the method
 	 * @see COutputCache
-	 * @since 1.0.5
 	 */
 	protected function recordCachingAction($context,$method,$params)
 	{
 		if(($controller=Yii::app()->getController())!==null)
 			$controller->recordCachingAction($context,$method,$params);
+	}
+
+	/**
+	 * Adds a package to packages list.
+	 *
+	 * @param string $name the name of the script package.
+	 * @param array $definition the definition array of the script package,
+	 * @see CClientScript::packages.
+	 * @return CClientScript the CClientScript object itself (to support method chaining, available since version 1.1.10).
+	 *
+	 * @since 1.1.9
+	 */
+	public function addPackage($name,$definition)
+	{
+		$this->packages[$name]=$definition;
+		return $this;
 	}
 }

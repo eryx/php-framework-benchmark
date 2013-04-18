@@ -14,7 +14,6 @@
  * under the specified directory.
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: MessageCommand.php 3212 2011-05-12 23:00:19Z alexander.makarow $
  * @package system.cli.commands
  * @since 1.0
  */
@@ -55,9 +54,13 @@ PARAMETERS
      directory 'sourcePath/a/b'.
    - translator: the name of the function for translating messages.
      Defaults to 'Yii::t'. This is used as a mark to find messages to be
-     translated.
+     translated. Accepts both string for single function name or array for
+     multiple function names.
    - overwrite: if message file must be overwritten with the merged messages.
-
+   - removeOld: if message no longer needs translation it will be removed,
+     instead of being enclosed between a pair of '@@' marks.
+   - sort: sort messages by key when merging, regardless of their translation
+     state (new, obsolete, translated.)
 
 EOD;
 	}
@@ -89,6 +92,12 @@ EOD;
 		if(!isset($overwrite))
 			$overwrite = false;
 
+		if(!isset($removeOld))
+			$removeOld = false;
+
+		if(!isset($sort))
+			$sort = false;
+
 		$options=array();
 		if(isset($fileTypes))
 			$options['fileTypes']=$fileTypes;
@@ -108,7 +117,7 @@ EOD;
 			foreach($messages as $category=>$msgs)
 			{
 				$msgs=array_values(array_unique($msgs));
-				$this->generateMessageFile($msgs,$dir.DIRECTORY_SEPARATOR.$category.'.php',$overwrite);
+				$this->generateMessageFile($msgs,$dir.DIRECTORY_SEPARATOR.$category.'.php',$overwrite,$removeOld,$sort);
 			}
 		}
 	}
@@ -117,21 +126,28 @@ EOD;
 	{
 		echo "Extracting messages from $fileName...\n";
 		$subject=file_get_contents($fileName);
-		$n=preg_match_all('/\b'.$translator.'\s*\(\s*(\'.*?(?<!\\\\)\'|".*?(?<!\\\\)")\s*,\s*(\'.*?(?<!\\\\)\'|".*?(?<!\\\\)")\s*[,\)]/s',$subject,$matches,PREG_SET_ORDER);
 		$messages=array();
-		for($i=0;$i<$n;++$i)
+		if(!is_array($translator))
+			$translator=array($translator);
+
+		foreach ($translator as $currentTranslator)
 		{
-			if(($pos=strpos($matches[$i][1],'.'))!==false)
-				$category=substr($matches[$i][1],$pos+1,-1);
-			else
-				$category=substr($matches[$i][1],1,-1);
-			$message=$matches[$i][2];
-			$messages[$category][]=eval("return $message;");  // use eval to eliminate quote escape
+			$n=preg_match_all('/\b'.$currentTranslator.'\s*\(\s*(\'[\w.]*?(?<!\.)\'|"[\w.]*?(?<!\.)")\s*,\s*(\'.*?(?<!\\\\)\'|".*?(?<!\\\\)")\s*[,\)]/s',$subject,$matches,PREG_SET_ORDER);
+
+			for($i=0;$i<$n;++$i)
+			{
+				if(($pos=strpos($matches[$i][1],'.'))!==false)
+					$category=substr($matches[$i][1],$pos+1,-1);
+				else
+					$category=substr($matches[$i][1],1,-1);
+				$message=$matches[$i][2];
+				$messages[$category][]=eval("return $message;");  // use eval to eliminate quote escape
+			}
 		}
 		return $messages;
 	}
 
-	protected function generateMessageFile($messages,$fileName,$overwrite)
+	protected function generateMessageFile($messages,$fileName,$overwrite,$removeOld,$sort)
 	{
 		echo "Saving messages to $fileName...";
 		if(is_file($fileName))
@@ -161,10 +177,17 @@ EOD;
 			ksort($translated);
 			foreach($translated as $message=>$translation)
 			{
-				if(!isset($merged[$message]) && !isset($todo[$message]))
-					$todo[$message]='@@'.$translation.'@@';
+				if(!isset($merged[$message]) && !isset($todo[$message]) && !$removeOld)
+				{
+					if(substr($translation,0,2)==='@@' && substr($translation,-2)==='@@')
+						$todo[$message]=$translation;
+					else
+						$todo[$message]='@@'.$translation.'@@';
+				}
 			}
 			$merged=array_merge($todo,$merged);
+			if($sort)
+				ksort($merged);
 			if($overwrite === false)
 				$fileName.='.merged';
 			echo "translation merged.\n";
@@ -196,8 +219,6 @@ EOD;
  * of the guide for details.
  *
  * NOTE, this file must be saved in UTF-8 encoding.
- *
- * @version \$Id: \$
  */
 return $array;
 

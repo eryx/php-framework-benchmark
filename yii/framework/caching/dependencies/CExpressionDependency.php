@@ -17,7 +17,6 @@
  * the same as the one evaluated when storing the data to cache.
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: CExpressionDependency.php 2799 2011-01-01 19:31:13Z qiang.xue $
  * @package system.caching.dependencies
  * @since 1.0
  */
@@ -25,10 +24,8 @@ class CExpressionDependency extends CCacheDependency
 {
 	/**
 	 * @var string the PHP expression whose result is used to determine the dependency.
-	 * Starting from version 1.0.11, the expression can also be a valid PHP callback,
-	 * including class method name (array(ClassName/Object, MethodName)),
-	 * or anonymous function (PHP 5.3.0+). The function/method will be passed with a
-	 * parameter which is the dependency object itself.
+	 * The expression can also be a valid serializable PHP callback.
+	 * The callback will be passed with a parameter which is the dependency object itself.
 	 */
 	public $expression;
 

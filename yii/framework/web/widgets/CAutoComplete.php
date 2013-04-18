@@ -17,7 +17,6 @@
  * There is {@link http://www.learningjquery.com/2010/06/autocomplete-migration-guide a good migration guide from the author of both JavaScript solutions}.
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: CAutoComplete.php 2799 2011-01-01 19:31:13Z qiang.xue $
  * @package system.web.widgets
  * @since 1.0
  * @deprecated in 1.1.3
@@ -27,7 +26,6 @@ class CAutoComplete extends CInputWidget
 	/**
 	 * @var boolean whether to show the autocomplete using a text area. Defaults to false,
 	 * meaning a text field is used.
-	 * @since 1.0.4
 	 */
 	public $textArea=false;
 	/**
@@ -184,7 +182,7 @@ class CAutoComplete extends CInputWidget
 	 * @var array additional options that can be passed to the constructor of the autocomplete js object.
 	 * This allows you to override existing functions of the autocomplete js class (e.g. the parse() function)
 	 *
-	 * If you want to provide JavaScript native code, you have to prefix the string with js: otherwise it will
+	 * If you want to provide JavaScript native code, you have to wrap the string with {@link CJavaScriptExpression} otherwise it will
 	 * be enclosed by quotes.
 	 */
 	public $options=array();
@@ -226,7 +224,6 @@ class CAutoComplete extends CInputWidget
 
 	/**
 	 * Registers the needed CSS and JavaScript.
-	 * @since 1.0.1
 	 */
 	public function registerClientScript()
 	{
@@ -253,7 +250,6 @@ class CAutoComplete extends CInputWidget
 	/**
 	 * Registers the needed CSS file.
 	 * @param string $url the CSS URL. If null, a default CSS URL will be used.
-	 * @since 1.0.2
 	 */
 	public static function registerCssFile($url=null)
 	{
@@ -273,7 +269,6 @@ class CAutoComplete extends CInputWidget
 			'matchCase', 'matchContains', 'mustMatch', 'selectFirst',
 			'extraParams', 'multiple', 'multipleSeparator', 'width',
 			'autoFill', 'max', 'scroll', 'scrollHeight', 'inputClass',
-			'formatItem', 'formatMatch', 'formatResult', 'highlight',
 			'resultsClass', 'loadingClass');
 		static $functions=array('formatItem', 'formatMatch', 'formatResult', 'highlight');
 
@@ -285,8 +280,13 @@ class CAutoComplete extends CInputWidget
 		}
 		foreach($functions as $func)
 		{
-			if(is_string($this->$func) && strncmp($this->$func,'js:',3))
-				$options[$func]='js:'.$this->$func;
+			if($this->$func!==null)
+			{
+				if($this->$func instanceof CJavaScriptExpression)
+					$options[$func]=$this->$func;
+				else
+					$options[$func]=new CJavaScriptExpression($this->$func);
+			}
 		}
 
 		return $options;

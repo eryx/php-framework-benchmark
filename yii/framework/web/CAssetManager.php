@@ -23,8 +23,11 @@
  * The property {@link setBaseUrl baseUrl} refers to the URL for accessing
  * the {@link setBasePath basePath}.
  *
+ * @property string $basePath The root directory storing the published asset files. Defaults to 'WebRoot/assets'.
+ * @property string $baseUrl The base url that the published asset files can be accessed.
+ * Note, the ending slashes are stripped off. Defaults to '/AppBaseUrl/assets'.
+ *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: CAssetManager.php 3289 2011-06-18 21:20:13Z qiang.xue $
  * @package system.web
  * @since 1.0
  */
@@ -50,15 +53,20 @@ class CAssetManager extends CApplicationComponent
 	 * Options FollowSymLinks
 	 * </pre>
 	 *
+	 * Note that this property cannot be true when {@link $forceCopy} property has true value too. Otherwise
+	 * an exception would be thrown. Using both properties at the same time is illogical because both of them
+	 * are solving similar tasks but in a different ways. Please refer to the {@link $forceCopy} documentation
+	 * for more details.
+	 *
 	 * @since 1.1.5
 	 */
 	public $linkAssets=false;
 	/**
 	 * @var array list of directories and files which should be excluded from the publishing process.
-	 * Defaults to exclude '.svn' files only. This option has no effect if {@link linkAssets} is enabled.
+	 * Defaults to exclude '.svn' and '.gitignore' files only. This option has no effect if {@link linkAssets} is enabled.
 	 * @since 1.1.6
 	 **/
-	public $excludeFiles=array('.svn');
+	public $excludeFiles=array('.svn','.gitignore');
 	/**
 	 * @var integer the permission to be set for newly generated asset files.
 	 * This value will be used by PHP chmod function.
@@ -73,6 +81,24 @@ class CAssetManager extends CApplicationComponent
 	 * @since 1.1.8
 	 */
 	public $newDirMode=0777;
+	/**
+	 * @var boolean whether we should copy the asset files and directories even if they already published before.
+	 * This property is used only during development stage. The main use case of this property is when you need
+	 * to force the original assets always copied by changing only one value without searching needed {@link publish}
+	 * method calls across the application codebase. Also it is useful in operating systems which does not fully
+	 * support symbolic links (therefore it is not possible to use {@link $linkAssets}) or we don't want to use them.
+	 * This property sets the default value of the $forceCopy parameter in {@link publish} method. Default value
+	 * of this property is false meaning that the assets will be published only in case they don't exist in webroot
+	 * assets directory.
+	 *
+	 * Note that this property cannot be true when {@link $linkAssets} property has true value too. Otherwise
+	 * an exception would be thrown. Using both properties at the same time is illogical because both of them
+	 * are solving similar tasks but in a different ways. Please refer to the {@link $linkAssets} documentation
+	 * for more details.
+	 *
+	 * @since 1.1.11
+	 */
+	public $forceCopy=false;
 	/**
 	 * @var string base web accessible path for storing private files
 	 */
@@ -143,75 +169,79 @@ class CAssetManager extends CApplicationComponent
 	 * <li>If the asset is a file, its file modification time will be checked
 	 * to avoid unnecessary file copying;</li>
 	 * <li>If the asset is a directory, all files and subdirectories under it will
-	 * be published recursively. Note, in this case the method only checks the
+	 * be published recursively. Note, in case $forceCopy is false the method only checks the
 	 * existence of the target directory to avoid repetitive copying.</li>
 	 * </ul>
+	 *
+	 * Note: On rare scenario, a race condition can develop that will lead to a
+	 * one-time-manifestation of a non-critical problem in the creation of the directory
+	 * that holds the published assets. This problem can be avoided altogether by 'requesting'
+	 * in advance all the resources that are supposed to trigger a 'publish()' call, and doing
+	 * that in the application deployment phase, before system goes live. See more in the following
+	 * discussion: http://code.google.com/p/yii/issues/detail?id=2579
+	 *
 	 * @param string $path the asset (file or directory) to be published
 	 * @param boolean $hashByName whether the published directory should be named as the hashed basename.
-	 * If false, the name will be the hashed dirname of the path being published.
+	 * If false, the name will be the hash taken from dirname of the path being published and path mtime.
 	 * Defaults to false. Set true if the path being published is shared among
 	 * different extensions.
 	 * @param integer $level level of recursive copying when the asset is a directory.
 	 * Level -1 means publishing all subdirectories and files;
 	 * Level 0 means publishing only the files DIRECTLY under the directory;
 	 * level N means copying those directories that are within N levels.
-	 * @param boolean $forceCopy whether we should copy the asset file or directory even if it is already published before.
+	 * @param boolean $forceCopy whether we should copy the asset file or directory even if it is already
+	 * published before. In case of publishing a directory old files will not be removed.
 	 * This parameter is set true mainly during development stage when the original
-	 * assets are being constantly changed. The consequence is that the performance
-	 * is degraded, which is not a concern during development, however.
-	 * This parameter has been available since version 1.1.2.
+	 * assets are being constantly changed. The consequence is that the performance is degraded,
+	 * which is not a concern during development, however. Default value of this parameter is null meaning
+	 * that it's value is controlled by {@link $forceCopy} class property. This parameter has been available
+	 * since version 1.1.2. Default value has been changed since 1.1.11.
+	 * Note that this parameter cannot be true when {@link $linkAssets} property has true value too. Otherwise
+	 * an exception would be thrown. Using this parameter with {@link $linkAssets} property at the same time
+	 * is illogical because both of them are solving similar tasks but in a different ways. Please refer
+	 * to the {@link $linkAssets} documentation for more details.
 	 * @return string an absolute URL to the published asset
 	 * @throws CException if the asset to be published does not exist.
 	 */
-	public function publish($path,$hashByName=false,$level=-1,$forceCopy=false)
+	public function publish($path,$hashByName=false,$level=-1,$forceCopy=null)
 	{
+		if($forceCopy===null)
+			$forceCopy=$this->forceCopy;
+		if($forceCopy && $this->linkAssets)
+			throw new CException(Yii::t('yii','The "forceCopy" and "linkAssets" cannot be both true.'));
 		if(isset($this->_published[$path]))
 			return $this->_published[$path];
-		else if(($src=realpath($path))!==false)
+		elseif(($src=realpath($path))!==false)
 		{
+			$dir=$this->generatePath($src,$hashByName);
+			$dstDir=$this->getBasePath().DIRECTORY_SEPARATOR.$dir;
 			if(is_file($src))
 			{
-				$dir=$this->hash($hashByName ? basename($src) : dirname($src));
 				$fileName=basename($src);
-				$dstDir=$this->getBasePath().DIRECTORY_SEPARATOR.$dir;
 				$dstFile=$dstDir.DIRECTORY_SEPARATOR.$fileName;
 
-				if($this->linkAssets)
+				if(!is_dir($dstDir))
 				{
-					if(!is_file($dstFile))
-					{
-						if(!is_dir($dstDir))
-						{
-							mkdir($dstDir);
-							@chmod($dstDir, $this->newDirMode);
-						}
-						symlink($src,$dstFile);
-					}
+					mkdir($dstDir,$this->newDirMode,true);
+					chmod($dstDir,$this->newDirMode);
 				}
-				else if(@filemtime($dstFile)<@filemtime($src) || $forceCopy)
+
+				if($this->linkAssets && !is_file($dstFile)) symlink($src,$dstFile);
+				elseif(@filemtime($dstFile)<@filemtime($src))
 				{
-					if(!is_dir($dstDir))
-					{
-						mkdir($dstDir);
-						@chmod($dstDir, $this->newDirMode);
-					}
 					copy($src,$dstFile);
-					@chmod($dstFile, $this->newFileMode);
+					chmod($dstFile,$this->newFileMode);
 				}
 
 				return $this->_published[$path]=$this->getBaseUrl()."/$dir/$fileName";
 			}
-			else if(is_dir($src))
+			elseif(is_dir($src))
 			{
-				$dir=$this->hash($hashByName ? basename($src) : $src);
-				$dstDir=$this->getBasePath().DIRECTORY_SEPARATOR.$dir;
-
-				if($this->linkAssets)
+				if($this->linkAssets && !is_dir($dstDir))
 				{
-					if(!is_dir($dstDir))
-						symlink($src,$dstDir);
+					symlink($src,$dstDir);
 				}
-				else if(!is_dir($dstDir) || $forceCopy)
+				elseif(!is_dir($dstDir) || $forceCopy)
 				{
 					CFileHelper::copyDirectory($src,$dstDir,array(
 						'exclude'=>$this->excludeFiles,
@@ -234,7 +264,7 @@ class CAssetManager extends CApplicationComponent
 	 * if the file or directory is published, where it will go.
 	 * @param string $path directory or file path being published
 	 * @param boolean $hashByName whether the published directory should be named as the hashed basename.
-	 * If false, the name will be the hashed dirname of the path being published.
+	 * If false, the name will be the hash taken from dirname of the path being published and path mtime.
 	 * Defaults to false. Set true if the path being published is shared among
 	 * different extensions.
 	 * @return string the published file path. False if the file or directory does not exist
@@ -243,11 +273,8 @@ class CAssetManager extends CApplicationComponent
 	{
 		if(($path=realpath($path))!==false)
 		{
-			$base=$this->getBasePath().DIRECTORY_SEPARATOR;
-			if(is_file($path))
-				return $base . $this->hash($hashByName ? basename($path) : dirname($path)) . DIRECTORY_SEPARATOR . basename($path);
-			else
-				return $base . $this->hash($hashByName ? basename($path) : $path);
+			$base=$this->getBasePath().DIRECTORY_SEPARATOR.$this->generatePath($path,$hashByName);
+			return is_file($path) ? $base.DIRECTORY_SEPARATOR.basename($path) : $base ;
 		}
 		else
 			return false;
@@ -259,7 +286,7 @@ class CAssetManager extends CApplicationComponent
 	 * if the file path is published, what the URL will be to access it.
 	 * @param string $path directory or file path being published
 	 * @param boolean $hashByName whether the published directory should be named as the hashed basename.
-	 * If false, the name will be the hashed dirname of the path being published.
+	 * If false, the name will be the hash taken from dirname of the path being published and path mtime.
 	 * Defaults to false. Set true if the path being published is shared among
 	 * different extensions.
 	 * @return string the published URL for the file or directory. False if the file or directory does not exist.
@@ -270,10 +297,8 @@ class CAssetManager extends CApplicationComponent
 			return $this->_published[$path];
 		if(($path=realpath($path))!==false)
 		{
-			if(is_file($path))
-				return $this->getBaseUrl().'/'.$this->hash($hashByName ? basename($path) : dirname($path)).'/'.basename($path);
-			else
-				return $this->getBaseUrl().'/'.$this->hash($hashByName ? basename($path) : $path);
+			$base=$this->getBaseUrl().'/'.$this->generatePath($path,$hashByName);
+			return is_file($path) ? $base.'/'.basename($path) : $base;
 		}
 		else
 			return false;
@@ -288,5 +313,22 @@ class CAssetManager extends CApplicationComponent
 	protected function hash($path)
 	{
 		return sprintf('%x',crc32($path.Yii::getVersion()));
+	}
+
+	/**
+	 * Generates path segments relative to basePath.
+	 * @param string $file for which public path will be created.
+	 * @param bool $hashByName whether the published directory should be named as the hashed basename.
+	 * @return string path segments without basePath.
+	 * @since 1.1.13
+	 */
+	protected function generatePath($file,$hashByName=false)
+	{
+		if (is_file($file))
+			$pathForHashing=$hashByName ? basename($file) : dirname($file).filemtime($file);
+		else
+			$pathForHashing=$hashByName ? basename($file) : $file.filemtime($file);
+
+		return $this->hash($pathForHashing);
 	}
 }

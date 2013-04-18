@@ -12,13 +12,12 @@
  * CXCache implements a cache application module based on {@link http://xcache.lighttpd.net/ xcache}.
  *
  * To use this application component, the XCache PHP extension must be loaded.
+ * Flush functionality will only work correctly if "xcache.admin.enable_auth" is set to "Off" in php.ini.
  *
  * See {@link CCache} manual for common cache operations that are supported by CXCache.
  *
  * @author Wei Zhuo <weizhuo[at]gmail[dot]com>
- * @version $Id: CXCache.php 2799 2011-01-01 19:31:13Z qiang.xue $
  * @package system.caching
- * @since 1.0.1
  */
 class CXCache extends CCache
 {

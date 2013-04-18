@@ -60,8 +60,18 @@
  * For more details about configuring form elements, please refer to {@link CFormInputElement}
  * and {@link CFormButtonElement}.
  *
+ * @property CForm $root The top-level form object.
+ * @property CActiveForm $activeFormWidget The active form widget associated with this form.
+ * This method will return the active form widget as specified by {@link activeForm}.
+ * @property CBaseController $owner The owner of this form. This refers to either a controller or a widget
+ * by which the form is created and rendered.
+ * @property CModel $model The model associated with this form. If this form does not have a model,
+ * it will look for a model in its ancestors.
+ * @property array $models The models that are associated with this form or its sub-forms.
+ * @property CFormElementCollection $elements The form elements.
+ * @property CFormElementCollection $buttons The form elements.
+ *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: CForm.php 3076 2011-03-14 13:16:43Z qiang.xue $
  * @package system.web.form
  * @since 1.1
  */
@@ -212,7 +222,7 @@ class CForm extends CFormElement implements ArrayAccess
 				if(isset($_POST[$class]))
 					$this->_model->setAttributes($_POST[$class]);
 			}
-			else if(isset($_GET[$class]))
+			elseif(isset($_GET[$class]))
 				$this->_model->setAttributes($_GET[$class]);
 		}
 		foreach($this->getElements() as $element)
@@ -320,7 +330,7 @@ class CForm extends CFormElement implements ArrayAccess
 	 * a {@link CFormStringElement} object (when 'type' is 'string'), a {@link CFormElement} object
 	 * (when 'type' is a string ending with 'Form'), or a {@link CFormInputElement} object in
 	 * all other cases.
-	 * @param array $elements the button configurations
+	 * @param array $elements the elements configurations
 	 */
 	public function setElements($elements)
 	{
@@ -503,7 +513,7 @@ class CForm extends CFormElement implements ArrayAccess
 				else
 					return "<div class=\"row field_{$element->name}\">\n".$element->render()."</div>\n";
 			}
-			else if($element instanceof CFormButtonElement)
+			elseif($element instanceof CFormButtonElement)
 				return $element->render()."\n";
 			else
 				return $element->render();

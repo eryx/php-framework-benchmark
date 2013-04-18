@@ -6,14 +6,14 @@
  * @link http://www.yiiframework.com/
  * @copyright Copyright &copy; 2008-2011 Yii Software LLC
  * @license http://www.yiiframework.com/license/
- * @version $Id: HelpCommand.php 2799 2011-01-01 19:31:13Z qiang.xue $
  */
 
 /**
  * HelpCommand displays help information for commands under yiic shell.
  *
+ * @property string $help The command description.
+ *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: HelpCommand.php 2799 2011-01-01 19:31:13Z qiang.xue $
  * @package system.cli.commands.shell
  * @since 1.0
  */
@@ -22,6 +22,7 @@ class HelpCommand extends CConsoleCommand
 	/**
 	 * Execute the action.
 	 * @param array command line parameters specific for this command
+	 * @return integer non zero application exit code for help
 	 */
 	public function run($args)
 	{
@@ -52,6 +53,7 @@ EOD;
 		}
 		else
 			echo $runner->createCommand($name)->getHelp();
+		return 1;
 	}
 
 	/**

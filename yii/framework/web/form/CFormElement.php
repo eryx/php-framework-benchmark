@@ -13,8 +13,11 @@
  *
  * CFormElement implements the way to get and set arbitrary attributes.
  *
+ * @property boolean $visible Whether this element is visible and should be rendered.
+ * @property mixed $parent The direct parent of this element. This could be either a {@link CForm} object or a {@link CBaseController} object
+ * (a controller or a widget).
+ *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: CFormElement.php 3001 2011-02-24 16:42:44Z alexander.makarow $
  * @package system.web.form
  * @since 1.1
  */
@@ -76,7 +79,7 @@ abstract class CFormElement extends CComponent
 		$getter='get'.$name;
 		if(method_exists($this,$getter))
 			return $this->$getter();
-		else if(isset($this->attributes[$name]))
+		elseif(isset($this->attributes[$name]))
 			return $this->attributes[$name];
 		else
 			throw new CException(Yii::t('yii','Property "{class}.{property}" is not defined.',

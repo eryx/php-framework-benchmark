@@ -19,8 +19,12 @@
  *
  * Usage is described at {@link CBaseController} and {@link CBaseController::widget}.
  *
+ * @property CBaseController $owner Owner/creator of this widget. It could be either a widget or a controller.
+ * @property string $id Id of the widget.
+ * @property CController $controller The controller that this widget belongs to.
+ * @property string $viewPath The directory containing the view files for this widget.
+ *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: CWidget.php 3204 2011-05-05 21:36:32Z alexander.makarow $
  * @package system.web.widgets
  * @since 1.0
  */
@@ -32,7 +36,6 @@ class CWidget extends CBaseController
 	 * a prefix can be specified to differentiate its action IDs from others.
 	 * The same prefix should then also be used to configure this property
 	 * when the widget is used in a view of the controller.
-	 * @since 1.0.1
 	 */
 	public $actionPrefix;
 	/**
@@ -76,7 +79,6 @@ class CWidget extends CBaseController
 	 *
 	 * @see actionPrefix
 	 * @see CController::actions
-	 * @since 1.0.1
 	 */
 	public static function actions()
 	{
@@ -110,7 +112,7 @@ class CWidget extends CBaseController
 	{
 		if($this->_id!==null)
 			return $this->_id;
-		else if($autoGenerate)
+		elseif($autoGenerate)
 			return $this->_id='yw'.self::$_counter++;
 	}
 
@@ -189,8 +191,7 @@ class CWidget extends CBaseController
 	 * The view script file is named as "ViewName.php". A localized view file
 	 * may be returned if internationalization is needed. See {@link CApplication::findLocalizedFile}
 	 * for more details.
-	 * Since version 1.0.2, the view name can also refer to a path alias
-	 * if it contains dot characters.
+	 * The view name can also refer to a path alias if it contains dot characters.
 	 * @param string $viewName name of the view (without file extension)
 	 * @return string the view file path. False if the view file does not exist
 	 * @see CApplication::findLocalizedFile
@@ -208,14 +209,14 @@ class CWidget extends CBaseController
 			$viewFile=$this->getViewPath(true).DIRECTORY_SEPARATOR.$viewName;
 			if(is_file($viewFile.$extension))
 				return Yii::app()->findLocalizedFile($viewFile.$extension);
-			else if($extension!=='.php' && is_file($viewFile.'.php'))
+			elseif($extension!=='.php' && is_file($viewFile.'.php'))
 				return Yii::app()->findLocalizedFile($viewFile.'.php');
 			$viewFile=$this->getViewPath(false).DIRECTORY_SEPARATOR.$viewName;
 		}
 
 		if(is_file($viewFile.$extension))
 			return Yii::app()->findLocalizedFile($viewFile.$extension);
-		else if($extension!=='.php' && is_file($viewFile.'.php'))
+		elseif($extension!=='.php' && is_file($viewFile.'.php'))
 			return Yii::app()->findLocalizedFile($viewFile.'.php');
 		else
 			return false;

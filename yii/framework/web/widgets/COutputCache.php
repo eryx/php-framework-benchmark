@@ -57,8 +57,9 @@
  * </ul>
  * For more advanced variation, override {@link getBaseCacheKey()} method.
  *
+ * @property boolean $isContentCached Whether the content can be found from cache.
+ *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: COutputCache.php 3315 2011-06-24 15:18:11Z qiang.xue $
  * @package system.web.widgets
  * @since 1.0
  */
@@ -99,14 +100,13 @@ class COutputCache extends CFilterWidget
 	 * @var string a PHP expression whose result is used in the cache key calculation.
 	 * By setting this property, the output cache will use different cached data
 	 * for each different expression result.
-	 * Starting from version 1.0.11, the expression can also be a valid PHP callback,
+	 * The expression can also be a valid PHP callback,
 	 * including class method name (array(ClassName/Object, MethodName)),
 	 * or anonymous function (PHP 5.3.0+). The function/method signature should be as follows:
 	 * <pre>
 	 * function foo($cache) { ... }
 	 * </pre>
 	 * where $cache refers to the output cache component.
-	 * @since 1.0.4
 	 */
 	public $varyByExpression;
 	/**
@@ -162,7 +162,7 @@ class COutputCache extends CFilterWidget
 	{
 		if($this->getIsContentCached())
 			$this->replayActions();
-		else if($this->_cache!==null)
+		elseif($this->_cache!==null)
 		{
 			$this->getController()->getCachingStack()->push($this);
 			ob_start();
@@ -185,7 +185,7 @@ class COutputCache extends CFilterWidget
 			else
 				echo $this->_content;
 		}
-		else if($this->_cache!==null)
+		elseif($this->_cache!==null)
 		{
 			$this->_content=ob_get_clean();
 			$this->getController()->getCachingStack()->pop();
@@ -329,13 +329,13 @@ class COutputCache extends CFilterWidget
 		{
 			if($action[0]==='clientScript')
 				$object=$cs;
-			else if($action[0]==='')
+			elseif($action[0]==='')
 				$object=$controller;
 			else
 				$object=$controller->{$action[0]};
 			if(method_exists($object,$action[1]))
 				call_user_func_array(array($object,$action[1]),$action[2]);
-			else if($action[0]==='' && function_exists($action[1]))
+			elseif($action[0]==='' && function_exists($action[1]))
 				call_user_func_array($action[1],$action[2]);
 			else
 				throw new CException(Yii::t('yii','Unable to replay the action "{object}.{method}". The method does not exist.',

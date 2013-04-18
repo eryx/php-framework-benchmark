@@ -11,16 +11,17 @@
 /**
  * CModelBehavior is a base class for behaviors that are attached to a model component.
  * The model should extend from {@link CModel} or its child classes.
+ *
+ * @property CModel $owner The owner model that this behavior is attached to.
+ *
  * @author Qiang Xue <qiang.xue@gmail.com>
- * @version $Id: CModelBehavior.php 2799 2011-01-01 19:31:13Z qiang.xue $
  * @package system.base
- * @since 1.0.2
  */
 class CModelBehavior extends CBehavior
 {
 	/**
 	 * Declares events and the corresponding event handler methods.
-	 * The default implementation returns 'onBeforeValidate' and 'onAfterValidate' events and handlers.
+	 * The default implementation returns 'onAfterConstruct', 'onBeforeValidate' and 'onAfterValidate' events and handlers.
 	 * If you override this method, make sure you merge the parent result to the return value.
 	 * @return array events (array keys) and the corresponding event handler methods (array values).
 	 * @see CBehavior::events
@@ -36,29 +37,32 @@ class CModelBehavior extends CBehavior
 
 	/**
 	 * Responds to {@link CModel::onAfterConstruct} event.
-	 * Overrides this method if you want to handle the corresponding event of the {@link CBehavior::owner owner}.
+	 * Override this method and make it public if you want to handle the corresponding event
+	 * of the {@link CBehavior::owner owner}.
 	 * @param CEvent $event event parameter
 	 */
-	public function afterConstruct($event)
+	protected function afterConstruct($event)
 	{
 	}
 
 	/**
 	 * Responds to {@link CModel::onBeforeValidate} event.
-	 * Overrides this method if you want to handle the corresponding event of the {@link owner}.
+	 * Override this method and make it public if you want to handle the corresponding event
+	 * of the {@link owner}.
 	 * You may set {@link CModelEvent::isValid} to be false to quit the validation process.
 	 * @param CModelEvent $event event parameter
 	 */
-	public function beforeValidate($event)
+	protected function beforeValidate($event)
 	{
 	}
 
 	/**
 	 * Responds to {@link CModel::onAfterValidate} event.
-	 * Overrides this method if you want to handle the corresponding event of the {@link owner}.
+	 * Override this method and make it public if you want to handle the corresponding event
+	 * of the {@link owner}.
 	 * @param CEvent $event event parameter
 	 */
-	public function afterValidate($event)
+	protected function afterValidate($event)
 	{
 	}
 }
