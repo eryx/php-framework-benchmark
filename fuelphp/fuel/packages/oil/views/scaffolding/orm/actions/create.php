@@ -24,7 +24,7 @@
 			}
 			else
 			{
-				Session::set_flash('error', $val->show_errors());
+				Session::set_flash('error', $val->error());
 			}
 		}
 

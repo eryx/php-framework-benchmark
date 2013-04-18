@@ -2,19 +2,18 @@
 /**
  * Fuel is a fast, lightweight, community driven PHP5 framework.
  *
- * @package		Fuel
- * @version		1.0
- * @author		Fuel Development Team
- * @license		MIT License
- * @copyright	2010 - 2011 Fuel Development Team
- * @link		http://fuelphp.com
+ * @package    Fuel
+ * @version    1.5
+ * @author     Fuel Development Team
+ * @license    MIT License
+ * @copyright  2010 - 2013 Fuel Development Team
+ * @link       http://fuelphp.com
  */
 
 namespace Orm;
 
 abstract class Relation
 {
-
 	/**
 	 * @var  string  name of the relationship in the model_from
 	 */
@@ -144,5 +143,3 @@ abstract class Relation
 		return $this->{$property};
 	}
 }
-
-/* End of file relation.php */

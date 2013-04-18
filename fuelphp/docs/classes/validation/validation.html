@@ -4,6 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../../';
@@ -52,6 +53,7 @@
 				<li><a href="#config">Configuration</a></li>
 				<li><a href="#usage">Usage</a></li>
 				<li><a href="#rules">Validation rules</a></li>
+				<li><a href="#extending_validation">Extending the Validation class</a></li>
 				<li><a href="errors.html">Validation Errors</a></li>
 				<li><a href="methods.html">Methods</a></li>
 			</ul>
@@ -104,6 +106,12 @@
 							<td><pre class="php"><code>false</code></pre></td>
 							<td>If true, and the label of the validated field contains spaces, the label will be enclosed in double quotes for enhanced readability.</td>
 						</tr>
+						<tr>
+							<th><kbd>global_input_fallback</kbd></th>
+							<td>boolean</td>
+							<td><pre class="php"><code>true</code></pre></td>
+							<td>If true, and value is not found in input array, the value will fall back to Input::param.</td>
+						</tr>
 					</tbody>
 				</table>
 				<p>If one or more of these values are missing from the global configuration, the class will use the defaults as defined in this table.</p>
@@ -140,7 +148,7 @@ $val->add('password', 'Your password')->add_rule('required')
 				be validated as its first argument and any further arguments can be given to the add_rule() method.</p>
 
 				<p>We also provide a shorter syntax which is very limited in comparison. It will not accept array-callbacks,
-				closures or parameters other then strings.</p>
+				closures or parameters other than strings.</p>
 
 				<pre class="php"><code>// The same fields as the example above
 $val = Validation::forge('my_validation');
@@ -210,6 +218,13 @@ $val->add_field('email', 'Email address', 'match_value[me@mydomain.com,1]|valid_
 							</td>
 						</tr>
 						<tr>
+						  <th>required_with</th>
+						  <td><kbd>$fieldname</kbd></td>
+						  <td>
+						    The field must be set if the field with the given <kbd>$fieldname</kbd> is set.
+						  </td>
+						</tr>
+						<tr>
 							<th>match_value</th>
 							<td><kbd>$compare</kbd>, <kbd>$strict</kbd> = false</td>
 							<td>
@@ -229,9 +244,8 @@ $val->add_field('email', 'Email address', 'match_value[me@mydomain.com,1]|valid_
 							<td><kbd>$field</kbd></td>
 							<td>
 								Will try to match the field to the field with the given fieldname, the matching is done
-								using ===.<br />
-								<strong>Important:</strong> you can only match against a field that was added before the
-								field this rule is added to.
+								using ===.
+								<p class="note"><strong>Important:</strong> you can only match against a field that was added before the field this rule is added to.</p>
 							</td>
 						</tr>
 						<tr>
@@ -264,9 +278,9 @@ $val->add_field('email', 'Email address', 'match_value[me@mydomain.com,1]|valid_
 						</tr>
 						<tr>
 							<th>valid_emails</th>
-							<td>(none)</td>
+							<td><kbd>$separator</kbd> (optional)</td>
 							<td>
-								Validates multiple email addresses separated by commas.
+								Validates multiple email addresses separated by commas (or <kbd>$separator</kbd>).
 							</td>
 						</tr>
 						<tr>
@@ -298,6 +312,15 @@ $val->add_field('email', 'Email address', 'match_value[me@mydomain.com,1]|valid_
 							<td>
 								Tests whether the given input is a number that is smaller than <kbd>$max_val</kbd>. (see
 								note about non-numeric values with <kbd>numeric_min</kbd> rule)
+							</td>
+						</tr>
+						<tr>
+							<th>numeric_between</th>
+							<td><kbd>$min_val</kbd>, <kbd>$max_val</kbd></td>
+							<td>
+								Tests whether the given input is a number that is between than <kbd>$min_val</kbd> and <kbd>$max_val</kbd>. (see
+								note about non-numeric values with <kbd>numeric_min</kbd> rule)
+								<p class="note"><strong>Important:</strong> specified numbers are included in the range.</p>
 							</td>
 						</tr>
 						<tr>
@@ -352,12 +375,28 @@ $val->add_field('email', 'Email address', 'match_value[me@mydomain.com,1]|valid_
 							<td>Allow dots.</td>
 						</tr>
 						<tr>
+							<th>commas</th>
+							<td>Allow commas.</td>
+						</tr>
+						<tr>
 							<th>punctuation</th>
 							<td>Allow dots, commas, exclamation marks, question marks, colons and semi-colons.</td>
 						</tr>
 						<tr>
 							<th>dashes</th>
 							<td>Allow dashes and underscores.</td>
+						</tr>
+						<tr>
+							<th>singlequotes</th>
+							<td>Allow single quotes.</td>
+						</tr>
+						<tr>
+							<th>doublequotes</th>
+							<td>Allow double quotes.</td>
+						</tr>
+						<tr>
+							<th>quotes</th>
+							<td>Allow single and double quotes.</td>
 						</tr>
 						<tr>
 							<th>utf8</th>
@@ -368,63 +407,77 @@ $val->add_field('email', 'Email address', 'match_value[me@mydomain.com,1]|valid_
 			</article>
 
 			<article>
-	            <h3 id="methods">Extending Validation class</h3>
-
-	            <p>There are few approaches to extend the validation class:</p>
-
-	            <p>1. To extend the core class like described in the <a href="../general/extending_core.html">Extending Core Classes</a></p>
-
-	            <p>2. To create a class in <b>app/classes/myvalidation.php</b> (for example)</p>
-	            <pre class="php"><code>// app/classes/myvalidation.php
-class Myvalidation
+				<h4 id="extending_validation">Extending the Validation class</h4>
+				<p>There are few approaches to extend the validation class:</p>
+				<p>1. To extend the core class like described in the <a href="../../general/extending_core.html">Extending Core Classes</a></p>
+				<p>2. To create a class in <b>app/classes/myrules.php</b> (for example)</p>
+				<pre class="php"><code>// app/classes/myrules.php
+class MyRules
 {
+	// note this is a static method
+	public static function _validation_unique($val, $options)
+	{
+		list($table, $field) = explode('.', $options);
 
-    public function _validation_unique($val, $options)
-    {
-        list($table, $field) = explode('.', $options);
+		$result = DB::select("LOWER (\"$field\")")
+		->where($field, '=', Str::lower($val))
+		->from($table)->execute();
 
-        $result = DB::select("LOWER (\"$field\")")
-            ->where($field, '=', Str::lower($val))
-            ->from($table)->execute();
+		return ! ($result->count() > 0);
+	}
 
-        return ! ($result->count() > 0);
-    }
+	// note this is a non-static method
+	public function _validation_is_upper($val)
+	{
+		return $val === strtoupper($val);
+	}
 
 }
 
 // and call it like:
 $val = Validation::forge();
-$val->add_callable('myvalidation'); // here we add the class to load rules from
 
-$val->add_field('username', 'Your username', 'trim|strip_tags|required|unique[users.username]');</code></pre>
+// Note the difference between static and non-static validation rules:
 
-	        <p>3. Calling callbacks from a model. It works like a method described above, but we only need to call it in other way:</p>
-			<pre class="php"><code>$val = Validation::forge();
+// Add it staticly, will only be able to use static methods
+$val->add_callable('MyRules');
+
+// Adds it non-static, will be able to use both static and non-static methods
+$val->add_callable(new MyRules());
+
+$val->add('username', 'Your username', array(), array('trim', 'strip_tags', 'required', 'is_upper'))
+	->add_rule('unique', 'users.username');</code></pre>
+
+				<p>3. Calling callbacks from a model. It works like a method described above, but we only need to call it in other way:</p>
+
+				<pre class="php"><code>$val = Validation::forge();
 $val->add_model('Model_User');</code></pre>
 
-	        <p class="note">
-	        <strong>Note: </strong>
-	        You need the '_validation_' prefix for a method to be used in validation.
-	        </p>
+				<p class="note">
+					<strong>Note: </strong>
+					You need the '_validation_' prefix for a method to be available in validation.
+				</p>
 
-			<p>
-				It can be useful to use <a href="methods.html#method_active">Validation::active()</a>
-				and <a href="methods.html#method_active_field">Validation::active_field()</a>
-				to get the currently active validation instance and field currently being validated, respectively.
-			</p>
+				<p class="note">
+					<strong>Note: </strong>
+					if you pass the class name as a string, the validation method must be defined as static. If the method is not static, you will have to pass an object instance as callable().
+				</p>
 
-			<p>For example, in the above you could do:</p>
-			<pre class="php"><code>public function _validation_unique($val, $options)
+				<p>It can be useful to use <a href="methods.html#method_active">Validation::active()</a> and <a href="methods.html#method_active_field">Validation::active_field()</a> to get the currently active validation instance and field currently being validated, respectively.</p>
+
+				<p>For example, in the above you could do:</p>
+
+				<pre class="php"><code>public static function _validation_unique($val, $options)
 {
 	Validation::active()->set_message('unique', 'The field :label must be unique, but :value has already been used');
-...</code></pre>
-	        </article>
-
+...
+}</code></pre>
+			</article>
 		</div>
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

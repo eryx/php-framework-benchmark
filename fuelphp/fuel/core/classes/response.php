@@ -3,10 +3,10 @@
  * Part of the Fuel framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2012 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -285,11 +285,16 @@ class Response
 	 */
 	public function send($send_headers = false)
 	{
-		$send_headers and $this->send_headers();
+		$body = $this->__toString();
+
+		if ($send_headers)
+		{
+			$this->send_headers();
+		}
 
 		if ($this->body != null)
 		{
-			echo $this->__toString();
+			echo $body;
 		}
 	}
 

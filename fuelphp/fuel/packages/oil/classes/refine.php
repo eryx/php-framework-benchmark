@@ -3,10 +3,10 @@
  * Fuel is a fast, lightweight, community driven PHP5 framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -45,7 +45,8 @@ class Refine
 		{
 			try
 			{
-				$path = \Fuel::add_module($module);
+				\Module::load($module);
+				$path = \Module::exists($module);
 				\Finder::instance()->add_path($path);
 			}
 			catch (\FuelException $e)
@@ -172,7 +173,7 @@ HELP;
 				{
 					foreach ($methods as $method)
 					{
-						$result[$task_name][] = $method->name;
+						strpos($method->name, '_') !== 0 and $result[$task_name][] = $method->name;
 					}
 				}
 			}

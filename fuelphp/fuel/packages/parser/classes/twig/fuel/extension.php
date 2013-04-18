@@ -5,10 +5,10 @@
  * Fuel is a fast, lightweight, community driven PHP5 framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -65,6 +65,11 @@ class Twig_Fuel_Extension extends Twig_Extension
 			'form_select'   => new Twig_Function_Function('Form::select'),
 			'form_label'    => new Twig_Function_Function('Form::label'),
 			'form_val'      => new Twig_Function_Function('Input::param'),
+
+			'asset_css'     => new Twig_Function_Function('Asset::css'),
+			'asset_js'      => new Twig_Function_Function('Asset::js'),
+			'asset_img'     => new Twig_Function_Function('Asset::img'),
+			'asset_render'  => new Twig_Function_Function('Asset::render'),
 		);
 	}
 

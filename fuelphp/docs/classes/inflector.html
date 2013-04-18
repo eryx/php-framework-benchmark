@@ -4,6 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../';
@@ -49,7 +50,7 @@
 			<p>The Inflector class allows you to transforms words from singular to plural, class names to table names, modularized class names to ones without, and class names to foreign keys.</p>
 
 			<article>
-				<h4 class="method" id="method_ascii">ascii($str)</h4>
+				<h4 class="method" id="method_ascii">ascii($str, $allow_non_ascii = false)</h4>
 				<p>The <strong>ascii</strong> method allows you to translate a string to a 7-bit ASCII string. This method only works with UTF-8.</p>
 				<table class="method">
 					<tbody>
@@ -70,6 +71,11 @@
 									<th><kbd>$str</kbd></th>
 									<td><i>Required</i></td>
 									<td>The string to translate.</td>
+								</tr>
+								<tr>
+									<th><kbd>$allow_non_ascii</kbd></th>
+									<td><pre class="php"><code>false</code></pre></td>
+									<td>Whether to allow non ASCII chars.</td>
 								</tr>
 							</table>
 						</td>
@@ -152,6 +158,11 @@
 									<td><i>Required</i></td>
 									<td>The classname.</td>
 								</tr>
+								<tr>
+									<th><kbd>$sep</kbd></th>
+									<td><i>_</i></td>
+									<td>The separator</td>
+								</tr>
 							</table>
 						</td>
 					</tr>
@@ -162,7 +173,8 @@
 					<tr>
 						<th>Example</th>
 						<td>
-							<pre class="php"><code>echo Inflector::words_to_upper('fuel_users'); // returns Fuel_Users</code></pre>
+							<pre class="php"><code>echo Inflector::words_to_upper('fuel_users'); // returns Fuel_Users
+echo Inflector::words_to_upper('module::method', '::'); // returns Module::Method</code></pre>
 						</td>
 					</tr>
 					</tbody>
@@ -381,7 +393,7 @@ echo Inflector::foreign_key('Inflector', false); // returns inflectorid</code></
 			</article>
 
 			<article>
-				<h4 class="method" id="method_friendly_title">friendly_title($str, $sep = '-', $lowercase = false)</h4>
+				<h4 class="method" id="method_friendly_title">friendly_title($str, $sep = '-', $lowercase = false, $allow_non_ascii = false)</h4>
 				<p>The <strong>friendly_title</strong> method allows you to convert your text to a URL-friendly title so that it can be used in the URL. It only works with UTF-8 input and outputs 7 bit ASCII characters.</p>
 				<table class="method">
 					<tbody>
@@ -412,6 +424,11 @@ echo Inflector::foreign_key('Inflector', false); // returns inflectorid</code></
 									<th><kbd>$lowercase</kbd></th>
 									<td><pre class="php"><code>false</code></pre></td>
 									<td>Whether to use lowercase or not.</td>
+								</tr>
+								<tr>
+									<th><kbd>$allow_non_ascii</kbd></th>
+									<td><pre class="php"><code>false</code></pre></td>
+									<td>Whether to allow non ASCII chars.</td>
 								</tr>
 							</table>
 						</td>
@@ -513,7 +530,7 @@ echo Inflector::is_countable('apple'); // returns true</code></pre>
 			</article>
 
 			<article>
-				<h4 class="method" id="method_pluralize">pluralize($word)</h4>
+				<h4 class="method" id="method_pluralize">pluralize($word, $count)</h4>
 				<p>The <strong>pluralize</strong> method allows you get the plural version of the given word.</p>
 				<table class="method">
 					<tbody>
@@ -535,6 +552,11 @@ echo Inflector::is_countable('apple'); // returns true</code></pre>
 									<td><i>Required</i></td>
 									<td>The word you want to pluralize.</td>
 								</tr>
+								<tr>
+									<th><kbd>$count</kbd></th>
+									<td><strong>0</strong></td>
+									<td>An instance, which if equal <kbd>1</kbd> will return the string as a singular.</td>
+								</tr>
 							</table>
 						</td>
 					</tr>
@@ -545,7 +567,8 @@ echo Inflector::is_countable('apple'); // returns true</code></pre>
 					<tr>
 						<th>Example</th>
 						<td>
-							<pre class="php"><code>echo Inflector::pluralize('apple'); // returns apples</code></pre>
+							<pre class="php"><code>echo Inflector::pluralize('apple'); // returns apples
+echo Inflector::pluralize('apple', 1); // returns apple</code></pre>
 						</td>
 					</tr>
 					</tbody>
@@ -716,7 +739,7 @@ echo Inflector::is_countable('apple'); // returns true</code></pre>
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

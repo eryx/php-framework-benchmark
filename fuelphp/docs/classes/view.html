@@ -4,6 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../';
@@ -56,7 +57,7 @@
 			</p>
 
 			<article>
-				<h4 class="method" id="method_construct">__construct($file = null, $data = null, $auto_encode = null)</h4>
+				<h4 class="method" id="method_construct">__construct($file = null, $data = null, $filter = null)</h4>
 				<table class="method">
 					<tbody>
 						<tr>
@@ -74,17 +75,17 @@
 									</tr>
 									<tr>
 										<th><kbd>$file</kbd></th>
-										<td><em>null</em></td>
+										<td><pre class="php"><code>null</code></pre></td>
 										<td class="description">the view filename, if not supplied you must supply it later through <em>set_filename</em> or supply it in <em>render</em>. View files should be relative to the <em>app/views</em> directory.</td>
 									</tr>
 									<tr>
 										<th><kbd>$data</kbd></th>
-										<td><em>null</em></td>
+										<td><pre class="php"><code>null</code></pre></td>
 										<td class="description">array of values</td>
 									</tr>
 									<tr>
-										<th><kbd>$auto_encode</kbd></th>
-										<td><em>null</em></td>
+										<th><kbd>$filter</kbd></th>
+										<td><pre class="php"><code>null</code></pre></td>
 										<td class="description">set to <em>true</em> or <em>false</em> to set auto encoding, defaults to main config setting (app/config/config.php)</td>
 									</tr>
 								</table>
@@ -98,10 +99,10 @@
 							<th>Example</th>
 							<td>
 								<pre class="php"><code>$view = new View('path/to/view', array(
-		'menu' => $menu,
-		'articles' => $articles,
-		'footer_links' => $footer_links,
-	));</code></pre>
+	'menu' => $menu,
+	'articles' => $articles,
+	'footer_links' => $footer_links,
+));</code></pre>
 							</td>
 						</tr>
 					</tbody>
@@ -109,7 +110,7 @@
 			</article>
 
 			<article>
-				<h4 class="method" id="method_forge">forge($file = null, $data = null, $auto_encode = null)</h4>
+				<h4 class="method" id="method_forge">forge($file = null, $data = null, $filter = null)</h4>
 				<p>The <strong>forge</strong> method returns a new View object.</p>
 				<table class="method">
 					<tbody>
@@ -128,17 +129,17 @@
 									</tr>
 									<tr>
 										<th><kbd>$file</kbd></th>
-										<td><em>null</em></td>
+										<td><pre class="php"><code>null</code></pre></td>
 										<td class="description">the view filename, if not supplied you must supply it later through <em>set_filename</em> or supply it in <em>render</em>. View files should be relative to the <em>app/views</em> directory and be supplied without the <strong>.php</strong> file extension.</td>
 									</tr>
 									<tr>
 										<th><kbd>$data</kbd></th>
-										<td><em>null</em></td>
+										<td><pre class="php"><code>null</code></pre></td>
 										<td class="description">array of values</td>
 									</tr>
 									<tr>
-										<th><kbd>$auto_encode</kbd></th>
-										<td><em>null</em></td>
+										<th><kbd>$filter</kbd></th>
+										<td><pre class="php"><code>null</code></pre></td>
 										<td class="description">tet to <em>true</em> or <em>false</em> to set auto encoding, defaults to main config setting (app/config/config.php)</td>
 									</tr>
 								</table>
@@ -152,11 +153,11 @@
 							<th>Example</th>
 							<td>
 								<pre class="php"><code>// Will create a View object for APPPATH/
-	$view = View::forge('path/to/view', array(
-		'menu' => $menu,
-		'articles' => $articles,
-		'footer_links' => $footer_links,
-	));</code></pre>
+$view = View::forge('path/to/view', array(
+	'menu' => $menu,
+	'articles' => $articles,
+	'footer_links' => $footer_links,
+));</code></pre>
 							</td>
 						</tr>
 					</tbody>
@@ -164,8 +165,8 @@
 			</article>
 
 			<article>
-				<h4 class="method" id="method_auto_encode">auto_encode($encode = true)</h4>
-				<p>The <strong>auto_encode</strong> sets whether to encode the data or not on a View instance.</p>
+				<h4 class="method" id="method_auto_encode">auto_filter($filter = true)</h4>
+				<p>The <strong>auto_filter</strong> method sets whether to encode the data or not on a View instance.</p>
 				<table class="method">
 					<tbody>
 						<tr>
@@ -182,8 +183,8 @@
 										<th class="description">Description</th>
 									</tr>
 									<tr>
-										<th><kbd>$encode</kbd></th>
-										<td><em>true</em></td>
+										<th><kbd>$filter</kbd></th>
+										<td><pre class="php"><code>true</code></pre></td>
 										<td class="description">whether to encode the data or not on a View instance</td>
 									</tr>
 								</table>
@@ -197,24 +198,24 @@
 							<th>Example</th>
 							<td>
 								<pre class="php"><code>$view = View::forge('path/to/view', array(
-		'menu' => $menu,
-		'articles' => $articles,
-		'footer_links' => $footer_links,
-	));
+	'menu' => $menu,
+	'articles' => $articles,
+	'footer_links' => $footer_links,
+));
 
-	$view->auto_encode();
+$view->auto_filter();
 
-	// or set it to false
+// or set it to false
 
-	$view->auto_encode(false);
+$view->auto_filter(false);
 
-	// or chain it
+// or chain it
 
-	$view = View::forge('path/to/view', array(
-		'menu' => $menu,
-		'articles' => $articles,
-		'footer_links' => $footer_links,
-	))->auto_encode();</code></pre>
+$view = View::forge('path/to/view', array(
+	'menu' => $menu,
+	'articles' => $articles,
+	'footer_links' => $footer_links,
+))->auto_filter();</code></pre>
 							</td>
 						</tr>
 					</tbody>
@@ -223,7 +224,7 @@
 
 			<article>
 				<h4 class="method" id="method_set_filename">set_filename($file)</h4>
-				<p>The <strong>set_filename</strong> allows you to set or change the view filename.</p>
+				<p>The <strong>set_filename</strong> method allows you to set or change the view filename.</p>
 				<table class="method">
 					<tbody>
 						<tr>
@@ -256,7 +257,7 @@
 							<td>
 								<pre class="php"><code>$view = new View();
 
-	$view->set_filename('path/to/view');</code></pre>
+$view->set_filename('path/to/view');</code></pre>
 							</td>
 						</tr>
 					</tbody>
@@ -264,8 +265,64 @@
 			</article>
 
 			<article>
-				<h4 class="method" id="method_set">set($key, $value = null, $encode = null)</h4>
-				<p>The <strong>set</strong> assigns a variable to a view.</p>
+				<h4 class="method" id="method_get">get($key = null, $default = null)</h4>
+				<p>The <strong>get</strong> method retrieves one or all variables set on a view.</p>
+				<table class="method">
+					<tbody>
+						<tr>
+							<th>Static</th>
+							<td>No</td>
+						</tr>
+						<tr>
+							<th>Parameters</th>
+							<td>
+								<table class="parameters">
+									<tr>
+										<th>Param</th>
+										<th>Default</th>
+										<th class="description">Description</th>
+									</tr>
+									<tr>
+										<th><kbd>$key</kbd></th>
+										<td><pre class="php"><code>null</code></pre></td>
+										<td class="description">variable name</td>
+									</tr>
+									<tr>
+										<th><kbd>$default</kbd></th>
+										<td><pre class="php"><code>null</code></pre></td>
+										<td class="description">default value to return if the variable isn't set</td>
+									</tr>
+								</table>
+							</td>
+						</tr>
+						<tr>
+							<th>Returns</th>
+							<td>mixed</td>
+						</tr>
+						<tr>
+							<th>Example</th>
+							<td>
+								<pre class="php"><code>// create a view and set some data
+$view = new View;
+$view->set(array('field1' =&gt; 'value1', 'field2' =&gt; 'value2');
+
+// get a single value
+$field1 = $view->get('field1');
+
+// get a single value, set a default if the field does not exist
+$field3 = $view->get('field3', 'value3');
+
+// get all values
+$fields = $view->get();</code></pre>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</article>
+
+			<article>
+				<h4 class="method" id="method_set">set($key, $value = null, $filter = null)</h4>
+				<p>The <strong>set</strong> method assigns a variable to a view.</p>
 				<table class="method">
 					<tbody>
 						<tr>
@@ -288,12 +345,12 @@
 									</tr>
 									<tr>
 										<th><kbd>$value</kbd></th>
-										<td><em>null</em></td>
+										<td><pre class="php"><code>null</code></pre></td>
 										<td class="description">the value</td>
 									</tr>
 									<tr>
-										<th><kbd>$encode</kbd></th>
-										<td><em>null</em></td>
+										<th><kbd>$filter</kbd></th>
+										<td><pre class="php"><code>null</code></pre></td>
 										<td class="description">set to <em>true</em> or <em>false</em> to encoding, defaults to main auto encoding setting</td>
 									</tr>
 								</table>
@@ -307,18 +364,18 @@
 							<th>Example</th>
 							<td>
 								<pre class="php"><code>$view = new View;
-	$view->set('users', $users, false);
+$view->set('users', $users, false);
 
-	// or set an array
+// or set an array
 
-	$view->set(array(
-		'users' => $users,
-		'articles' => $articles,
-	), null, true);
+$view->set(array(
+	'users' => $users,
+	'articles' => $articles,
+), null, true);
 
-	// If you need HTML / Javascript passed you need to set the last param to false
-	// when output encoding is enabled.
-	$view->set('example', '&lt;h1&gt;Heading&lt;/h1&gt;', false);</code></pre>
+// If you need HTML / Javascript passed you need to set the last param to false
+// when output encoding is enabled.
+$view->set('example', '&lt;h1&gt;Heading&lt;/h1&gt;', false);</code></pre>
 							</td>
 						</tr>
 					</tbody>
@@ -326,8 +383,61 @@
 			</article>
 
 			<article>
-				<h4 class="method" id="method_set_global">set_global($key, $value = null, $encode = null)</h4>
-				<p>The <strong>set_global</strong> sets a variable accessible for all views.</p>
+				<h4 class="method" id="method_set_safe">set_safe($key, $value = null)</h4>
+				<p>The same as <code>set()</code>, except this defaults to not-encoding the variable on output.</p>
+				<table class="method">
+					<tbody>
+						<tr>
+							<th>Static</th>
+							<td>No</td>
+						</tr>
+						<tr>
+							<th>Parameters</th>
+							<td>
+								<table class="parameters">
+									<tr>
+										<th>Param</th>
+										<th>Default</th>
+										<th class="description">Description</th>
+									</tr>
+									<tr>
+										<th><kbd>$key</kbd></th>
+										<td><em>required</em></td>
+										<td class="description">variable name or array of variables</td>
+									</tr>
+									<tr>
+										<th><kbd>$value</kbd></th>
+										<td><pre class="php"><code>null</code></pre></td>
+										<td class="description">the value</td>
+									</tr>
+								</table>
+							</td>
+						</tr>
+						<tr>
+							<th>Returns</th>
+							<td>Current View object</td>
+						</tr>
+						<tr>
+							<th>Example</th>
+							<td>
+								<pre class="php"><code>$view = new View;
+$view->set_safe('users', $users);
+
+// or set an array
+
+$view->set_safe(array(
+	'users' => $users,
+	'articles' => $articles,
+), null);</code></pre>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</article>
+
+			<article>
+				<h4 class="method" id="method_set_global">set_global($key, $value = null, $filter = null)</h4>
+				<p>The <strong>set_global</strong> method sets a variable accessible for all views.</p>
 				<table class="method">
 					<tbody>
 						<tr>
@@ -350,12 +460,12 @@
 									</tr>
 									<tr>
 										<th><kbd>$value</kbd></th>
-										<td><em>null</em></td>
+										<td><pre class="php"><code>null</code></pre></td>
 										<td class="description">the value</td>
 									</tr>
 									<tr>
-										<th><kbd>$encode</kbd></th>
-										<td><em>null</em></td>
+										<th><kbd>$filter</kbd></th>
+										<td><pre class="php"><code>null</code></pre></td>
 										<td class="description">set to <em>true</em> or <em>false</em> to encoding, defaults to main auto encoding setting</td>
 									</tr>
 								</table>
@@ -370,12 +480,12 @@
 							<td>
 								<pre class="php"><code>View::set_global('users', $users, false);
 
-	// or set an array
+// or set an array
 
-	View::set_global(array(
-		'users' => $users,
-		'articles' => $articles,
-	), null, true);</code></pre>
+View::set_global(array(
+	'users' => $users,
+	'articles' => $articles,
+), null, true);</code></pre>
 							</td>
 						</tr>
 					</tbody>
@@ -412,7 +522,7 @@
 									</tr>
 									<tr>
 										<th><kbd>$value</kbd></th>
-										<td><em>null</em></td>
+										<td><pre class="php"><code>null</code></pre></td>
 										<td class="description">the value</td>
 									</tr>
 								</table>
@@ -426,14 +536,14 @@
 							<th>Example</th>
 							<td>
 								<pre class="php"><code>$view = new View;
-	$view->bind('users', $users, false);
+$view->bind('users', $users, false);
 
-	// or set an array
+// or set an array
 
-	$view->bind(array(
-		'users' => $users,
-		'articles' => $articles,
-	), null, true);</code></pre>
+$view->bind(array(
+	'users' => $users,
+	'articles' => $articles,
+), null, true);</code></pre>
 							</td>
 						</tr>
 					</tbody>
@@ -442,7 +552,7 @@
 
 			<article>
 				<h4 class="method" id="method_bind_global">bind_global($key, $value = null)</h4>
-				<p>The <strong>bind_global</strong> assigns a global variable by reference accessible for all views.</p>
+				<p>The <strong>bind_global</strong> method assigns a global variable by reference accessible for all views.</p>
 				<p class="note">Please note: these cannot be cleaned by output encoding and should thus be considered unsafe.</p>
 				<table class="method">
 					<tbody>
@@ -489,7 +599,7 @@
 			<article>
 				<h4 class="method" id="method_render">render($file = null)</h4>
 				<p>
-					The <strong>set</strong> renders the view object to a string.
+					The <strong>set</strong> method renders the view object to a string.
 					Global and local data are merged and extracted to create local variables within the view file.
 				</p>
 				<table class="method">
@@ -511,7 +621,7 @@
 									<tr>
 										<th><kbd>$file</kbd></th>
 										<td><em>string</em></td>
-										<td><em>null</em></td>
+										<td><pre class="php"><code>null</code></pre></td>
 										<td class="description">the view filename without the extension</td>
 									</tr>
 								</table>
@@ -526,13 +636,13 @@
 							<td>
 								<pre class="php"><code>$html = View::forge()->render('path/to/view');
 
-	// or
+// or
 
-	$html = View::forge('path/to/view')->render();
+$html = View::forge('path/to/view')->render();
 
-	// or
+// or
 
-	$html = View::forge()->set_filename('path/to/view')->render();</code></pre>
+$html = View::forge()->set_filename('path/to/view')->render();</code></pre>
 							</td>
 						</tr>
 					</tbody>
@@ -542,7 +652,7 @@
 			<h3 id="procedural_helpers">Procedural helpers</h3>
 
 			<article>
-				<h4 id="function_render" class="method" data-class="">render($view, $data = array())</h4>
+				<h4 id="function_render" class="method" data-class="">render($view, $data = array(), $auto_filter = null)</h4>
 				<p>The <strong>render</strong> function is an alias for <a href="#method_render">View::render</a>.</p>
 				<table class="method">
 					<tbody>
@@ -568,6 +678,12 @@
 										<td><pre class="php"><code>array()</code></pre></td>
 										<td class="description">an array of data to be passed to the view</td>
 									</tr>
+									<tr>
+										<th><kbd>$auto_filter</kbd></th>
+										<td><em>bool</em></td>
+										<td><pre class="php"><code>null</code></pre></td>
+										<td class="description">whether to filter the data or not</td>
+									</tr>
 								</table>
 							</td>
 						</tr>
@@ -589,7 +705,7 @@
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

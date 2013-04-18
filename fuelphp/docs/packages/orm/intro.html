@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../../';
@@ -47,8 +48,8 @@
 			<p>Orm is short for <a href="http://en.wikipedia.org/wiki/Object_relational_mapper" target="_blank">Object
 				Relational Mapper</a> which does 2 things: it maps your database table rows to objects and it allows you
 				to establish relations between those objects.<br />
-				It follows closely the <a href="http://en.wikipedia.org/wiki/Active_record_pattern" target="_blank">
-				Active Record Pattern</a>, but was also influenced by other systems.</p>
+				It follows the <a href="http://en.wikipedia.org/wiki/Active_record_pattern" target="_blank">
+				Active Record Pattern</a> closely, but was also influenced by other systems.</p>
 
 			<section>
 				<h2 id="intro">Introduction</h2>
@@ -62,8 +63,10 @@
 				<h2 id="install">Installation</h2>
 
 				<p>The Orm package is included in the Fuel download. All you need to do is enable it in your config.</p>
-				<pre class="php"><code>'packages' => array(
-	'orm',
+					<pre class="php"><code>'always_load' => array(
+	'packages' => array(
+		'orm',
+	),
 ),</code></pre>
 			</section>
 
@@ -92,13 +95,22 @@
 					already saved objects. This shouldn't happen during normal usage and is most often caused by faulty
 					configuration of relations.<br />
 					Sometimes this can be caused by a bug, especially when you're not using a stable release.</p>
+
+				<h3>I have defined a limit and offset, but the results are not correct</h3>
+				<p>The ORM always makes sure that query results are consistent. If you run a query that contains related
+					models, a subquery will be generated to make sure the entire related resultset is fetched. Even if this
+					means more records then the limit you have set will be fetched. This is because once you start manipulating
+					incomplete resultsets, very bad things might happen to your related models.</p>
+				<p>If you are absolutely sure you are not going to manipulate the results, for example because you need them
+					for pagination only, you can use <kbd>rows_limit()</kbd> and <kbd>rows_offset()</kbd> instead, which will
+					forces them on the entire query.</p>
 			</section>
 
 		</div>
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

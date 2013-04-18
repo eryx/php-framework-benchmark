@@ -3,10 +3,10 @@
  * Fuel is a fast, lightweight, community driven PHP5 framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -20,17 +20,17 @@ namespace Oil;
  * @category	Core
  */
 class Generate_Admin extends Generate_Scaffold
-{	
+{
 	public static $view_subdir = 'admin/';
-	
+
 	public static $controller_prefix = 'Admin_';
 	public static $model_prefix = '';
-	
+
 	public static $controller_parent = 'Controller_Admin';
-	
+
 	public static function forge($args, $subfolder)
 	{
-		
+
 		$default_files = array(
 			array(
 				'source' => $subfolder.'/controllers/base.php',
@@ -43,7 +43,7 @@ class Generate_Admin extends Generate_Scaffold
 				'type' => 'controller',
 			),
 			array(
-				'source' => $subfolder.'/views/template.php',
+				'source' => '/template.php',
 				'location' => 'views/admin/template.php',
 				'type' => 'views',
 			),
@@ -58,15 +58,20 @@ class Generate_Admin extends Generate_Scaffold
 				'type' => 'views',
 			),
 		);
-		
+
 		foreach ($default_files as $file)
 		{
-			if ( ! file_exists($content = APPPATH.$file['location']))
+			// check if there's a template in app, and if so, use that
+			if (file_exists(APPPATH.'views/'.static::$view_subdir.$file['source']))
 			{
-				Generate::create($content, file_get_contents(PKGPATH.'oil/views/'.static::$view_subdir.$file['source']), $file['type']);
+				Generate::create(APPPATH.$file['location'], file_get_contents(APPPATH.'views/'.static::$view_subdir.$file['source']), $file['type']);
+			}
+			else
+			{
+				Generate::create(APPPATH.$file['location'], file_get_contents(\Package::exists('oil').'views/'.static::$view_subdir.$file['source']), $file['type']);
 			}
 		}
-		
+
 		parent::forge($args, $subfolder);
 	}
 }

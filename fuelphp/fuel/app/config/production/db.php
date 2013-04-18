@@ -1,6 +1,6 @@
 <?php
 /**
- * The production database settings.
+ * The production database settings. These get merged with the global settings.
  */
 
 return array(

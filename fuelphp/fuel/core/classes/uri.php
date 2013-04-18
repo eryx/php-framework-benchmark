@@ -3,10 +3,10 @@
  * Part of the Fuel framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2012 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -92,13 +92,17 @@ class Uri
 
 	/**
 	 * Converts the current URI segments to an associative array.  If
-	 * the URI has an odd number of segments, an exception will be thrown.
+	 * the URI has an odd number of segments, an empty value will be added.
 	 *
-	 * @return  array|null  the array or null
+	 * @param  int  segment number to start from. default value is the first segment
+	 * @return  array  the assoc array
 	 */
-	public static function to_assoc()
+	public static function to_assoc($start = 1)
 	{
-		return \Arr::to_assoc(static::segments());
+		$segments = array_slice(static::segments(), ($start - 1));
+		count($segments) % 2 and $segments[] = null;
+
+		return \Arr::to_assoc($segments);
 	}
 
 	/**

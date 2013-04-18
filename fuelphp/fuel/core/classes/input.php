@@ -3,10 +3,10 @@
  * Part of the Fuel framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2012 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -179,18 +179,22 @@ class Input
 		// Deal with any trailing dots
 		$uri = rtrim($uri, '.');
 
-		// Strip the defined url suffix from the uri if needed
-		$uri_info = pathinfo($uri);
-
-		if ( ! empty($uri_info['extension']))
+		// Do we have a URI and does it not end on a slash?
+		if ($uri and substr($uri, -1) !== '/')
 		{
-			if (strpos($uri_info['extension'],'/') === false)
-			{
-				static::$detected_ext = $uri_info['extension'];
+			// Strip the defined url suffix from the uri if needed
+			$uri_info = pathinfo($uri);
 
-				if (\Config::get('routing.strip_extension', true))
+			if ( ! empty($uri_info['extension']))
+			{
+				if (strpos($uri_info['extension'],'/') === false)
 				{
-					$uri = $uri_info['dirname'].'/'.$uri_info['filename'];
+					static::$detected_ext = $uri_info['extension'];
+
+					if (\Config::get('routing.strip_extension', true))
+					{
+						$uri = $uri_info['dirname'].'/'.$uri_info['filename'];
+					}
 				}
 			}
 		}

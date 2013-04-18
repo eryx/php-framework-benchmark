@@ -4,6 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../';
@@ -49,7 +50,7 @@
 			<h3 id="what_is_profiling">What is profiling?</h3>
 
 			<p>
-				The profiler provides profiling and debugging related information without needing them to add a lot of programmatic overhead
+				The profiler provides profiling and debugging related information without having to add a lot of programmatic overhead
 				to the code. You only need to toggle one config setting to true and you have access to an automated tool to help create a
 				faster and more consistent review experience. Since anyone can use it, the profiler also gives you an idea of where the code
 				stands before the review.
@@ -91,8 +92,9 @@
 			<h3 id="database_profiling">Database profiling</h3>
 
 				<p>
-					Profiling your database connection is disabled by default too. Database profiling is activated on a per connection basis, and can be
-					activated by setting the 'profiler' option of the connection configuration in your config/db.php to true.
+					Database profiling is disabled by default too. Database profiling is activated per defined database, and is
+					activated by setting the 'profiling' option of the database configuration you want to profile in your
+					config/&lt;environment&gt;/db.php to true.
 				</p>
 
 				<pre class="php"><code>'profiling'  => true,
@@ -107,7 +109,7 @@
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

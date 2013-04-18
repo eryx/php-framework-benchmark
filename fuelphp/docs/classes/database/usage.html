@@ -4,6 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../../';
@@ -49,7 +50,7 @@
 				Normal database interactions are to go through the <a href="./db.html">DB class</a>.
 				The following examples will give you a feel for how to go about using databases in Fuel.
 			</p>
-			<p>Database usage is devided into a couple of segments:</p>
+			<p>Database usage is divided into a couple of segments:</p>
 
 			<ul>
 				<li><a href="#running-queries">Running queries</a></li>
@@ -61,6 +62,7 @@
 				<li><a href="#deleting">Deleting</a> data</li>
 				<li><a href="#joins">Joins</a></li>
 				<li><a href="#escaping">Escaping</a></li>
+				<li><a href="#binding">Query binding</a></li>
 				<li><a href="#caching">Query caching</a></li>
 			</ul>
 
@@ -143,7 +145,7 @@ Array
 				<h3 id="results">Results</h3>
 				<p>
 					Executing a select query will generate a result object containing the requested database records.
-					By default the result is fetched as associative arrays. Here is an exaple how to influence this
+					By default the result is fetched as associative arrays. Here is an example how to influence this
 					behaviour.
 				</p>
 				<pre class="php"><code>// Will fetch the result as an associative array.
@@ -154,14 +156,21 @@ $result = DB::select('id','name')->from('users')->as_object()->execute();
 
 // Will fetch the result as an Model_Users object.
 $result = DB::select()->from('users')->as_object('Model_Users')->execute();
+
+// Will fetch the result as an Model_Users object (a model from the Users module).
+$result = DB::select()->from('users')->as_object('\\Users\\Model_Users')->execute();
 </code></pre>
+				<p class="note">
+					When you pass a class name to as_object(), make sure you include any namespace if needed. If the class
+					specified does not exist, as_object() will be ignored and an indexed array will be returned.
+				</p>
 				<p>Want to know how many records you have fetched? It's dead simple!</p>
 				<pre class="php"><code>
 $result = DB::select('*')->from('users')->execute();
 // Just count the results, it returns an int.
 $num_rows = count($result);
 </code></pre>
-				<p>To access these results you eighter loop through the result object directly, or get the result array.</p>
+				<p>To access these results you either loop through the result object directly, or get the result array.</p>
 				<pre class="php"><code>$result = DB::select()->from('users')->execute();
 foreach($result as $item)
 {
@@ -181,7 +190,7 @@ $on_key = $result->as_array('id');
 foreach($on_key as $id => $item)
 {
 	// $id will contain the records id
-	// do something with $item or it's $id
+	// do something with $item or its $id
 }
 
 $key_value = $result->as_array('id', 'email');
@@ -312,7 +321,7 @@ $result = DB::update('users')
 				<h3 id="inserting">Inserting</h3>
 				<p>
 					For inserting data we use <a href="./db.html#method_insert">DB::insert</a>.
-					If succesfully executed an insert query will return an array containing a
+					If successfully executed an insert query will return an array containing a
 					list of insert id and rows created.
 				</p>
 				<pre class="php"><code>// Will execute INSERT INTO `users`(`name`,`email`,`password`)
@@ -323,7 +332,7 @@ list($insert_id, $rows_affected) = DB::insert('users')->set(array(
 	'password' => 's0_s3cr3t',
 ))->execute();
 </code></pre>
-				<p>You can also set the columns and values seperatly</p>
+				<p>You can also set the columns and values separately</p>
 
 				<pre class="php"><code>// Will execute INSERT INTO `users`(`name`,`email`,`password`)
 // VALUES ("John Random", "john@example.com", "s0_s3cr3t")
@@ -372,9 +381,9 @@ $result = DB::select()->from('users')->join('roles','right outer')->on('roles.id
 				<h3 id="escaping">Escaping</h3>
 
 				<p>Fields and values in database calls are escaped by default. In some cases you'll want to not escape data. The DB class provides a method to create <em>database expressions</em>, <a href="./db.html#method_expr">DB::expr</a>. If you don't want a value to get escaped, just wrap it in a database expression.</p>
-				<p>Database expressions are especially helpful when dealing with thing like MySQL's native function (like <em>COUNT</em>) and predefined constands (like <em>DEFAULT</em>).</p>
+				<p>Database expressions are especially helpful when dealing with thing like MySQL's native function (like <em>COUNT</em>) and predefined constants (like <em>DEFAULT</em>).</p>
 
-				<pre class="php"><code>// Set a field to it's default
+				<pre class="php"><code>// Set a field to its default
 DB::update('users')->where('id', '=', 1)->set(array(
 	'some_column' => DB::expr('DEFAULT'),
 ))->execute();
@@ -393,13 +402,81 @@ $count = $result_arr['count'];
 
 			<article>
 
+				<h3 id="binding">Query binding</h3>
+
+				<p>The query builder supports query binding, a technique that allows you to assign variables to your
+				hand-written queries in a safe and secure manner.</p>
+
+				<p>Query binding works by placing uniquely identifyable placeholders in your SQL. The query builder will
+				replace these placeholders by their corresponding values when the query is compiled for execution (so not
+				when you bind it!).</p>
+
+				<p>You define placeholder using the FuelPHP standard notation, which is a string, prefixed by a colon
+				(:varname).</p>
+
+				<pre class="php"><code>$name = 'John'; // set the variable we're going to bind
+$query = "SELECT * FROM users WHERE username = :name"; // our query
+
+// bind the variable and run the query, produces SELECT * FROM users WHERE username = 'John'
+$result = DB::query($query)->bind('name', $name)->execute();</code></pre>
+
+				<p>Variables are bound by reference, so you can define your query and your bindings early in your code
+				and modify the bound variable later.</p>
+
+				<pre class="php"><code>// create the query object
+$query = DB::query("SELECT * FROM users WHERE username = :name");
+
+$name = 'unknown';                // set the variable with a default value
+$query->bind('name', $name);     // and bind it to the query
+
+// after some code, change the bound variable
+$name = 'Sally';
+
+// bind the variable and run the query, produces SELECT * FROM users WHERE username = 'Sally'
+$result = $query->execute();</code></pre>
+
+				<p>Because the variable is bound by reference, you can NOT bind a literal. If you
+				do, you'll get a "Cannot pass parameter 2 by reference" exception!</p>
+
+				<pre class="php"><code>// this will generate an exception!
+$query = DB::query("SELECT * FROM users WHERE username = :name")->bind('name', 'value')->execute();</code></pre>
+
+				<p>You can assign by value using the param() method:</p>
+
+				<pre class="php"><code>// this will work though
+$query = DB::query("SELECT * FROM users WHERE username = :name")->param('name', 'value')->execute();</code></pre>
+
+				<p>And finally, you can use the parameters() method if you want to mix the two:</p>
+
+				<pre class="php"><code>// create the query object
+$query = DB::query("SELECT * FROM users WHERE username = :name AND state = :state");
+
+$name = 'John'; // set the variable we're going to bind
+
+// bind the variable and literal
+$query->parameters(array('name' => &amp;$name, 'state' => 'new'));
+
+// and run the query, produces SELECT * FROM users WHERE username = 'John' AND state = 'new'
+$result = $query->execute();</code></pre>
+
+				<p class="note">Some frameworks use question marks as placeholders. This works for them because their
+				binding system is positional, the first question mark gets replaced by the first variable bound, and
+				so on. In FuelPHP, order of binding is not relevant, there is a one-to-one link between the placeholder
+				and the variable bound. It also means you can use the same placeholder multiple times in a single
+				query.</p>
+
+			</article>
+
+			<article>
+
 				<h3 id="caching">Query caching</h3>
 
 				<p>The query builder also supports caching a query's result to help you bring down your database access.
 					For this goal it uses the Cache class behind the scenes but handles both retrieval and regeneration
 					of the caches.<br />
-					The <code>cached()</code> method takes 2 arguements: the expiration time (cache validity in seconds)
-					and a second arguement to set a custom key for the query (by default a md5 hash of the SQL). That
+					The <code>cached()</code> method takes 3 arguments: the expiration time (cache validity in seconds)
+					a second argument to set a custom key for the query (by default a md5 hash of the SQL), and a boolean
+					that can be used to indicate that you don't want to cache empty results. Using a custom cache key
 					will allow you to manually delete specific queries more easily and group sets of query caches into
 					specific directories.</p>
 
@@ -411,7 +488,8 @@ $query = DB::query("SELECT * FROM users")->cached(3600)->execute();
 
 // You can specify a key to handle the delete of cached results, useful if you
 // know that will be updated and need to delete it before it gets shown.
-$query = DB::query("SELECT * FROM users")->cached(3600, "foo.bar")->execute();
+// Empty query results will not be cached.
+$query = DB::query("SELECT * FROM users")->cached(3600, "foo.bar", false)->execute();
 
 // This delete the previous query from cache
 Cache::delete("foo.bar");
@@ -428,7 +506,7 @@ Cache::delete_all("db");</code></pre>
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

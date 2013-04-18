@@ -1,4 +1,4 @@
-<?php echo '<?php echo Form::open(array(\'class\' => \'form-stacked\')); ?>' ?>
+<?php echo '<?php echo Form::open(); ?>' ?>
 
 
 	<fieldset>
@@ -10,11 +10,11 @@
 <?php switch($field['type']):
 
 				case 'text':
-					echo "\t\t\t\t<?php echo Form::textarea('{$field['name']}', Input::post('{$field['name']}', isset(\${$singular_name}) ? \${$singular_name}->{$field['name']} : ''), array('class' => 'span10', 'rows' => 8)); ?>\n";
+					echo "\t\t\t\t<?php echo Form::textarea('{$field['name']}', Input::post('{$field['name']}', isset(\${$singular_name}) ? \${$singular_name}->{$field['name']} : ''), array('class' => 'span8', 'rows' => 8)); ?>\n";
 				break;
 
 				default:
-					echo "\t\t\t\t<?php echo Form::input('{$field['name']}', Input::post('{$field['name']}', isset(\${$singular_name}) ? \${$singular_name}->{$field['name']} : ''), array('class' => 'span6')); ?>\n";
+					echo "\t\t\t\t<?php echo Form::input('{$field['name']}', Input::post('{$field['name']}', isset(\${$singular_name}) ? \${$singular_name}->{$field['name']} : ''), array('class' => 'span4')); ?>\n";
 
 endswitch; ?>
 
@@ -22,7 +22,7 @@ endswitch; ?>
 		</div>
 <?php endforeach; ?>
 		<div class="actions">
-			<?php echo '<?php'; ?> echo Form::submit('submit', 'Save', array('class' => 'btn primary')); <?php echo '?>'; ?>
+			<?php echo '<?php'; ?> echo Form::submit('submit', 'Save', array('class' => 'btn btn-primary')); <?php echo '?>'; ?>
 
 
 		</div>

@@ -5,10 +5,10 @@
  * Fuel is a fast, lightweight, community driven PHP5 framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -25,6 +25,7 @@ Autoloader::add_classes(array(
 	'Parser\\View_Jade'        => __DIR__.'/classes/view/jade.php',
 	'Parser\\View_Haml'        => __DIR__.'/classes/view/haml.php',
 	'Parser\\View_Smarty'      => __DIR__.'/classes/view/smarty.php',
+	'Parser\\View_Phptal'      => __DIR__.'/classes/view/phptal.php',
 ));
 
 

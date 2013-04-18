@@ -1,12 +1,13 @@
 <?php
 /**
- * Part of the Fuel framework. *
- * @package		Fuel
- * @version		1.0
- * @author		Fuel Development Team
- * @license		MIT License
- * @copyright	2010 - 2011 Fuel Development Team
- * @link		http://fuelphp.com
+ * Part of the Fuel framework.
+ *
+ * @package    Fuel
+ * @version    1.5
+ * @author     Fuel Development Team
+ * @license    MIT License
+ * @copyright  2010 - 2013 Fuel Development Team
+ * @link       http://fuelphp.com
  */
 
 namespace Fuel\Core;
@@ -50,6 +51,13 @@ class Mongo_Db
 	 * @var  bool
 	 */
 	protected $persist = false;
+
+	/**
+	 * Whether to use the profiler
+	 *
+	 * @var  bool
+	 */
+	protected $profiling = false;
 
 	/**
 	 * Holds all the select options
@@ -173,6 +181,11 @@ class Mongo_Db
 		else
 		{
 			$connection_string .= "{$config['hostname']}";
+		}
+
+		if (\Arr::get($config, 'profiling') === true)
+		{
+			$this->profiling = true;
 		}
 
 		$connection_string .= "/{$config['database']}";
@@ -612,21 +625,54 @@ class Mongo_Db
 	}
 
 	/**
+	 *	Get the document cursor from mongodb based upon the passed parameters
+	 *
+	 *	@param	string	$collection		the collection name
+	 *	@usage	$mongodb->get_cursor('foo', array('bar' => 'something'));
+	 */
+	public function get_cursor($collection = "")
+    {
+        if (empty($collection))
+        {
+            throw new \Mongo_DbException("In order to retrieve documents from MongoDB you must provide a collection name.");
+        }
+
+        $documents = $this->db->{$collection}->find($this->wheres, $this->selects)->limit((int) $this->limit)->skip((int) $this->offset)->sort($this->sorts);
+
+        $this->_clear();
+
+        return $documents;
+    }
+
+	/**
 	 *	Get the documents based upon the passed parameters
 	 *
 	 *	@param	string	$collection		the collection name
 	 *	@usage	$mongodb->get('foo', array('bar' => 'something'));
 	 */
-	 public function get($collection = "")
+	public function get($collection = "")
 	{
-		if (empty($collection))
+		if ($this->profiling)
 		{
-			throw new \Mongo_DbException("In order to retrieve documents from MongoDB");
+			$query = json_encode(array(
+			'type'			=> 'find',
+			'collection'	=> $collection,
+			'select'		=> $this->selects,
+			'where'			=> $this->wheres,
+			'limit'			=> $this->limit,
+			'offset'		=> $this->offset,
+			'sort'			=> $this->sorts,
+			));
+
+			$benchmark = \Profiler::start("Database {$this->db}", $query);
 		}
 
-		$results = array();
+		$documents = $this->get_cursor($collection);
 
-		$documents = $this->db->{$collection}->find($this->wheres, $this->selects)->limit((int) $this->limit)->skip((int) $this->offset)->sort($this->sorts);
+		if (isset($benchmark))
+		{
+			\Profiler::stop($benchmark);
+		}
 
 		$returns = array();
 
@@ -637,8 +683,6 @@ class Mongo_Db
 				$returns[] = $doc;
 			}
 		}
-
-		$this->_clear();
 
 		return $returns;
 	}
@@ -656,7 +700,24 @@ class Mongo_Db
 			throw new \Mongo_DbException("In order to retrieve documents from MongoDB");
 		}
 
+		if ($this->profiling)
+		{
+			$query = json_encode(array(
+			'type'			=> 'findOne',
+			'collection'	=> $collection,
+			'select'		=> $this->selects,
+			'where'			=> $this->wheres,
+			));
+
+			$benchmark = \Profiler::start("Database {$this->db}", $query);
+		}
+
 		$returns = $this->db->{$collection}->findOne($this->wheres, $this->selects);
+
+		if (isset($benchmark))
+		{
+			\Profiler::stop($benchmark);
+		}
 
 		$this->_clear();
 
@@ -678,7 +739,26 @@ class Mongo_Db
 			throw new \Mongo_DbException("In order to retrieve a count of documents from MongoDB");
 		}
 
+		if ($this->profiling)
+		{
+			$query = json_encode(array(
+			'type'			=> 'count',
+			'collection'	=> $collection,
+			'where'			=> $this->wheres,
+			'limit'			=> $this->limit,
+			'offset'		=> $this->offset,
+			));
+
+			$benchmark = \Profiler::start("Database {$this->db}", $query);
+		}
+
 		$count = $this->db->{$collection}->find($this->wheres)->limit((int) $this->limit)->skip((int) $this->offset)->count($foundonly);
+
+		if (isset($benchmark))
+		{
+			\Profiler::stop($benchmark);
+		}
+
 		$this->_clear();
 		return ($count);
 	}
@@ -708,7 +788,24 @@ class Mongo_Db
 
 		try
 		{
+			if ($this->profiling)
+			{
+				$query = json_encode(array(
+				'type'			=> 'insert',
+				'collection'	=> $collection,
+				'payload'		=> $insert,
+				));
+
+				$benchmark = \Profiler::start("Database {$this->db}", $query);
+			}
+
 			$this->db->{$collection}->insert($insert, array('fsync' => true));
+
+			if (isset($benchmark))
+			{
+				\Profiler::stop($benchmark);
+			}
+
 			if (isset($insert['_id']))
 			{
 				return $insert['_id'];
@@ -747,7 +844,27 @@ class Mongo_Db
 		try
 		{
 			$options = array_merge($options, array('fsync' => true, 'multiple' => false));
+
+			if ($this->profiling)
+			{
+				$query = json_encode(array(
+				'type'			=> 'update',
+				'collection'	=> $collection,
+				'where'			=> $this->wheres,
+				'payload'		=> $data,
+				'options'		=> $options,
+				));
+
+				$benchmark = \Profiler::start("Database {$this->db}", $query);
+			}
+
 			$this->db->{$collection}->update($this->wheres, (($literal) ? $data : array('$set' => $data)), $options);
+
+			if (isset($benchmark))
+			{
+				\Profiler::stop($benchmark);
+			}
+
 			$this->_clear();
 			return true;
 		}
@@ -778,7 +895,26 @@ class Mongo_Db
 
 		try
 		{
+			if ($this->profiling)
+			{
+				$query = json_encode(array(
+				'type'			=> 'updateAll',
+				'collection'	=> $collection,
+				'where'			=> $this->wheres,
+				'payload'		=> $data,
+				'literal'		=> $literal,
+				));
+
+				$benchmark = \Profiler::start("Database {$this->db}", $query);
+			}
+
 			$this->db->{$collection}->update($this->wheres, (($literal) ? $data : array('$set' => $data)), array('fsync' => true, 'multiple' => true));
+
+			if (isset($benchmark))
+			{
+				\Profiler::stop($benchmark);
+			}
+
 			$this->_clear();
 			return true;
 		}
@@ -803,7 +939,24 @@ class Mongo_Db
 
 		try
 		{
+			if ($this->profiling)
+			{
+				$query = json_encode(array(
+				'type'			=> 'delete',
+				'collection'	=> $collection,
+				'where'			=> $this->wheres,
+				));
+
+				$benchmark = \Profiler::start("Database {$this->db}", $query);
+			}
+
 			$this->db->{$collection}->remove($this->wheres, array('fsync' => true, 'justOne' => true));
+
+			if (isset($benchmark))
+			{
+				\Profiler::stop($benchmark);
+			}
+
 			$this->_clear();
 			return true;
 		}
@@ -828,7 +981,24 @@ class Mongo_Db
 
 		try
 		{
+			if ($this->profiling)
+			{
+				$query = json_encode(array(
+				'type'			=> 'deleteAll',
+				'collection'	=> $collection,
+				'where'			=> $this->wheres,
+				));
+
+				$benchmark = \Profiler::start("Database {$this->db}", $query);
+			}
+
 			$this->db->{$collection}->remove($this->wheres, array('fsync' => true, 'justOne' => false));
+
+			if (isset($benchmark))
+			{
+				\Profiler::stop($benchmark);
+			}
+
 			$this->_clear();
 			return true;
 		}
@@ -979,7 +1149,7 @@ class Mongo_Db
 	{
 		return ($this->db->{$collection});
 	}
-	
+
 	/**
 	 *	Resets the class variables to default settings
 	 */

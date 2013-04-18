@@ -3,10 +3,10 @@
  * Fuel is a fast, lightweight, community driven PHP5 framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -16,7 +16,7 @@ abstract class Auth_Login_Driver extends \Auth_Driver
 {
 
 	/**
-	 * @var  Auth_Driver
+	 * @var  Auth_Driver	default instance
 	 */
 	protected static $_instance = null;
 
@@ -24,17 +24,6 @@ abstract class Auth_Login_Driver extends \Auth_Driver
 	 * @var  array  contains references if multiple were loaded
 	 */
 	protected static $_instances = array();
-
-	/**
-	 * This method is deprecated...use forge() instead.
-	 * 
-	 * @deprecated until 1.2
-	 */
-	public static function factory(array $config = array())
-	{
-		\Log::warning('This method is deprecated.  Please use a forge() instead.', __METHOD__);
-		return static::forge($config);
-	}
 
 	public static function forge(array $config = array())
 	{
@@ -193,10 +182,6 @@ abstract class Auth_Login_Driver extends \Auth_Driver
 	 */
 	public function hasher()
 	{
-		if ( ! class_exists('PHPSecLib\\Crypt_Hash', false))
-		{
-			import('phpseclib/Crypt/Hash', 'vendor');
-		}
 		is_null($this->hasher) and $this->hasher = new \PHPSecLib\Crypt_Hash();
 
 		return $this->hasher;
@@ -210,6 +195,13 @@ abstract class Auth_Login_Driver extends \Auth_Driver
 	 * @return  bool
 	 */
 	abstract protected function perform_check();
+
+	/**
+	 * Perform the actual login check
+	 *
+	 * @return  bool
+	 */
+	abstract public function validate_user();
 
 	/**
 	 * Login method

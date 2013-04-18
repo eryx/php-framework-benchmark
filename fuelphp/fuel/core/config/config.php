@@ -3,10 +3,10 @@
  * Part of the Fuel framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2012 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -121,33 +121,59 @@ return array(
 	 * Security settings
 	 */
 	'security' => array(
-		'csrf_autoload'    => false,
-		'csrf_token_key'   => 'fuel_csrf_token',
-		'csrf_expiration'  => 0,
+		/**
+		 * If true, every HTTP request of the type speficied in autoload_methods
+		 * will be checked for a CSRF token. If not present or not valid, a
+		 * security exception will be thrown.
+		 */
+		'csrf_autoload'         => false,
+		'csrf_autoload_methods' => array('post', 'put', 'delete'),
+
+		/**
+		 * Name of the form field that holds the CSRF token.
+		 */
+		'csrf_token_key'        => 'fuel_csrf_token',
+
+		/**
+		 * Expiry of the token in seconds. If zero, the token remains the same
+		 * for the entire user session.
+		 */
+		'csrf_expiration'       => 0,
+
+		/**
+		 * A salt to make sure the generated security tokens are not predictable
+		 */
+		'token_salt'       => 'put your salt value here to make the token more secure',
 
 		/**
 		 * This input filter can be any normal PHP function as well as 'xss_clean'
 		 *
 		 * WARNING: Using xss_clean will cause a performance hit.
 		 * How much is dependant on how much input data there is.
+		 *
+		 * Note: MUST BE DEFINED IN THE APP CONFIG FILE!
 		 */
-		'uri_filter'       => array('htmlentities'),
+		//'uri_filter'       => array(),
 
 		/**
 		 * This input filter can be any normal PHP function as well as 'xss_clean'
 		 *
 		 * WARNING: Using xss_clean will cause a performance hit.
 		 * How much is dependant on how much input data there is.
+		 *
+		 * Note: MUST BE DEFINED IN THE APP CONFIG FILE!
 		 */
-		'input_filter'  => array(),
+		//'input_filter'  => array(),
 
 		/**
 		 * This output filter can be any normal PHP function as well as 'xss_clean'
 		 *
 		 * WARNING: Using xss_clean will cause a performance hit.
 		 * How much is dependant on how much input data there is.
+		 *
+		 * Note: MUST BE DEFINED IN THE APP CONFIG FILE!
 		 */
-		'output_filter'  => array('Security::htmlentities'),
+		//'output_filter'  => array(),
 
 		/**
 		 * Encoding mechanism to use on htmlentities()
@@ -168,12 +194,7 @@ return array(
 		 * With output encoding switched on all objects passed will be converted to strings or
 		 * throw exceptions unless they are instances of the classes in this array.
 		 */
-		'whitelisted_classes' => array(
-			'Fuel\\Core\\Response',
-			'Fuel\\Core\\View',
-			'Fuel\\Core\\ViewModel',
-			'Closure',
-		)
+		'whitelisted_classes' => array(),
 	),
 
 	/**

@@ -4,6 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../';
@@ -85,7 +86,7 @@
 
 				<p>And last we'll call the ViewModel from the controller:</p>
 
-				<pre><code>ViewModel::forge('Index');</code></pre>
+				<pre class="php"><code>ViewModel::forge('index');</code></pre>
 
 				<p>Now we have everything setup; however, there is still no data passed to the view. It still needs to get a
 				<code>$title</code> string and <code>$articles</code> array passed to it. We do this by adding a <code>view()</code> method
@@ -140,8 +141,8 @@ $echo_upper('this string'); // Outputs: "THIS STRING"</code></pre>
 				than the default <code>view()</code> method. To use those, you need to add the method's name as the second parameter to the
 				<code>ViewModel::forge()</code> method:</p>
 
-				<pre><code>// will call other_method() upon the ViewModel from the above example
-ViewModel::forge('Index', 'other_method');</code></pre>
+				<pre class="php"><code>// will call other_method() upon the ViewModel from the above example
+ViewModel::forge('index', 'other_method');</code></pre>
 
 				<h4 id="before_after">Before and after methods</h4>
 
@@ -159,7 +160,7 @@ ViewModel::forge('Index', 'other_method');</code></pre>
 
 				<h4>Using ViewModels from other namespaces or not View_ prefixed</h4>
 
-				<p>If you want to use these, you have to use the full classname with the <code>factory()</code>, including the namespace.
+				<p>If you want to use these, you have to use the full classname with the <code>forge()</code>, including the namespace.
 				In these cases, the default naming will often not work as expected so setting the <code>$_view</code>
 				property is encouraged.</p>
 			</article>
@@ -168,7 +169,7 @@ ViewModel::forge('Index', 'other_method');</code></pre>
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

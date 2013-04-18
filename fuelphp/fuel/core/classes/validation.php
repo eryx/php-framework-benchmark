@@ -3,10 +3,10 @@
  * Part of the Fuel framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2012 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -54,7 +54,7 @@ class Validation
 		{
 			if ($fieldset->validation(false) != null)
 			{
-				throw new \DomainException('Form instance already exists, cannot be recreated. Use instance() instead of factory() to retrieve the existing instance.');
+				throw new \DomainException('Form instance already exists, cannot be recreated. Use instance() instead of forge() to retrieve the existing instance.');
 			}
 		}
 
@@ -175,7 +175,7 @@ class Validation
 	{
 		$field = $this->add($name, $label);
 
-		$rules = explode('|', $rules);
+		is_array($rules) or $rules = explode('|', $rules);
 
 		foreach ($rules as $rule)
 		{
@@ -858,9 +858,13 @@ class Validation
 			{
 				$flags = array('numeric', 'dots');
 			}
+			elseif ($flags == 'quotes')
+			{
+				$flags = array('singlequotes', 'doublequotes');
+			}
 			elseif ($flags == 'all')
 			{
-				$flags = array('alpha', 'utf8', 'numeric', 'spaces', 'newlines', 'tabs', 'punctuation', 'dashes');
+				$flags = array('alpha', 'utf8', 'numeric', 'spaces', 'newlines', 'tabs', 'punctuation', 'singlequotes', 'doublequotes', 'dashes');
 			}
 			else
 			{
@@ -878,6 +882,8 @@ class Validation
 		$pattern .= in_array('commas', $flags) && ! in_array('punctuation', $flags) ? ',' : '';
 		$pattern .= in_array('punctuation', $flags) ? "\.,\!\?:;\&" : '';
 		$pattern .= in_array('dashes', $flags) ? '_\-' : '';
+		$pattern .= in_array('singlequotes', $flags) ? "'" : '';
+		$pattern .= in_array('doublequotes', $flags) ? "\"" : '';
 		$pattern = empty($pattern) ? '/^(.*)$/' : ('/^(['.$pattern.'])+$/');
 		$pattern .= in_array('utf8', $flags) ? 'u' : '';
 
@@ -909,6 +915,19 @@ class Validation
 	}
 
 	/**
+	 * Checks whether numeric input is between a minimum and a maximum value
+	 *
+	 * @param   string|float|int
+	 * @param   float|int
+	 * @param   float|int
+	 * @return  bool
+	 */
+	public function _validation_numeric_between($val, $min_val, $max_val)
+	{
+		return $this->_empty($val) or (floatval($val) >= floatval($min_val) and floatval($val) <= floatval($max_val));
+	}
+
+	/**
 	 * Conditionally requires completion of current field based on completion of another field
 	 *
 	 * @param mixed
@@ -917,13 +936,12 @@ class Validation
 	 */
 	public function _validation_required_with($val, $field)
 	{
-
-	  if ( ! $this->_empty($this->input($field)) and $this->_empty($val))
-	  {
+		if ( ! $this->_empty($this->input($field)) and $this->_empty($val))
+		{
 			$validating = $this->active_field();
 			throw new \Validation_Error($validating, $val, array('required_with' => array($this->field($field))), array($this->field($field)->label));
-	  }
+		}
 
-	  return true;
+		return true;
 	}
 }

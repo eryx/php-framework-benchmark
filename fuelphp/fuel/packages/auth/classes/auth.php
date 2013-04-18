@@ -3,10 +3,10 @@
  * Fuel is a fast, lightweight, community driven PHP5 framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -26,7 +26,7 @@ class Auth
 {
 
 	/**
-	 * @var  Auth_Login_Driver
+	 * @var  Auth_Login_Driver	default instance
 	 */
 	protected static $_instance = null;
 
@@ -73,17 +73,6 @@ class Auth
 			static::$_instance = reset(static::$_instances);
 			static::check();
 		}
-	}
-
-	/**
-	 * This method is deprecated...use forge() instead.
-	 * 
-	 * @deprecated until 1.2
-	 */
-	public static function factory($custom = array())
-	{
-		\Log::warning('This method is deprecated.  Please use a forge() instead.', __METHOD__);
-		return static::forge($custom);
 	}
 
 	/**

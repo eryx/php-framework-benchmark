@@ -3,10 +3,10 @@
  * Fuel is a fast, lightweight, community driven PHP5 framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -137,20 +137,30 @@ CONF;
 			throw new Exception('No controller name was provided.');
 		}
 
-		$actions = $args;
+		// Do we want a view or a viewmodel?
+		$with_viewmodel = \Cli::option('with-viewmodel');
+
+ 		$actions = $args;
 
 		$filename = trim(str_replace(array('_', '-'), DS, $name), DS);
 
 		$filepath = APPPATH.'classes'.DS.'controller'.DS.$filename.'.php';
 
 		// Uppercase each part of the class name and remove hyphens
-		$class_name = \Inflector::classify($name);
+		$class_name = \Inflector::classify(str_replace(array('\\', '/'), '_', $name), false);
 
 		// Stick "blog" to the start of the array
 		array_unshift($args, $filename);
 
 		// Create views folder and each view file
-		static::views($args, 'crud', false);
+		if (\Cli::option('crud'))
+		{
+			static::views($args, 'scaffolding'.DS.'crud'.DS.'views', false);
+		}
+		else
+		{
+			static::views($args, 'scaffolding'.DS.'orm'.DS.'views', false);
+		}
 
 		$actions or $actions = array('index');
 
@@ -181,6 +191,32 @@ CONTROLLER;
 		// Write controller
 		static::create($filepath, $controller, 'controller');
 
+
+		// Do you want a viewmodel with that?
+		if ($with_viewmodel)
+		{
+			$viewmodel_filepath = APPPATH.'classes'.DS.'view'.DS.$filename;
+
+			// One ViewModel per action
+			foreach ($actions as $action)
+			{
+				$viewmodel = <<<VIEWMODEL
+<?php
+
+class View_{$class_name}_{$action} extends Viewmodel
+{
+	public function view()
+	{
+		\$this->content = "{$class_name} &raquo; {$action}";
+	}
+}
+VIEWMODEL;
+
+				// Write viewmodel
+				static::create($viewmodel_filepath.DS.$action.'.php', $viewmodel, 'viewmodel');
+			}
+		}
+
 		$build and static::build();
 	}
 
@@ -199,23 +235,14 @@ CONTROLLER;
 			throw new Exception('No fields have been provided, the model will not know how to build the table.');
 		}
 
-		$plural = \Inflector::pluralize($singular);
+		$plural = \Cli::option('singular') ? $singular : \Inflector::pluralize($singular);
 
 		$filename = trim(str_replace(array('_', '-'), DS, $singular), DS);
 
-		$filepath = APPPATH . 'classes/model/'.$filename.'.php';
+		$filepath = APPPATH.'classes'.DS.'model'.DS.$filename.'.php';
 
 		// Uppercase each part of the class name and remove hyphens
-		$class_name = \Inflector::classify($singular, false);
-
-		$contents = '';
-
-		$timestamp_properties = array();
-
-		if ( ! \Cli::option('no-timestamp'))
-		{
-			$timestamp_properties = array('created_at:int', 'updated_at:int');
-		}
+		$class_name = \Inflector::classify(str_replace(array('\\', '/'), '_', $singular), false);
 
 		// Turn foo:string into "id", "foo",
 		$properties = implode(",\n\t\t", array_map(function($field) {
@@ -226,20 +253,56 @@ CONTROLLER;
 				return "'".$field."'";
 			}
 
-		}, array_merge(array('id:int'), $args, $timestamp_properties)));
+		}, $args));
 
-		if ( ! \Cli::option('no-properties'))
+		// Make sure an id is present
+		strpos($properties, "'id'") === false and $properties = "'id',\n\t\t".$properties.',';
+
+		$contents = '';
+
+		if (\Cli::option('crud'))
 		{
-			$contents .= <<<CONTENTS
+			if ( ! \Cli::option('no-properties'))
+			{
+				$contents = <<<CONTENTS
 	protected static \$_properties = array(
 		{$properties}
 	);
 
 CONTENTS;
-		}
+			}
 
-		if (\Cli::option('crud'))
-		{
+			if($created_at = \Cli::option('created-at'))
+			{
+				is_string($created_at) or $created_at = 'created_at';
+
+				$contents .= <<<CONTENTS
+
+	protected static \$_created_at = '$created_at';
+
+CONTENTS;
+			}
+
+			if($updated_at = \Cli::option('updated-at'))
+			{
+				is_string($updated_at) or $updated_at = 'updated_at';
+
+				$contents .= <<<CONTENTS
+
+	protected static \$_updated_at = '$updated_at';
+
+CONTENTS;
+			}
+
+			if(\Cli::option('mysql-timestamp'))
+			{
+				$contents .= <<<CONTENTS
+
+	protected static \$_mysql_timestamp = true;
+
+CONTENTS;
+			}
+
 			$contents .= <<<CONTENTS
 
 	protected static \$_table_name = '{$plural}';
@@ -259,16 +322,68 @@ MODEL;
 		{
 			if ( ! \Cli::option('no-timestamp'))
 			{
+				$created_at = \Cli::option('created-at', 'created_at');
+				is_string($created_at) or $created_at = 'created_at';
+				$properties .= "\n\t\t'".$created_at."',";
+
+				$updated_at = \Cli::option('updated-at', 'updated_at');
+				is_string($updated_at) or $updated_at = 'updated_at';
+				$properties .= "\n\t\t'".$updated_at."',";
+
+				$time_type = (\Cli::option('mysql-timestamp')) ? 'timestamp' : 'int';
+
+				$timestamp_properties = array($created_at.':'.$time_type.':null[1]', $updated_at.':'.$time_type.':null[1]');
+				$args = array_merge($args, $timestamp_properties);
+			}
+
+			if ( ! \Cli::option('no-properties'))
+			{
+				$contents = <<<CONTENTS
+	protected static \$_properties = array(
+		{$properties}
+	);
+
+CONTENTS;
+			}
+
+			if ( ! \Cli::option('no-timestamp'))
+			{
+				$mysql_timestamp = (\Cli::option('mysql-timestamp')) ? 'true' : 'false';
+
+				if(($created_at = \Cli::option('created-at')) and is_string($created_at))
+				{
+					$created_at = <<<CONTENTS
+
+			'property' => '$created_at',
+CONTENTS;
+				}
+				else
+				{
+					$created_at = '';
+				}
+
+				if(($updated_at = \Cli::option('updated-at')) and is_string($updated_at))
+				{
+					$updated_at = <<<CONTENTS
+
+			'property' => '$updated_at',
+CONTENTS;
+				}
+				else
+				{
+					$updated_at = '';
+				}
+
 				$contents .= <<<CONTENTS
 
 	protected static \$_observers = array(
 		'Orm\Observer_CreatedAt' => array(
 			'events' => array('before_insert'),
-			'mysql_timestamp' => false,
+			'mysql_timestamp' => $mysql_timestamp,$created_at
 		),
 		'Orm\Observer_UpdatedAt' => array(
 			'events' => array('before_save'),
-			'mysql_timestamp' => false,
+			'mysql_timestamp' => $mysql_timestamp,$updated_at
 		),
 	);
 CONTENTS;
@@ -288,15 +403,18 @@ MODEL;
 		// Build the model
 		static::create($filepath, $model, 'model');
 
-		if ( ! empty($args))
+		if ( ! \Cli::option('no-migration'))
 		{
-			array_unshift($args, 'create_'.$plural);
-			static::migration($args, false);
-		}
+			if ( ! empty($args))
+			{
+				array_unshift($args, 'create_'.$plural);
+				static::migration($args, false);
+			}
 
-		else
-		{
-			throw new Exception('Not enough arguments to create this migration.');
+			else
+			{
+				throw new \Exception('Not enough arguments to create this migration.');
+			}
 		}
 
 		$build and static::build();
@@ -318,12 +436,13 @@ MODEL;
 		// Add the default template if it doesnt exist
 		if ( ! file_exists($app_template = APPPATH.'views/template.php'))
 		{
-			static::create($app_template, file_get_contents(PKGPATH.'oil/views/'.$subfolder.'/template.php'), 'view');
+			static::create($app_template, file_get_contents(\Package::exists('oil').'views/scaffolding/template.php'), 'view');
 		}
 
 		foreach ($args as $action)
 		{
-			$view_title = \Inflector::humanize($action);
+			$view_title = \Cli::option('with-viewmodel') ? '<?php echo $content; ?>' : \Inflector::humanize($action);
+
 			$view = <<<VIEW
 <p>{$view_title}</p>
 VIEW;
@@ -347,7 +466,12 @@ VIEW;
 		}
 
 		// Check if a migration with this name already exists
-		if (count($duplicates = glob(APPPATH."migrations/*_{$migration_name}*")) > 0)
+		if (($duplicates = glob(APPPATH."migrations/*_{$migration_name}*")) === false)
+		{
+			throw new Exception("Unable to read existing migrations. Do you have an 'open_basedir' defined?");
+		}
+
+		if (count($duplicates) > 0)
 		{
 			// Don't override a file
 			if (\Cli::option('s', \Cli::option('skip')) === true)
@@ -411,6 +535,12 @@ VIEW;
 					$subjects = array($matches[0], $matches[2]);
 				}
 
+				// delete_{field}_from_{table}
+				else if (count($matches) == 3 && $matches[1] == 'from')
+				{
+					$subjects = array($matches[0], $matches[2]);
+				}
+
 				// rename_field_{field}_to_{field}_in_{table} (with underscores in field names)
 				else if (count($matches) >= 5 && in_array('to', $matches) && in_array('in', $matches))
 				{
@@ -418,6 +548,15 @@ VIEW;
 					 implode('_', array_slice($matches, array_search('in', $matches)+1)),
 					 implode('_', array_slice($matches, 0, array_search('to', $matches))),
 					 implode('_', array_slice($matches, array_search('to', $matches)+1, array_search('in', $matches)-2))
+				  );
+				}
+
+				// rename_table
+				else if ($method_name == 'rename_table')
+				{
+					$subjects = array(
+					 implode('_', array_slice($matches, 0, array_search('to', $matches))),
+					 implode('_', array_slice($matches, array_search('to', $matches)+1))
 				  );
 				}
 
@@ -536,6 +675,16 @@ VIEW;
 								}
 							}
 
+							// deal with some special cases
+							switch ($option_name)
+							{
+								case 'auto_increment':
+								case 'null':
+								case 'unsigned':
+									$option = (bool) $option;
+									break;
+							}
+
 							$field_array[$option_name] = $option;
 
 						}
@@ -581,6 +730,111 @@ MIGRATION;
 		$filepath = APPPATH . 'migrations/'.$number.'_' . strtolower($migration_name) . '.php';
 
 		static::create($filepath, $migration, 'migration');
+
+		$build and static::build();
+	}
+
+
+
+	public static function task($args, $build = true)
+	{
+
+		if ( ! ($name = \Str::lower(array_shift($args))))
+		{
+			throw new Exception('No task name was provided.');
+		}
+
+		if (empty($args))
+		{
+			\Cli::write("\tNo tasks actions have been provided, the TASK will only create default task.", 'red');
+		}
+
+		$args or $args = array('index');
+
+		// Uppercase each part of the class name and remove hyphens
+		$class_name = \Inflector::classify($name, false);
+
+		$filename = trim(str_replace(array('_', '-'), DS, $name), DS);
+		$filepath = APPPATH.'tasks'.DS.$filename.'.php';
+
+		$action_str = '';
+
+		foreach ($args as $action)
+		{
+			$task_path = '\\'.\Inflector::humanize($name).'\\'.\Inflector::humanize($action);
+
+			if (!ctype_alpha($action[0])) {
+				throw new Exception('An action does not start with alphabet character.  ABORTING');
+			}
+
+			$action_str .= '
+	/**
+	 * This method gets ran when a valid method name is not used in the command.
+	 *
+	 * Usage (from command line):
+	 *
+	 * php oil r '.$name.':'.$action.' "arguments"
+	 *
+	 * @return string
+	 */
+	public static function '.$action.'($args = NULL)
+	{
+		echo "\n===========================================";
+		echo "\nRunning task ['.\Inflector::humanize($name).':'. \Inflector::humanize($action) . ']";
+		echo "\n-------------------------------------------\n\n";
+
+		/***************************
+		 Put in TASK DETAILS HERE
+		 **************************/
+	}'.PHP_EOL;
+
+			$message = \Cli::color("\t\tPreparing task method [", 'green');
+			$message .= \Cli::color(\Inflector::humanize($action), 'cyan');
+			$message .= \Cli::color("]", 'green');
+			\Cli::write($message);
+		}
+
+		// Default RUN task action
+		$action = 'run';
+		$default_action_str = '
+	/**
+	 * This method gets ran when a valid method name is not used in the command.
+	 *
+	 * Usage (from command line):
+	 *
+	 * php oil r '.$name.'
+	 *
+	 * @return string
+	 */
+	public static function run($args = NULL)
+	{
+		echo "\n===========================================";
+		echo "\nRunning DEFAULT task ['.\Inflector::humanize($name).':'. \Inflector::humanize($action) . ']";
+		echo "\n-------------------------------------------\n\n";
+
+		/***************************
+		 Put in TASK DETAILS HERE
+		 **************************/
+	}'.PHP_EOL;
+
+		// Build Controller
+		$task_class = <<<CONTROLLER
+<?php
+
+namespace Fuel\Tasks;
+
+class {$class_name}
+{
+{$default_action_str}
+
+{$action_str}
+}
+/* End of file tasks/{$name}.php */
+
+CONTROLLER;
+
+		// Write controller
+		static::create($filepath, $task_class, 'tasks');
 
 		$build and static::build();
 	}
@@ -672,7 +926,7 @@ HELP;
 			$result = @fwrite($handle, $file['contents']);
 
 			// Write $somecontent to our opened file.
-			if ($result === FALSE)
+			if ($result === false)
 			{
 				throw new Exception('Cannot write to file: '. $file['path']);
 			}
@@ -712,7 +966,7 @@ HELP;
 		}
 		else
 		{
-			throw new Exception('Config file core/config/migrations.php');
+			throw new \Exception('Config file core/config/migrations.php');
 			exit;
 		}
 

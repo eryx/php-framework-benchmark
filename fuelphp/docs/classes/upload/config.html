@@ -1,13 +1,14 @@
 <!doctype html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">	
+	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../../';
-		var class_prefix = "Fuel::";
+		var class_prefix = "Upload::";
 	</script>
 	<script src="./../../assets/js/combined.js"></script>
 	<title>Upload Config - Classes - FuelPHP Documentation</title>
@@ -20,38 +21,40 @@
 					<strong>FuelPHP, a PHP 5.3 Framework</strong>
 					Documentation
 				</h1>
-				
+
 				<form id="google_search">
 					<p>
 						<span id="search_clear">&nbsp;</span>
 						<input type="submit" name="search_submit" id="search_submit" value="search" />
-						<input type="text" value="" id="search_input" name="search_input" />						
+						<input type="text" value="" id="search_input" name="search_input" />
 					</p>
 				</form>
 			</div>
 			<nav>
-				
+
 				<div class="clear"></div>
 			</nav>
 			<a href="#" id="toc_handle">table of contents</a>
 			<div class="clear"></div>
 		</header>
-		
+
 		<div id="cse">
 			<div id="cse_point"></div>
 			<div id="cse_content"></div>
 		</div>
-		
+
 		<div id="main">
-		
+
 			<h2>Upload Class</h2>
-	
-			<p>The upload class allows to securely process files that have been uploaded to the application.
-				It allows you to filter uploads in various ways, define what the destination filenames should look like, or filter on size or length of the filename.</p>
-	
+
+			<p>
+				The upload class allows to securely process files that have been uploaded to the application.
+				It allows you to filter uploads in various ways, define what the destination filenames should look like, or filter on size or length of the filename.
+			</p>
+
 			<section>
 				<h3 id="configuration">Configuration</h3>
-	
+
 				<p>The upload class is configured through the <kbd>fuel/core/config/upload.php</kbd> configuration file. It is already populated with a default configuration. You can override this configuration by copying this config file to your application config directory, and modify that file as needed.</p>
 				<p>The following configuration settings can be defined:</p>
 				<table class="config">
@@ -84,7 +87,7 @@
 							<td><pre class="php"><code>array()</code></pre></td>
 							<td>
 								Array of allowed file extensions. If empty or not defined, all file extensions are allowed.
-								Extensions need to be defined in lower case only. If a file is uploaded in upper case, it's extension
+								Extensions need to be defined in lower case only. If a file is uploaded in upper case, its extension
 								will be matched against the whitelist in lower case.
 							</td>
 						</tr>
@@ -94,7 +97,7 @@
 							<td><pre class="php"><code>array()</code></pre></td>
 							<td>
 								Array of disallowed file extensions. If empty or not defined, all file extensions are allowed.
-								Extensions need to be defined in lower case only. If a file is uploaded in upper case, it's extension
+								Extensions need to be defined in lower case only. If a file is uploaded in upper case, its extension
 								will be matched against the blacklist in lower case.
 							</td>
 						</tr>
@@ -112,7 +115,7 @@
 							<td>array</td>
 							<td><pre class="php"><code>array()</code></pre></td>
 							<td>
-								array of disallowed file extensions. If empty or not defined, all file extensions are allowed.
+								Array of disallowed file types. If empty or not defined, all file types are allowed.
 							</td>
 						</tr>
 						<tr>
@@ -221,6 +224,14 @@
 							</td>
 						</tr>
 						<tr>
+							<th>normalize_separator</th>
+							<td>string</td>
+							<td><pre class="php"><code>'_'</code></pre></td>
+							<td>
+								If you’ve set normalize to <code>true</code> you can change what spaces are changed to, rather than underscores by default.
+							</td>
+						</tr>
+						<tr>
 							<th>max_length</th>
 							<td>integer</td>
 							<td><pre class="php"><code>0</code></pre></td>
@@ -241,6 +252,16 @@
 								</p>
 							</td>
 						</tr>
+						<tr>
+							<th>change_case</th>
+							<td>boolean</td>
+							<td><em>false</em></td>
+							<td>
+								<p>
+									This option allows you to force a case on the filename. Possible values are 'upper' and 'lower'.
+								</p>
+							</td>
+						</tr>
 					</tbody>
 				</table>
 			</section>
@@ -249,7 +270,7 @@
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

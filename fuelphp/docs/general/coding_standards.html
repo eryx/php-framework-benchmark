@@ -4,6 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../';
@@ -110,7 +111,7 @@ class Session_Cookie extends Session_Driver
 			<pre class="php"><code>core/classes/session.php
 core/classes/session/cookie.php</code></pre>
 
-			<h5 id="methods">Methods</h5>
+			<h5 id="methods_standards">Methods</h5>
 
 			<p>Like class names, method names should use underscores to separate words, not CamelCase. Method names should
 				also be all lower case. Visibility should always be included (public, protected, private).<br />
@@ -188,18 +189,28 @@ else
 {
 	//catch all do something here
 }
+
 foreach ($array as $key => $value)
 {
 	//loop here
 }
-for ($i = 0; $i < $max; $i++)
+
+for ($i = 0; $i &lt; $max; $i++)
 {
 	//loop here
 }
-while ($i < $max)
+
+while ($i &lt; $max)
 {
 	//loop here
 }
+
+do
+{
+	//loop here
+}
+while ($i &lt; $max)
+
 switch ($var)
 {
 	case 'value1':
@@ -247,8 +258,8 @@ $var = Uri::segment(3) ?: 'default';</code></pre>
 
 			<p>Comparing function/method returns and variables should be type aware, for example some functions may return
 				<kbd>false</kbd>, and when comparing this return the type sensitive operators such as <kbd>===</kbd> or <kbd>!==</kbd>. Additionally, use of
-				<kbd>and</kbd> or <kbd>or</kbd> is preferred over <kbd>&&</kbd> or <kbd>||</kbd> for readability. In some cases, this cannot be avoided and the use of
-				<kbd>&&</kbd> or <kbd>||</kbd> as its required may be used. The <kbd>!</kbd> should have spaces on both sides when used.</p>
+				<kbd>and</kbd> or <kbd>or</kbd> is preferred over <kbd>&amp;&amp;</kbd> or <kbd>||</kbd> for readability. In some cases, this cannot be avoided and the use of
+				<kbd>&amp;&amp;</kbd> or <kbd>||</kbd> as its required may be used. The <kbd>!</kbd> should have spaces on both sides when used.</p>
 
 			<pre class="php"><code>if ($var == false and $other_var != 'some_value')
 if ($var === false or my_function() !== false)
@@ -262,10 +273,13 @@ if ( ! $var)</code></pre>
 {
 
 }</code></pre>
+			<p>In case the class is empty, braces will be on the same line as the definition:</p>
 
-			<h5 id="function_method">Function/Method Declarations</h5>
+			<pre class="php"><code>class Empty_Class { }</code></pre>
 
-			<p>The function/method opening brace must always begin on a new line and have the same indentation as its
+			<h5 id="function_method">Function/Method/Closure Declarations</h5>
+
+			<p>The function/method/closure opening brace must always begin on a new line and have the same indentation as its
 				structure.</p>
 
 			<pre class="php"><code>class Session
@@ -273,7 +287,10 @@ if ( ! $var)</code></pre>
 
 	public static function get_flash($name, $data)
 	{
-		// Some code here
+		$closure = function($a, $b)
+		{
+			// Your closure code here
+		}
 	}
 
 }</code></pre>
@@ -316,11 +333,36 @@ $var = $some_var + $other_var; //space before and after math operator
 $var++; // no space before increment
 ++$var; //no space after increment</code></pre>
 
+			<h5 id="dot-notation">Array dot-notation</h5>
+
+			<p>
+				Although strictly speaking it's not a coding standard, it's used a lot within the frameworks classes and this documentation,
+				and since it's not a common PHP notation, it might confuse people new to the framework.
+			</p>
+			<pre class="php"><code>// when you see "always_load.packages = array()", it is shorthand for:
+array("always_load" => array("packages" => array(...) ) );
+</code></pre>
+
+			<p>This notation is used by the Arr class, but also the Lang, Config and Session classes, to quickly access individual elements from a multi-dimensional array.</p>
+			<pre class="php"><code>// when you have an array structure like this
+$array = array(
+    "always_load" => array(
+        "packages" => array(
+            "orm",
+            "package" => "/my/special/package.php",
+        )
+     )
+);
+
+// then this will return "/my/special/package.php":
+$path = Arr::get($array, 'always_load.packages.package');
+</code></pre>
+
 		</div>
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

@@ -1,5 +1,73 @@
 # Changelog
 
+## v1.5
+
+[Full List of core changes since 1.4](https://github.com/fuel/core/compare/1.4/master...1.5/master)
+
+### Important fixes, changes, notes. Read them carefully.
+
+* The "Undefined constant MYSQL_ATTR_COMPRESS" issue that pops up under certain conditions has been fixed.
+* It has been reported that under certain circumstances there might be issues with serialized data stored in the Auth user table, field "profile_fields", and the "payload" field in the sessions table. It is strongly advised to define those columns as "blob" to avoid these issues.
+* A new `Log` package has been introduced in preparation for the transition to 2.0, which replaces the `Log` class.
+
+### Backward compability notes
+
+* __Uri::to_assoc()__ no longer throws an exception with uneven segments, but returns ``null`` as value of the last segment
+* ORM __Model::find()__ no longer accepts ``null`` as only parameter. If you want to use that, you are now REQUIRED to also pass the options array (or an empty array).
+* __Sessions__ have been refactored, all validation and validation data has been moved server side. Because of this, pre-1.5 sessions are not longer compatible.
+* The __Log__ class has been removed and replaced by the __log package__. If you have extended the `Log` class in your application, you will have to extend `\Log\Log` instead, and check the compatibility of your changes. If they are about logging to other locations, you might want to look into the Monolog stream handlers instead.
+
+### Removed code (because it was deprecated in v1.4 or earlier)
+
+* ORM __Model::find()__ can no longer be used to construct queries using method chaining. Use  __Model::query()__ instead.
+
+### System changes
+
+* __Controller_Hybrid__: Now sets the correct content-type header on empty responses.
+* __Controller_Rest__: Now sets the correct content-type header on empty responses.
+
+### Specific classes
+
+* __Agent__: Will now honour 301/302 redirects when trying to fetch the browscap file.
+* __Arr__: New ``filter_recursive`` method, a recursive version of PHP's ``array_filter()`` function.
+* __Debug:__ ``dump()`` method now html encodes string variables.
+* __Debug:__ ``dump()`` and ``inspect()`` can now be styled using CSS (a classname has been added to the div).
+* __Fieldset__: New ``set_tabular_form()`` method allows creation of one-to-many forms.
+* __Fieldset__: New ``get_tabular_form()`` method to check if a fieldset defines a tabular form.
+* __Image__: New ``flip()`` method for vertical/horizontal image flipping.
+* __Inflector__: ``friendly_title()`` now has an option to deal with non-ascii characters.
+* __Inflector__: ``pluralize()`` now has an count parameter to return a singular value if the count is 1.
+* __Migrate__: Now allows you to define the DB connection to be used for migrations in the global migrations config file.
+* __Model_Crud__: Now has a `$_write_connection` property to support master/slave database setups.
+* __Mongo_Db__: Will now log it's queries to the profiler if enabled.
+* __Mongo_Db__: Now has a method ``get_cursor()`` to directly get a mongodb cursor.
+* __Pagination__: Now support pagination using a Query String variable.
+* __Pagination__: Now has support for first/last page links.
+* __Response__: Will now add a "Content-Length" header when generating the output.
+* __Session__: Now correctly erases the session cookie on a ``destroy``.
+* __Session__: Now silently (re)creates the session if data is present by no session is created.
+* __Session__: Cookie encryption can now be disabled using a session configuration key.
+* __Session__: Session cookie now only contains the session id. Validation now happens with server-side data.
+* __Session__: New configuration key `expire_flash_after_get` controls `get_flash()` expiration.
+* __Session__: ``get_flash()`` now has to override the configured flash variable expiration rules.
+* __Session__: ``set_flash()`` now has to partial array dot-notation support.
+* __Uri__: ``to_assoc()`` now accepts a start parameter allowing you to skip leading segments.
+* __Validation__: Now has a new built-in rule 'numeric_between' allowing you to specify a range.
+* __Database_Query_Builder_Join__: Now supports both AND and ON chaining of join condition.
+
+### Packages
+
+* __Orm__: Supports the new tabular form fieldset in it's models.
+* __Orm__: ``find()`` options array now has support for 'group_by'.
+* __Orm__: New ``Model_Soft`` implements soft-delete functionality (thanks to Steve West).
+* __Orm__: ``from_array()`` can now also populate related objects.
+* __Orm__: `Model` now has a `$_write_connection` property to support master/slave database setups.
+* __Oil__: ``oil install`` now installs packages without 'fuel_' prefix too.
+* __Oil__: scaffolding now supports subdirectories.
+* __Oil__: Now has a config file that allows you to configure the location of phpunit.
+* __Oil__: Now has a task `fromdb` that can generate models, migrations, scaffolding or admin from an existing database.
+* __Parser__: Twig driver has been updated to work with Twig v1.12.0.
+
 ## v1.4
 
 [Full List of core changes since 1.3](https://github.com/fuel/core/compare/1.3/master...1.4/master)
@@ -28,10 +96,6 @@ This release features a new Pagination class that isn't completely backward comp
 
 * __Redis__: ``Redis::instance()`` will no longer create new objects. Use ``Redis::forge()`` for that.
 * __Orm\Model__: Using the ``find()`` method without parameters is deprecated. Use ``query()`` instead.
-
-### Security related
-
-* tbd
 
 ### System changes
 

@@ -4,6 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../';
@@ -49,9 +50,63 @@
 
 			<p>The database table `migration` tracks which migrations have already been run so all you have to do is update your application files and call <kbd>Migrate::current()</kbd> to work out which migrations should be run. The current version is found in core/config/migration.php so like any other config file you should copy this to app/config to make changes.</p>
 
+			<h3><a class="internal_link" href="#/config">Configuration</a></h3>
+
+			<table class="config">
+				<tbody>
+					<tr class="header">
+						<th>Key</th>
+						<th>Type</th>
+						<th>Default</th>
+						<th>Description</th>
+					</tr>
+					<tr>
+						<th>folder</th>
+						<td>string</td>
+						<td>
+							<pre class="php">
+								<code>'migrations/'</code>
+							</pre>
+						</td>
+						<td>
+							The folder in which migration files will be found.
+						</td>
+					</tr>
+					<tr>
+						<th>connection</th>
+						<td>string</td>
+						<td>
+							<pre class="php">
+								<code>null</code>
+							</pre>
+						</td>
+						<td>
+							Configuration name of a database connection to use to write migrations.
+						</td>
+					</tr>
+					<tr>
+						<th>table</th>
+						<td>string</td>
+						<td>
+							<pre class="php">
+								<code>'migration'</code>
+							</pre>
+						</td>
+						<td>
+							The database table used to store migration data.
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<p class="note">
+				<strong>Note: </strong>
+				After migrations have been run, the configuration file will be rewritten with version information included. These version numbers are used internally and should not be changed.
+			</p>
+
 			<h3>Creating a Migration</h3>
 
-			<p>Create a file in the app/migrations folder. The prefix should be an incremental count starting at 001, do not skip numbers and do not have two numbers that match. The first would be something like <kbd>app/migrations/001_example.php</kbd>.
+			<p>Create a file in the app/migrations folder. The prefix should be an incremental count starting at 001, do not skip numbers and do not have two numbers that match. The first would be something like <kbd>app/migrations/001_example.php</kbd>.</p>
 			<pre class="php"><code>namespace Fuel\Migrations;
 
 class Example
@@ -72,7 +127,7 @@ class Example
     }
 }</code></pre>
 
-			<h3 id="run_a_mirgation">Run a Migration</h3>
+			<h3 id="run_a_migration">Run a Migration</h3>
 
 			<p>A migration can be run in two ways:</p>
 
@@ -89,6 +144,18 @@ $ php oil refine migrate:up
 $ php oil refine migrate:down
 $ php oil refine migrate --version=10</code></pre>
 
+			<p>
+				Migrations are supported for modules and packages too. You can specify on the oil commandline if you want to
+				migrate all, or only specific modules and/or packages. If you do, you can use '--default' to indicate you want
+				to include app migrations.
+			</p>
+
+			<pre class="cli"><code>$ php oil refine migrate -all
+$ php oil refine migrate --modules=module1,module2 --packages=package1
+$ php oil refine migrate:up --packages=package1
+$ php oil refine migrate:down --modules=module1,module2 --default
+$ php oil refine migrate --version=10</code></pre>
+
 			<p class="note">
 				<strong>Note: </strong>
 				The migrate:current task is to match your schema to the version listed in <kbd>fuel/[app|core]/config/migrate.php</kbd> as if you have just got
@@ -96,11 +163,22 @@ $ php oil refine migrate --version=10</code></pre>
 				config number so the current command will not be relevant in many situations.
 			</p>
 
+			<h3 id="skip_migrations">Skipping migrations</h3>
+
+			<p>
+				You can abort the migration process by having your <kbd>up()</kbd> or <kbd>down()</kbd> method return
+				<kbd>false</kbd>. This can be useful if your migration has external dependencies, for example the existence of a table created in a different
+				migration.
+			</p>
+			<p class="note">
+				This will only abort the migration stack currently being processed, either the application migrations, or the migrations in a single module or package.
+				All migrations in other stacks will be processed as normal.
+			</p>
 		</div>
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

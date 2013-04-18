@@ -3,10 +3,10 @@
  * Part of the Fuel framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2012 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -33,6 +33,11 @@ class Fieldset_Field
 	 * @var  string  Name of this field
 	 */
 	protected $name = '';
+
+	/**
+	 * @var  string  Base name of this field
+	 */
+	protected $basename = '';
 
 	/**
 	 * @var  string  Field type for form generation, false to prevent it showing
@@ -91,6 +96,10 @@ class Fieldset_Field
 	public function __construct($name, $label = '', array $attributes = array(), array $rules = array(), $fieldset = null)
 	{
 		$this->name = (string) $name;
+
+		// determine the field's base name (for fields with array indices)
+		$this->basename = ($pos = strpos($this->name, '[')) ? rtrim(substr(strrchr($this->name, '['), 1), ']') : $this->name;
+
 		$this->fieldset = $fieldset instanceof Fieldset ? $fieldset : null;
 
 		// Don't allow name in attributes
@@ -274,6 +283,32 @@ class Fieldset_Field
 		if ($callback === 'required')
 		{
 			$this->set_attribute('required', 'required');
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Delete a validation rule
+	 *
+	 * @param   string|Callback	either a validation rule or full callback
+	 * @param   bool	whether to also reset related attributes
+	 * @return  Fieldset_Field  this, to allow chaining
+	 */
+	public function delete_rule($callback, $set_attr = true)
+	{
+		foreach($this->rules as $index => $rule)
+		{
+			if ($rule[0] === $callback)
+			{
+				unset($this->rules[$index]);
+				break;
+			}
+		}
+
+		if ($callback === 'required' and $set_attr)
+		{
+			unset($this->attributes[$callback]);
 		}
 
 		return $this;
@@ -484,8 +519,7 @@ class Fieldset_Field
 						{
 							$attributes['id'] = null;
 						}
-
-						$build_field[$form->label($label, $attributes['id'])] = $this->type == 'radio'
+						$build_field[$form->label($label, null, array('for' => $attributes['id']))] = $this->type == 'radio'
 							? $form->radio($attributes)
 							: $form->checkbox($attributes);
 
@@ -535,7 +569,7 @@ class Fieldset_Field
 		$form = $this->fieldset()->form();
 
 		$required_mark = $this->get_attribute('required', null) ? $form->get_config('required_mark', null) : null;
-		$label = $this->label ? $form->label($this->label, null, array('for' => $this->get_attribute('id', null))) : '';
+		$label = $this->label ? $form->label($this->label, null, array('id' => 'label_'.$this->name, 'for' => $this->get_attribute('id', null))) : '';
 		$error_template = $form->get_config('error_template', '');
 		$error_msg = ($form->get_config('inline_errors') && $this->error()) ? str_replace('{error_msg}', $this->error(), $error_template) : '';
 		$error_class = $this->error() ? $form->get_config('error_class') : '';
@@ -565,10 +599,18 @@ class Fieldset_Field
 			$build_field = implode(' ', $build_field);
 		}
 
+		// determine the field_id, which allows us to identify the field for CSS purposes
+		$field_id = 'col_'.$this->name;
+		if ($parent = $this->fieldset()->parent())
+		{
+			$parent->get_tabular_form() and $field_id = $parent->get_tabular_form().'_col_'.$this->basename;
+		}
+
 		$template = $this->template ?: $form->get_config('field_template', "\t\t<tr>\n\t\t\t<td class=\"{error_class}\">{label}{required}</td>\n\t\t\t<td class=\"{error_class}\">{field} {description} {error_msg}</td>\n\t\t</tr>\n");
-		$template = str_replace(array('{label}', '{required}', '{field}', '{error_msg}', '{error_class}', '{description}'),
-			array($label, $required_mark, $build_field, $error_msg, $error_class, $this->description),
+		$template = str_replace(array('{label}', '{required}', '{field}', '{error_msg}', '{error_class}', '{description}', '{field_id}'),
+			array($label, $required_mark, $build_field, $error_msg, $error_class, $this->description, $field_id),
 			$template);
+
 		return $template;
 	}
 

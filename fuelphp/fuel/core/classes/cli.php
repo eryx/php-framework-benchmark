@@ -3,10 +3,10 @@
  * Part of the Fuel framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2012 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -95,8 +95,9 @@ class Cli
 	 * Named options must be in the following formats:
 	 * php index.php user -v --v -name=John --name=John
 	 *
-	 * @param	string|int	$name	the name of the option (int if unnamed)
-	 * @return	string
+	 * @param   string|int  $name     the name of the option (int if unnamed)
+	 * @param   mixed       $default  value to return if the option is not defined
+	 * @return  mixed
 	 */
 	public static function option($name, $default = null)
 	{
@@ -107,6 +108,27 @@ class Cli
 		return static::$args[$name];
 	}
 
+	/**
+	 * Allows you to set a commandline option from code
+	 *
+	 * @param   string|int  $name   the name of the option (int if unnamed)
+	 * @param   mixed|null  $value  value to set, or null to delete the option
+	 * @return  mixed
+	 */
+	public static function set_option($name, $value = null)
+	{
+		if ($value === null)
+		{
+			if (isset(static::$args[$name]))
+			{
+				unset(static::$args[$name]);
+			}
+		}
+		else
+		{
+			static::$args[$name] = $value;
+		}
+	}
 
 	/**
 	 * Get input from the shell, using readline or the standard STDIN

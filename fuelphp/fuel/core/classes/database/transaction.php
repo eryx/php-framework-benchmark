@@ -1,9 +1,18 @@
 <?php
 /**
+ * Part of the Fuel framework.
+ *
+ * @package    Fuel
+ * @version    1.5
+ * @author     Fuel Development Team
+ * @license    MIT License
+ * @copyright  2010 - 2013 Fuel Development Team
+ * @link       http://fuelphp.com
+ */
+
+/**
  * Interact with Database Transactions
  *
- * @package    Fuel/Database
- * @category   Database
  * @author     five07
  * @copyright  (c) 2011 five07
  * @license    https://github.com/five07/Fuel-Addons/blob/master/LICENSE
@@ -34,17 +43,6 @@ class Database_Transaction
 			static::$_instance = static::forge();
 		}
 		return static::$_instance;
-	}
-
-	/**
-	 * This method is deprecated...use forge() instead.
-	 *
-	 * @deprecated until 1.2
-	 */
-	public static function factory()
-	{
-		logger(\Fuel::L_WARNING, 'This method is deprecated.  Please use a forge() instead.', __METHOD__);
-		return static::forge();
 	}
 
 	/**

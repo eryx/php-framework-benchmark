@@ -3,10 +3,10 @@
  * Part of the Fuel framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2012 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -432,6 +432,7 @@ class Agent
 				$curl = curl_init();
 				curl_setopt($curl, CURLOPT_BINARYTRANSFER, 1);
 				curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+				curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
 				curl_setopt($curl, CURLOPT_MAXREDIRS, 5);
 				curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 				curl_setopt($curl, CURLOPT_HEADER, 0);
@@ -443,7 +444,14 @@ class Agent
 
 			case 'wrapper':
 				ini_set('user_agent', 'Fuel PHP framework - Agent class (http://fuelphp.com)');
-				$data = file_get_contents(static::$config['browscap']['url']);
+				try
+				{
+					$data = file_get_contents(static::$config['browscap']['url']);
+				}
+				catch (\ErrorException $e)
+				{
+					$data = false;
+				}
 			default:
 
 			break;

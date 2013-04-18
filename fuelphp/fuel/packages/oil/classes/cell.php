@@ -3,10 +3,10 @@
  * Fuel is a fast, lightweight, community driven PHP5 framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -24,7 +24,7 @@ class Cell
 {
 	protected static $_protected = array('auth', 'email', 'oil', 'orm', 'parser');
 	protected static $_api_url = 'http://cells.fuelphp.com/api/';
-	
+
 	protected static $_git_binary = 'git';
 	protected static $_hg_binary = 'hg';
 
@@ -45,29 +45,29 @@ class Cell
 			throw new Exception('Package "' . $package . '" is already installed.');
 			return;
 		}
-		
+
 		$request_url = static::$_api_url.'cells/show.json?name='.urlencode($package);
 		$response = json_decode(@file_get_contents($request_url), true);
-		
+
 		if ( ! $response)
 		{
 			throw new Exception('No response from the API. Perhaps check your internet connection?');
 		}
-		
+
 		if (empty($response['cell']))
 		{
 			throw new Exception('Could not find the cell "' . $package . '".');
 		}
-		
+
 		$cell = $response['cell'];
-		
+
 		// Now, lets get this package
 
 		// If it is git and (they have git installed (TODO) and they havent asked for a zip)
 		if ($cell['repository_type'] == 'git' and ! \Cli::option('via-zip'))
 		{
 			\Cli::write('Downloading package: ' . $package);
-			static::_clone_package_repo($cell['repository_url'], $package, $version);	
+			static::_clone_package_repo($cell['repository_url'], $package, $version);
 		}
 
 		// Fallback to shoving a ZIP file in place
@@ -113,19 +113,17 @@ class Cell
 
 	public static function uninstall($package)
 	{
-		$package_folder = PKGPATH . $package;
+		// Check to see if this package is already installed
+		if ( ! $package_folder = \Package::exists($package))
+		{
+			throw new Exception('Package "' . $package . '" is not installed.');
+			return false;
+		}
 
 		// Check to see if this package is already installed
 		if (in_array($package, static::$_protected))
 		{
 			throw new Exception('Package "' . $package . '" cannot be uninstalled.');
-			return false;
-		}
-
-		// Check to see if this package is already installed
-		if ( ! is_dir($package_folder))
-		{
-			throw new Exception('Package "' . $package . '" is not installed.');
 			return false;
 		}
 
@@ -142,23 +140,23 @@ class Cell
 			static::help();
 			return;
 		}
-	
+
 		$request_url = static::$_api_url.'cells/show.json?name='.urlencode($cell);
 		$response = json_decode(@file_get_contents($request_url), true);
-		
+
 		if ( ! $response)
 		{
 			throw new Exception('No response from the API. Perhaps check your internet connection?');
 		}
-		
+
 		else if (empty($response['cell']))
 		{
 			throw new Exception('Could not find the cell "' . $cell . '".');
 		}
-		
+
 		var_dump($response);
 	}
-	
+
 	public static function help()
 	{
 		$output = <<<HELP

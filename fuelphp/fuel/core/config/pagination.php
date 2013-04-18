@@ -3,10 +3,10 @@
  * Part of the Fuel framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2012 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -29,6 +29,9 @@ return array(
 	'default'                     => array(
 		'wrapper'                 => "<div class=\"pagination\">\n\t{pagination}\n</div>\n",
 
+		'first'                   => "<span class=\"first\">\n\t{link}\n</span>\n",
+		'first-link'              => "\t\t<a href=\"{uri}\">{page}</a>\n",
+
 		'previous'                => "<span class=\"previous\">\n\t{link}\n</span>\n",
 		'previous-link'           => "\t\t<a href=\"{uri}\">{page}</a>\n",
 
@@ -46,11 +49,17 @@ return array(
 
 		'next-inactive'           => "<span class=\"next-inactive\">\n\t{link}\n</span>\n",
 		'next-inactive-link'      => "\t\t<a href=\"{uri}\">{page}</a>\n",
+
+		'last'                    => "<span class=\"last\">\n\t{link}\n</span>\n",
+		'last-link'               => "\t\t<a href=\"{uri}\">{page}</a>\n",
 	),
 
 	// Twitter bootstrap 2.x template
 	'bootstrap'                   => array(
 		'wrapper'                 => "<div class=\"pagination\">\n\t<ul>{pagination}\n\t</ul>\n</div>\n",
+
+		'first'                   => "\n\t\t<li>{link}</li>",
+		'first-link'              => "<a href=\"{uri}\">{page}</a>",
 
 		'previous'                => "\n\t\t<li>{link}</li>",
 		'previous-link'           => "<a href=\"{uri}\">{page}</a>",
@@ -69,5 +78,9 @@ return array(
 
 		'next-inactive'           => "\n\t\t<li class=\"disabled\">{link}</li>",
 		'next-inactive-link'      => "<a href=\"{uri}\">{page}</a>",
+
+		'last'                    => "\n\t\t<li>{link}</li>",
+		'last-link'               => "<a href=\"{uri}\">{page}</a>",
 	),
+
 );

@@ -12,7 +12,7 @@
 
 				if ($<?php echo $singular_name; ?>->save())
 				{
-					Session::set_flash('success', 'Updated <?php echo $singular_name; ?> #'.$id);
+					Session::set_flash('success', e('Updated <?php echo $singular_name; ?> #'.$id));
 					Response::redirect('<?php echo $uri; ?>');
 				}
 				else
@@ -22,7 +22,7 @@
 			}
 			else
 			{
-				Session::set_flash('error', $val->show_errors());
+				Session::set_flash('error', $val->error());
 			}
 		}
 

@@ -2,10 +2,12 @@
 /**
  * Part of the Fuel framework.
  *
- * @package		Fuel
- * @version		1.0
- * @license		MIT License
- * @copyright	2010 - 2012 Fuel Development Team
+ * @package    Fuel
+ * @version    1.5
+ * @author     Fuel Development Team
+ * @license    MIT License
+ * @copyright  2010 - 2013 Fuel Development Team
+ * @link       http://fuelphp.com
  */
 
 namespace Fuel\Core;
@@ -127,6 +129,8 @@ class Pagination
 		'total_items'             => 0,
 		'num_links'               => 5,
 		'uri_segment'             => 3,
+		'show_first'              => false,
+		'show_last'               => false,
 		'pagination_url'          => null,
 	);
 
@@ -135,6 +139,8 @@ class Pagination
 	 */
 	protected $template = array(
 		'wrapper'                 => "<div class=\"pagination\">\n\t{pagination}\n</div>\n",
+		'first'                   => "<span class=\"first\">\n\t{link}\n</span>\n",
+		'first-link'              => "\t\t<a href=\"{uri}\">{page}</a>\n",
 		'previous'                => "<span class=\"previous\">\n\t{link}\n</span>\n",
 		'previous-link'           => "\t\t<a href=\"{uri}\">{page}</a>\n",
 		'previous-inactive'       => "<span class=\"previous-inactive\">\n\t{link}\n</span>\n",
@@ -147,6 +153,8 @@ class Pagination
 		'next-link'               => "\t\t<a href=\"{uri}\">{page}</a>\n",
 		'next-inactive'           => "<span class=\"next-inactive\">\n\t{link}\n</span>\n",
 		'next-inactive-link'      => "\t\t<a href=\"{uri}\">{page}</a>\n",
+		'last'                    => "<span class=\"next\">\n\t{link}\n</span>\n",
+		'last-link'               => "\t\t<a href=\"{uri}\">{page}</a>\n",
 	);
 
 	/**
@@ -236,7 +244,7 @@ class Pagination
 
 		$html = str_replace(
 			'{pagination}',
-			$this->previous().$this->pages_render().$this->next(),
+			$this->first().$this->previous().$this->pages_render().$this->next().$this->last(),
 			$this->template['wrapper']
 		);
 
@@ -276,14 +284,35 @@ class Pagination
 			}
 			else
 			{
-				$url = ($i == 1) ? '' : '/'.$i;
-
 				$html .= str_replace(
 				    '{link}',
-				    str_replace(array('{uri}', '{page}'), array(rtrim($this->config['pagination_url'], '/').$url, $i), $this->template['regular-link']),
+				    str_replace(array('{uri}', '{page}'), array($this->_make_link($i), $i), $this->template['regular-link']),
 				    $this->template['regular']
 				);
 			}
+		}
+
+		return $html;
+	}
+
+	/**
+	 * Pagination "First" link
+	 *
+	 * @param	string $value optional text to display in the link
+	 *
+	 * @return	string	Markup for the 'first' page number link
+	 */
+	public function first($marker = '&laquo;&laquo;')
+	{
+		$html = '';
+
+		if ($this->config['show_first'] and $this->config['total_pages'] > 1 and $this->config['current_page'] > 1)
+		{
+			$html = str_replace(
+				'{link}',
+				str_replace(array('{uri}', '{page}'), array($this->_make_link(1), $marker), $this->template['first-link']),
+				$this->template['first']
+			);
 		}
 
 		return $html;
@@ -313,11 +342,11 @@ class Pagination
 			else
 			{
 				$previous_page = $this->config['current_page'] - 1;
-				$previous_page = ($previous_page == 1) ? '' : '/'.$previous_page;
+				$previous_page = ($previous_page == 1) ? '' : $previous_page;
 
 				$html = str_replace(
 				    '{link}',
-				    str_replace(array('{uri}', '{page}'), array(rtrim($this->config['pagination_url'], '/').$previous_page, $marker), $this->template['previous-link']),
+				    str_replace(array('{uri}', '{page}'), array($this->_make_link($previous_page), $marker), $this->template['previous-link']),
 				    $this->template['previous']
 				);
 			}
@@ -349,14 +378,37 @@ class Pagination
 			}
 			else
 			{
-				$next_page = '/'.($this->config['current_page'] + 1);
+				$next_page = $this->config['current_page'] + 1;
 
 				$html = str_replace(
 				    '{link}',
-				    str_replace(array('{uri}', '{page}'), array(rtrim($this->config['pagination_url'], '/').$next_page, $marker), $this->template['next-link']),
+				    str_replace(array('{uri}', '{page}'), array($this->_make_link($next_page), $marker), $this->template['next-link']),
 				    $this->template['next']
 				);
 			}
+		}
+
+		return $html;
+	}
+
+	/**
+	 * Pagination "Last" link
+	 *
+	 * @param	string $value optional text to display in the link
+	 *
+	 * @return	string	Markup for the 'last' page number link
+	 */
+	public function last($marker = '&raquo;&raquo;')
+	{
+		$html = '';
+
+		if ($this->config['show_last'] and $this->config['total_pages'] > 1 and $this->config['current_page'] != $this->config['total_pages'])
+		{
+			$html = str_replace(
+				'{link}',
+				str_replace(array('{uri}', '{page}'), array($this->_make_link($this->config['total_pages']), $marker), $this->template['last-link']),
+				$this->template['last']
+			);
 		}
 
 		return $html;
@@ -370,8 +422,15 @@ class Pagination
 		// calculate the number of pages
 		$this->config['total_pages'] = ceil($this->config['total_items'] / $this->config['per_page']) ?: 1;
 
-		// calculate the current page number
-		$this->config['current_page'] = ($this->config['total_items'] > 0 and $this->config['current_page'] > 1) ? $this->config['current_page'] : (int) \Request::main()->uri->get_segment($this->config['uri_segment']);
+		// get the current page number from the URI or the query string
+		if (is_string($this->config['uri_segment']))
+		{
+			$this->config['current_page'] = ($this->config['total_items'] > 0 and $this->config['current_page'] > 1) ? $this->config['current_page'] : \Input::get($this->config['uri_segment'], 1);
+		}
+		else
+		{
+			$this->config['current_page'] = ($this->config['total_items'] > 0 and $this->config['current_page'] > 1) ? $this->config['current_page'] : (int) \Request::main()->uri->get_segment($this->config['uri_segment']);
+		}
 
 		// make sure the current page is within bounds
 		if ($this->config['current_page'] > $this->config['total_pages'])
@@ -385,6 +444,72 @@ class Pagination
 
 		// the current page must be zero based so that the offset for page 1 is 0.
 		$this->config['offset'] = ($this->config['current_page'] - 1) * $this->config['per_page'];
+	}
+
+	/**
+	 * Generate a pagination link
+	 */
+	protected function _make_link($page)
+	{
+		// make sure we have a valid page number
+		empty($page) and $page = 1;
+
+		// construct a pagination url if we don't have one
+		if (is_null($this->config['pagination_url']))
+		{
+			// start with the main uri
+			$this->config['pagination_url'] = \Uri::main();
+			\Input::get() and $this->config['pagination_url'] .= '?'.http_build_query(\Input::get());
+		}
+
+		// was a placeholder defined in the url?
+		if (strpos($this->config['pagination_url'], '{page}') === false)
+		{
+			// break the url in bits so we can insert it
+			$url = parse_url($this->config['pagination_url']);
+
+			// parse the query string
+			if (isset($url['query']))
+			{
+				parse_str($url['query'], $url['query']);
+			}
+			else
+			{
+				$url['query'] = array();
+			}
+
+			// is the page number a URI segment?
+			if (is_numeric($this->config['uri_segment']))
+			{
+				// get the URL segments
+				$segs = isset($url['path']) ? explode('/', trim($url['path'], '/')) : array();
+
+				// do we have enough segments to insert? we can't fill in any blanks...
+				if (count($segs) < $this->config['uri_segment'] - 1)
+				{
+					throw new \RuntimeException("Not enough segments in the URI, impossible to insert the page number");
+				}
+
+				// replace the selected segment with the page placeholder
+				$segs[$this->config['uri_segment'] - 1] = '{page}';
+				$url['path'] = '/'.implode('/', $segs);
+			}
+			else
+			{
+				// add our placeholder
+				$url['query'][$this->config['uri_segment']] = '{page}';
+			}
+
+			// re-assemble the url
+			$query = empty($url['query']) ? '' : '?'.preg_replace('/%7Bpage%7D/', '{page}', http_build_query($url['query']));
+			unset($url['query']);
+			empty($url['scheme']) or $url['scheme'] .= '://';
+			empty($url['port']) or $url['host'] .= ':';
+			$this->config['pagination_url'] = implode($url).$query;
+		}
+
+		// return the page link
+		return str_replace('{page}', $page, $this->config['pagination_url']);
 	}
 
 }

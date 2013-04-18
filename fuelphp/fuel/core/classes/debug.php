@@ -3,10 +3,10 @@
  * Part of the Fuel framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2012 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -76,7 +76,7 @@ class Debug
 JS;
 				static::$js_displayed = true;
 			}
-			echo '<div style="font-size: 13px;background: #EEE !important; border:1px solid #666; color: #000 !important; padding:10px;">';
+			echo '<div class="fuelphp-dump" style="font-size: 13px;background: #EEE !important; border:1px solid #666; color: #000 !important; padding:10px;">';
 			echo '<h1 style="border-bottom: 1px solid #CCC; padding: 0 0 5px 0; margin: 0 0 5px 0; font: bold 120% sans-serif;">'.$callee['file'].' @ line: '.$callee['line'].'</h1>';
 			echo '<pre style="overflow:auto;font-size:100%;">';
 
@@ -128,7 +128,7 @@ JS;
 JS;
 			static::$js_displayed = true;
 		}
-		echo '<div style="font-size: 13px;background: #EEE !important; border:1px solid #666; color: #000 !important; padding:10px;">';
+		echo '<div class="fuelphp-inspect" style="font-size: 13px;background: #EEE !important; border:1px solid #666; color: #000 !important; padding:10px;">';
 		echo '<h1 style="border-bottom: 1px solid #CCC; padding: 0 0 5px 0; margin: 0 0 5px 0; font: bold 120% sans-serif;">'.$callee['file'].' @ line: '.$callee['line'].'</h1>';
 		echo '<pre style="overflow:auto;font-size:100%;">';
 		$i = 0;
@@ -193,7 +193,7 @@ JS;
 		}
 		elseif (is_string($var))
 		{
-			$return .= "<i>{$scope}</i> <strong>{$name}</strong> (String): <span style=\"color:#E00000;\">\"{$var}\"</span> (".strlen($var)." characters)\n";
+			$return .= "<i>{$scope}</i> <strong>{$name}</strong> (String): <span style=\"color:#E00000;\">\"".htmlentities($var)."\"</span> (".strlen($var)." characters)\n";
 		}
 		elseif (is_float($var))
 		{
@@ -217,10 +217,17 @@ JS;
 		}
 		elseif (is_object($var))
 		{
+			// dirty hack to get the object id
+			ob_start();
+			var_dump($var);
+			$contents = ob_get_contents();
+			strpos($contents, 'xdebug-var-dump') !== false ? preg_match('~(.*?)\)\[<i>(\d+)(.*)~', $contents, $matches) : preg_match('~object\((.*?)#(\d+)(.*)~', $contents, $matches);
+			ob_end_clean();
+
 			$id = 'fuel_debug_'.mt_rand();
 			$rvar = new \ReflectionObject($var);
 			$vars = $rvar->getProperties();
-			$return .= "<i>{$scope}</i> <strong>{$name}</strong> (Object): ".get_class($var);
+			$return .= "<i>{$scope}</i> <strong>{$name}</strong> (Object #".$matches[2]."): ".get_class($var);
 			if (count($vars) > 0 and static::$max_nesting_level > $level)
 			{
 				$return .= " <a href=\"javascript:fuel_debug_toggle('$id');\" title=\"Click to ".(static::$js_toggle_open?"close":"open")."\">&crarr;</a>\n";

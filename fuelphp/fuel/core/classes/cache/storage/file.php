@@ -3,10 +3,10 @@
  * Part of the Fuel framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2012 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -173,8 +173,10 @@ class Cache_Storage_File extends \Cache_Storage_Driver
 
 		$files = \File::read_dir($path.$section, -1, array('\.cache$' => 'file'));
 
-		$delete = function($path, $files) use(&$delete)
+		$delete = function($path, $files) use(&$delete, &$section)
 		{
+			$path = rtrim($path, '\\/').DS;
+
 			foreach ($files as $dir => $file)
 			{
 				if (is_numeric($dir))
@@ -192,6 +194,8 @@ class Cache_Storage_File extends \Cache_Storage_Driver
 					}
 				}
 			}
+
+			$section !== '' and rmdir($path);
 
 			return true;
 		};

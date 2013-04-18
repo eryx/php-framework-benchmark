@@ -6,6 +6,16 @@ if (isset($_GET['debug'])) {
     // System Start Memory
     define('START_MEMORY_USAGE', memory_get_usage());
 }
+/**
+ * Fuel is a fast, lightweight, community driven PHP5 framework.
+ *
+ * @package    Fuel
+ * @version    1.5
+ * @author     Fuel Development Team
+ * @license    MIT License
+ * @copyright  2010 - 2013 Fuel Development Team
+ * @link       http://fuelphp.com
+ */
 
 /**
  * Set error reporting and display errors settings.  You will want to change these when in production.
@@ -48,9 +58,19 @@ try
 catch (HttpNotFoundException $e)
 {
 	$route = array_key_exists('_404_', Router::$routes) ? Router::$routes['_404_']->translation : Config::get('routes._404_');
-	if ($route)
+
+	if($route instanceof Closure)
 	{
-		$response = Request::forge($route)->execute()->response();
+		$response = $route();
+
+		if( ! $response instanceof Response)
+		{
+			$response = Response::forge($response);
+		}
+	}
+	elseif ($route)
+	{
+		$response = Request::forge($route, false)->execute()->response();
 	}
 	else
 	{
@@ -70,10 +90,6 @@ $response->body(
 );*/
 
 $response->send(true);
-
-// Fire off the shutdown event
-Event::shutdown();
-
 
 if (!isset($_GET['debug'])) {
     die();
@@ -99,3 +115,4 @@ $xhprof_runs = new XHProfRuns_Default();
 $run_id = $xhprof_runs->save_run($xhprof_data, "xhprof_foo");
 
 echo ", xhprof <a href=\"http://xhprof.pfb.example.com/xhprof_html/index.php?run=$run_id&source=xhprof_foo\">url</a>";
+

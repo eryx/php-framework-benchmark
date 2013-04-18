@@ -3,10 +3,10 @@
  * Part of the Fuel framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2012 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -29,7 +29,7 @@ class Fuel
 	/**
 	 * @var  string  The version of Fuel
 	 */
-	const VERSION = '1.4';
+	const VERSION = '1.5-dev';
 
 	/**
 	 * @var  string  constant used for when in testing mode
@@ -57,29 +57,29 @@ class Fuel
 	const L_NONE = 0;
 
 	/**
-	 * @var  int  Log errors only
+	 * @var  int  Log everything
 	 */
-	const L_ERROR = 1;
-
-	/**
-	 * @var  int  Log warning massages and below
-	 */
-	const L_WARNING = 2;
+	const L_ALL = 99;
 
 	/**
 	 * @var  int  Log debug massages and below
 	 */
-	const L_DEBUG = 3;
+	const L_DEBUG = 100;
 
 	/**
 	 * @var  int  Log info massages and below
 	 */
-	const L_INFO = 4;
+	const L_INFO = 200;
 
 	/**
-	 * @var  int  Log everything
+	 * @var  int  Log warning massages and below
 	 */
-	const L_ALL = 5;
+	const L_WARNING = 300;
+
+	/**
+	 * @var  int  Log errors only
+	 */
+	const L_ERROR = 400;
 
 	/**
 	 * @var  bool  Whether Fuel has been initialized
@@ -101,20 +101,6 @@ class Fuel
 	public static $timezone = 'UTC';
 
 	public static $encoding = 'UTF-8';
-
-	public static $path_cache = array();
-
-	public static $caching = false;
-
-	/**
-	 * The amount of time to cache in seconds.
-	 * @var	int	$cache_lifetime
-	 */
-	public static $cache_lifetime = 3600;
-
-	protected static $cache_dir = '';
-
-	public static $paths_changed = false;
 
 	public static $is_cli = false;
 
@@ -151,22 +137,13 @@ class Fuel
 		// Start up output buffering
 		ob_start(\Config::get('ob_callback', null));
 
+		if (\Config::get('caching', false))
+		{
+			\Finder::instance()->read_cache('FuelFileFinder');
+		}
+
 		static::$profiling = \Config::get('profiling', false);
-
-		if (static::$profiling)
-		{
-			\Profiler::init();
-			\Profiler::mark(__METHOD__.' Start');
-		}
-
-		static::$cache_dir = \Config::get('cache_dir', APPPATH.'cache/');
-		static::$caching = \Config::get('caching', false);
-		static::$cache_lifetime = \Config::get('cache_lifetime', 3600);
-
-		if (static::$caching)
-		{
-			\Finder::instance()->read_cache('Fuel::paths');
-		}
+		static::$profiling and \Profiler::init();
 
 		// set a default timezone if one is defined
 		static::$timezone = \Config::get('default_timezone') ?: date_default_timezone_get();
@@ -224,9 +201,9 @@ class Fuel
 	 */
 	public static function finish()
 	{
-		if (static::$caching)
+		if (\Config::get('caching', false))
 		{
-			\Finder::instance()->write_cache('Fuel::paths');
+			\Finder::instance()->write_cache('FuelFileFinder');
 		}
 
 		if (static::$profiling)
@@ -295,81 +272,6 @@ class Fuel
 	public static function load($file)
 	{
 		return include $file;
-	}
-
-	/**
-	 * This method does basic filesystem caching.  It is used for things like path caching.
-	 *
-	 * This method is from KohanaPHP's Kohana class.
-	 *
-	 * @param  string  the cache name
-	 * @param  array   the data to cache (if non given it returns)
-	 * @param  int     the number of seconds for the cache too live
-	 */
-	public static function cache($name, $data = null, $lifetime = null)
-	{
-		// Cache file is a hash of the name
-		$file = sha1($name).'.txt';
-
-		// Cache directories are split by keys to prevent filesystem overload
-		$dir = rtrim(static::$cache_dir, DS).DS.$file[0].$file[1].DS;
-
-		if ($lifetime === NULL)
-		{
-			// Use the default lifetime
-			$lifetime = static::$cache_lifetime;
-		}
-
-		if ($data === null)
-		{
-			if (is_file($dir.$file))
-			{
-				if ((time() - filemtime($dir.$file)) < $lifetime)
-				{
-					// Return the cache
-					return unserialize(file_get_contents($dir.$file));
-				}
-				else
-				{
-					try
-					{
-						// Cache has expired
-						unlink($dir.$file);
-					}
-					catch (Exception $e)
-					{
-						// Cache has mostly likely already been deleted,
-						// let return happen normally.
-					}
-				}
-			}
-
-			// Cache not found
-			return NULL;
-		}
-
-		if ( ! is_dir($dir))
-		{
-			// Create the cache directory
-			mkdir($dir, octdec(\Config::get('file.chmod.folders', 0777)), true);
-
-			// Set permissions (must be manually set to fix umask issues)
-			chmod($dir, octdec(\Config::get('file.chmod.folders', 0777)));
-		}
-
-		// Force the data to be a string
-		$data = serialize($data);
-
-		try
-		{
-			// Write the cache
-			return (bool) file_put_contents($dir.$file, $data, LOCK_EX);
-		}
-		catch (Exception $e)
-		{
-			// Failed to write cache
-			return false;
-		}
 	}
 
 	/**

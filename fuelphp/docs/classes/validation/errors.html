@@ -4,6 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../../';
@@ -71,7 +72,7 @@
 $val->set_message('required', 'The field :label is required.');
 
 // or change the message for a specific field, no matter the actual error
-echo $val->errors('username')->get_message('The field :label must be filled out before auth is attempted.');
+echo $val->error('username')->get_message('The field :label must be filled out before auth is attempted.');
 // Outputs "The field Your username must be filled out before auth is attempted." when validation for username
 // failed, or nothing when not yet validated or validation succeeded.</code></pre>
 
@@ -233,7 +234,7 @@ $field->add_rule(array('odd' => function($val) { return (bool) ($val % 2); }));
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

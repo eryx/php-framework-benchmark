@@ -2,21 +2,32 @@
 /**
  * Fuel is a fast, lightweight, community driven PHP5 framework.
  *
- * @package		Fuel
- * @version		1.0
- * @author		Fuel Development Team
- * @license		MIT License
- * @copyright	2010 - 2011 Fuel Development Team
- * @link		http://fuelphp.com
+ * @package    Fuel
+ * @version    1.5
+ * @author     Fuel Development Team
+ * @license    MIT License
+ * @copyright  2010 - 2013 Fuel Development Team
+ * @link       http://fuelphp.com
  */
 
 namespace Orm;
 
+/**
+ * Observer base class
+ */
 abstract class Observer
 {
-
+	/**
+	 * @var	array	list of created observer instances created
+	 */
 	protected static $_instances = array();
 
+	/**
+	 * Get notified of an event
+	 *
+	 * @param  Model   $instance
+	 * @param  string  $event
+	 */
 	public static function orm_notify($instance, $event)
 	{
 		$model_class = get_class($instance);
@@ -26,6 +37,11 @@ abstract class Observer
 		}
 	}
 
+	/**
+	 * Create an instance of this observer
+	 *
+	 * @param  string  name of the model class
+	 */
 	public static function instance($model_class)
 	{
 		$observer = get_called_class();
@@ -37,5 +53,3 @@ abstract class Observer
 		return static::$_instances[$observer][$model_class];
 	}
 }
-
-/* End of file observer.php */

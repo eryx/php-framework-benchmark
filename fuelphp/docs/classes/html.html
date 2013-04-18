@@ -4,6 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../';
@@ -228,12 +229,12 @@ echo Html:::mail_to('name@domain.com', 'Name', null, array('id' => 'a2', 'class'
 						<th>Example</th>
 						<td>
 							<pre class="php"><code>//returns
-//&lt;script type="text/javascript"&gt
+//&lt;script type="text/javascript"&gt;
 //	var user = "name";
 //	var at = "@";
 //	var server = "domain.com";
-//	document.write('&lt;a href="' + 'mail' + 'to:' + user + at + server + '"&gtName&lt;/a&gt');
-//&lt;/script&gt
+//	document.write('&lt;a href="' + 'mail' + 'to:' + user + at + server + '"&gt;Name&lt;/a&gt;');
+//&lt;/script&gt;
 echo Html::mail_to_safe('name@domain.com', 'Name');</code></pre>
 						</td>
 					</tr>
@@ -716,7 +717,7 @@ echo Html::ol($items, $attr);</code></pre>
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

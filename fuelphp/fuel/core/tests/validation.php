@@ -3,10 +3,10 @@
  * Part of the Fuel framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2012 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -382,7 +382,7 @@ class Test_Validation extends TestCase
 	/**
 	 * Validation:  valid_emails (different separator)
 	 * Expecting:   success
-	 * 
+	 *
 	 * @dataProvider    form_provider
 	 */
 	public function test_validation_valid_emails_separator_success($input)
@@ -555,6 +555,41 @@ class Test_Validation extends TestCase
 	}
 
 	/**
+	 * Validation:  numeric_between
+	 * Expecting:   success
+	 *
+	 * @dataProvider    form_provider
+	 */
+	public function test_validation_numeric_between_success($input)
+	{
+		$val = Validation::forge(__FUNCTION__);
+		$val->add_field('ten', 'Number', 'numeric_between[9,11]');
+
+		$output = $val->run($input);
+		$expected = true;
+
+		$this->assertEquals($expected, $output);
+	}
+
+	/**
+	 * Validation:  numeric_between
+	 * Expecting:   failure
+	 *
+	 * @dataProvider    form_provider
+	 */
+	public function test_validation_numeric_between_failure($input)
+	{
+		$val = Validation::forge(__FUNCTION__);
+		$val->add_field('ten', 'Number', 'numeric_between[7,8]');
+		$val->run($input);
+
+		$output = $val->error('ten', false) ? true : false;
+		$expected = true;
+
+		$this->assertEquals($expected, $output);
+	}
+
+	/**
 	 * Validation:  required_with
 	 * Expecting:   success
 	 *
@@ -619,6 +654,7 @@ class Test_Validation extends TestCase
 
 		$val = Validation::forge(__FUNCTION__);
 		$val->add('f1', 'F1')->add_rule('valid_string', array('alpha', 'numeric'));
+		$val->set_message('valid_string', 'The valid string rule :rule(:param:1) failed for field :label');
 		$val->run($post);
 
 		$test = $val->error('f1')->get_message();
@@ -638,6 +674,7 @@ class Test_Validation extends TestCase
 
 		$val = Validation::forge(__FUNCTION__);
 		$val->add_field('f1', 'F1', 'valid_string[alpha,numeric]');
+		$val->set_message('valid_string', 'The valid string rule :rule(:param:1) failed for field :label');
 		$val->run($post);
 
 		$test = $val->error('f1')->get_message();

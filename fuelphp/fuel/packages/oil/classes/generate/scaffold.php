@@ -3,10 +3,10 @@
  * Fuel is a fast, lightweight, community driven PHP5 framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -48,7 +48,7 @@ class Generate_Scaffold
 
 		$subfolder = trim($subfolder, '/');
 
-		if ( ! is_dir(PKGPATH.'oil/views/'.static::$view_subdir.$subfolder))
+		if ( ! is_dir(\Package::exists('oil').'views/'.static::$view_subdir.$subfolder))
 		{
 			throw new Exception('The subfolder for admin templates does not exist or is spelled wrong: '.$subfolder.' ');
 		}
@@ -59,6 +59,11 @@ class Generate_Scaffold
 		{
 			// Parse the argument for each field in a pattern of name:type[constraint]
 			preg_match(static::$fields_regex, $arg, $matches);
+
+			if ( ! isset($matches[1]))
+			{
+				throw new Exception('One or more fields were badly specified. Ensure they are name:type');
+			}
 
 			$data['fields'][] = array(
 				'name'       => \Str::lower($matches[1]),
@@ -97,12 +102,28 @@ class Generate_Scaffold
 		// If a folder is used, the entity is the last part
 		$name_parts = explode(DS, $name);
 		$data['singular_name'] = \Inflector::singularize(end($name_parts));
-		$data['plural_name'] = \Inflector::pluralize($data['singular_name']);
+		$data['plural_name'] = \Cli::option('singular') ? $data['singular_name'] : \Inflector::pluralize($data['singular_name']);
+
 		$data['table'] = \Inflector::tableize($model_name);
 		$data['controller_parent'] = static::$controller_parent;
 
 		/** Generate the Migration **/
 		$migration_args = $args;
+
+		// add timestamps to the table if needded
+		if ($data['include_timestamps'])
+		{
+			if (\Cli::option('mysql-timestamp', false))
+			{
+				$migration_args[] = 'created_at:date:null[1]';
+				$migration_args[] = 'updated_at:date:null[1]';
+			}
+			else
+			{
+				$migration_args[] = 'created_at:int:null[1]';
+				$migration_args[] = 'updated_at:int:null[1]';
+			}
+		}
 		array_unshift($migration_args, 'create_'.\Inflector::pluralize(\Str::lower($name)));
 		Generate::migration($migration_args, false);
 
@@ -134,7 +155,7 @@ class Generate_Scaffold
 			),
 			array(
 				'name'   => 'create',
-				'params' => '$id = null',
+				'params' => '',
 				'code'   => \View::forge(static::$view_subdir.$subfolder.'/actions/create', $data),
 			),
 			array(
@@ -168,7 +189,15 @@ class Generate_Scaffold
 		// Add the default template if it doesnt exist
 		if ( ! file_exists($app_template = APPPATH.'views/template.php'))
 		{
-			Generate::create($app_template, file_get_contents(PKGPATH.'oil/views/'.static::$view_subdir.$subfolder.'/views/template.php'), 'view');
+			// check if there's a template in app, and if so, use that
+			if (file_exists(APPPATH.'views/'.static::$view_subdir.$subfolder.'/views/template.php'))
+			{
+				Generate::create($app_template, file_get_contents(APPPATH.'views/'.static::$view_subdir.$subfolder.'/views/template.php'), 'view');
+			}
+			else
+			{
+				Generate::create($app_template, file_get_contents(\Package::exists('oil').'views/'.static::$view_subdir.'template.php'), 'view');
+			}
 		}
 
 		Generate::build();

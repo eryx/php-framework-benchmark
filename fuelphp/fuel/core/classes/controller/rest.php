@@ -156,20 +156,25 @@ abstract class Controller_Rest extends \Controller
 	 */
 	protected function response($data = array(), $http_status = null)
 	{
+		// set the correct response header
+		if (method_exists('Format', 'to_'.$this->format))
+		{
+			$this->response->set_header('Content-Type', $this->_supported_formats[$this->format]);
+		}
+
+		// no data returned? Set the NO CONTENT status on the response
 		if ((is_array($data) and empty($data)) or ($data == ''))
 		{
 			$this->response->status = $this->no_data_status;
 			return $this->response;
 		}
 
+		// make sure we have a valid return status
 		$http_status or $http_status = $this->http_status;
 
 		// If the format method exists, call and return the output in that format
 		if (method_exists('Format', 'to_'.$this->format))
 		{
-			// Set the correct format header
-			$this->response->set_header('Content-Type', $this->_supported_formats[$this->format]);
-
 			// Handle XML output
 			if ($this->format === 'xml')
 			{
@@ -185,9 +190,6 @@ abstract class Controller_Rest extends \Controller
 				// Set the formatted response
 				$this->response->body(\Format::forge($data)->{'to_'.$this->format}());
 			}
-
-			// Set the reponse http status
-			$http_status and $this->response->status = $http_status;
 		}
 
 		// Format not supported, output directly
@@ -195,6 +197,9 @@ abstract class Controller_Rest extends \Controller
 		{
 			$this->response->body($data);
 		}
+
+		// Set the reponse http status
+		$http_status and $this->response->status = $http_status;
 
 		return $this->response;
 	}
@@ -226,8 +231,13 @@ abstract class Controller_Rest extends \Controller
 		}
 
 		// Otherwise, check the HTTP_ACCEPT (if it exists and we are allowed)
-		if (\Input::server('HTTP_ACCEPT') and \Config::get('rest.ignore_http_accept') !== true)
+		if ($acceptable = \Input::server('HTTP_ACCEPT') and \Config::get('rest.ignore_http_accept') !== true)
 		{
+			// If anything is accepted, and we have a default, return that
+			if ($acceptable == '*/*' and ! empty($this->rest_format))
+			{
+				return $this->rest_format;
+			}
 
 			// Split the Accept header and build an array of quality scores for each format
 			$fragments = new \CachingIterator(new \ArrayIterator(preg_split('/[,;]/', \Input::server('HTTP_ACCEPT'))));

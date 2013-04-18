@@ -145,6 +145,36 @@ class Database_Query_Builder_Select extends \Database_Query_Builder_Where
 	}
 
 	/**
+	 * Adds "AND ON ..." conditions for the last created JOIN statement.
+	 *
+	 * @param   mixed   column name or array($column, $alias) or object
+	 * @param   string  logic operator
+	 * @param   mixed   column name or array($column, $alias) or object
+	 * @return  $this
+	 */
+	public function and_on($c1, $op, $c2)
+	{
+		$this->_last_join->and_on($c1, $op, $c2);
+
+		return $this;
+	}
+
+	/**
+	 * Adds "OR ON ..." conditions for the last created JOIN statement.
+	 *
+	 * @param   mixed   column name or array($column, $alias) or object
+	 * @param   string  logic operator
+	 * @param   mixed   column name or array($column, $alias) or object
+	 * @return  $this
+	 */
+	public function or_on($c1, $op, $c2)
+	{
+		$this->_last_join->or_on($c1, $op, $c2);
+
+		return $this;
+	}
+
+	/**
 	 * Creates a "GROUP BY ..." filter.
 	 *
 	 * @param   mixed   column name or array($column, $column) or object
@@ -418,18 +448,18 @@ class Database_Query_Builder_Select extends \Database_Query_Builder_Where
 
 	public function reset()
 	{
-		$this->_select   =
-		$this->_from     =
-		$this->_join     =
-		$this->_where    =
-		$this->_group_by =
-		$this->_having   =
+		$this->_select   = array();
+		$this->_from     = array();
+		$this->_join     = array();
+		$this->_where    = array();
+		$this->_group_by = array();
+		$this->_having   = array();
 		$this->_order_by = array();
 
 		$this->_distinct = FALSE;
 
-		$this->_limit     =
-		$this->_offset    =
+		$this->_limit     = NULL;
+		$this->_offset    = NULL;
 		$this->_last_join = NULL;
 
 		$this->_parameters = array();

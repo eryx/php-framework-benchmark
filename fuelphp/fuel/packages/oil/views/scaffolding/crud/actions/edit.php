@@ -1,3 +1,5 @@
+		is_null($id) and Response::redirect('<?php echo $controller_name ?>');
+
 		$<?php echo $singular_name; ?> = Model_<?php echo $model_name; ?>::find_one_by_id($id);
 
 		if (Input::method() == 'POST')
@@ -22,7 +24,7 @@
 			}
 			else
 			{
-				Session::set_flash('error', $val->show_errors());
+				Session::set_flash('error', $val->error());
 			}
 		}
 

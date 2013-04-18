@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../../../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../../../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../../../';
@@ -53,7 +54,7 @@
 			<section>
 				<h2 id="belongs_to">Relations: Belongs To</h2>
 
-				<p>Has the primary key of the relation keps in its table, belongs to 1 related object. This is the other
+				<p>Has the primary key of the relation kept in its table, belongs to 1 related object. This is the other
 					side of a <a href="has_one.html">HasOne</a> or <a href="has_many.html">HasMany</a> relation.</p>
 
 				<h3>Example</h3>
@@ -88,7 +89,7 @@ $comment->save();</code></pre>
 				<pre class="php"><code>// in a Model_Comment which belong to a post
 protected static $_belongs_to = array(
 	'post' => array(
-		'key_from' => 'comment_id',
+		'key_from' => 'post_id',
 		'model_to' => 'Model_Post',
 		'key_to' => 'id',
 		'cascade_save' => true,
@@ -101,7 +102,7 @@ protected static $_belongs_to = array(
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

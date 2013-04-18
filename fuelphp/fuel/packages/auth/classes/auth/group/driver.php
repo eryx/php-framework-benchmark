@@ -3,10 +3,10 @@
  * Fuel is a fast, lightweight, community driven PHP5 framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -25,17 +25,6 @@ abstract class Auth_Group_Driver extends \Auth_Driver
 	 * @var	array	contains references if multiple were loaded
 	 */
 	protected static $_instances = array();
-
-	/**
-	 * This method is deprecated...use forge() instead.
-	 * 
-	 * @deprecated until 1.2
-	 */
-	public static function factory(array $config = array())
-	{
-		\Log::warning('This method is deprecated.  Please use a forge() instead.', __METHOD__);
-		return static::forge($config);
-	}
 
 	public static function forge(array $config = array())
 	{
@@ -97,7 +86,7 @@ abstract class Auth_Group_Driver extends \Auth_Driver
 		foreach (\Auth::verified() as $v)
 		{
 			// ... and check all those their groups
-			$gs = $v->get_user_groups();
+			$gs = $v->get_groups();
 			foreach ($gs as $g_id)
 			{
 				// ... and try to validate if its group is this one

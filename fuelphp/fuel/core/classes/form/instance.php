@@ -3,10 +3,10 @@
  * Part of the Fuel framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2012 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -606,7 +606,6 @@ class Form_Instance
 		}
 
 		unset($attributes['label']);
-		unset($attributes['id']);
 
 		return html_tag('label', $attributes, \Lang::get($label, array(), false) ?: $label);
 	}

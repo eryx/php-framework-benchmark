@@ -3,10 +3,10 @@
  * Part of the Fuel framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2012 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -362,6 +362,11 @@ class Request
 			if ($this->route->callable !== null)
 			{
 				$response = call_user_func_array($this->route->callable, array($this));
+
+				if ( ! $response instanceof Response)
+				{
+					$response = new \Response($response);
+				}
 			}
 			else
 			{

@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../../';
@@ -107,12 +108,12 @@
 						Parser object. This is a convention and not a requirement and might be different on 3rd party
 						drivers.</p>
 
-					<pre class="php"><code>// Example using SimpleTags
-$view = View::forge('example.stags');
-$view->parser()->set_delimiters('{', '}');
+					<pre class="php"><code>// Clear the cache for a specific Smarty template
+$view = View::forge('example.smarty');
+$view->parser()->clearCache('example.smarty');
 
 // Example static usage
-View_SimpleTags::parser()->set_delimiters('{', '}');</code></pre>
+View_Smarty::parser()->clearCache('example.smarty');</code></pre>
 				</section>
 
 			</section>
@@ -121,7 +122,7 @@ View_SimpleTags::parser()->set_delimiters('{', '}');</code></pre>
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

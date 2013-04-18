@@ -3,10 +3,10 @@
  * Fuel is a fast, lightweight, community driven PHP5 framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -28,7 +28,7 @@ class Auth_Login_SimpleAuth extends \Auth_Login_Driver
 
 	public static function _init()
 	{
-		\Config::load('simpleauth', true);
+		\Config::load('simpleauth', true, true, true);
 	}
 
 	/**
@@ -92,13 +92,11 @@ class Auth_Login_SimpleAuth extends \Auth_Login_Driver
 	}
 
 	/**
-	 * Login user
+	 * Check the user exists before logging in
 	 *
-	 * @param   string
-	 * @param   string
 	 * @return  bool
 	 */
-	public function login($username_or_email = '', $password = '')
+	public function validate_user($username_or_email = '', $password = '')
 	{
 		$username_or_email = trim($username_or_email) ?: trim(\Input::post(\Config::get('simpleauth.username_post_key', 'username')));
 		$password = trim($password) ?: trim(\Input::post(\Config::get('simpleauth.password_post_key', 'password')));
@@ -118,13 +116,28 @@ class Auth_Login_SimpleAuth extends \Auth_Login_Driver
 			->from(\Config::get('simpleauth.table_name'))
 			->execute(\Config::get('simpleauth.db_connection'))->current();
 
-		if ($this->user == false)
+		return $this->user ?: false;
+	}
+
+	/**
+	 * Login user
+	 *
+	 * @param   string
+	 * @param   string
+	 * @return  bool
+	 */
+	public function login($username_or_email = '', $password = '')
+	{
+		if ( ! ($this->user = $this->validate_user($username_or_email, $password)))
 		{
 			$this->user = \Config::get('simpleauth.guest_login', true) ? static::$guest_login : false;
 			\Session::delete('username');
 			\Session::delete('login_hash');
 			return false;
 		}
+
+		// register so Auth::logout() can find us
+		Auth::_register_verified($this);
 
 		\Session::set('username', $this->user['username']);
 		\Session::set('login_hash', $this->create_login_hash());
@@ -196,7 +209,7 @@ class Auth_Login_SimpleAuth extends \Auth_Login_Driver
 
 		if (empty($username) or empty($password) or empty($email))
 		{
-			throw new \SimpleUserUpdateException('Username, password and email address can\'t be empty.');
+			throw new \SimpleUserUpdateException('Username, password or email address is not given, or email address is invalid', 1);
 		}
 
 		$same_users = \DB::select_array(\Config::get('simpleauth.table_columns', array('*')))
@@ -209,11 +222,11 @@ class Auth_Login_SimpleAuth extends \Auth_Login_Driver
 		{
 			if (in_array(strtolower($email), array_map('strtolower', $same_users->current())))
 			{
-				throw new \SimpleUserUpdateException('Email address already exists');
+				throw new \SimpleUserUpdateException('Email address already exists', 2);
 			}
 			else
 			{
-				throw new \SimpleUserUpdateException('Username already exists');
+				throw new \SimpleUserUpdateException('Username already exists', 3);
 			}
 		}
 
@@ -223,6 +236,8 @@ class Auth_Login_SimpleAuth extends \Auth_Login_Driver
 			'email'           => $email,
 			'group'           => (int) $group,
 			'profile_fields'  => serialize($profile_fields),
+			'last_login'      => 0,
+			'login_hash'      => '',
 			'created_at'      => \Date::forge()->get_timestamp()
 		);
 		$result = \DB::insert(\Config::get('simpleauth.table_name'))
@@ -250,13 +265,13 @@ class Auth_Login_SimpleAuth extends \Auth_Login_Driver
 
 		if (empty($current_values))
 		{
-			throw new \SimpleUserUpdateException('Username not found');
+			throw new \SimpleUserUpdateException('Username not found', 4);
 		}
 
 		$update = array();
 		if (array_key_exists('username', $values))
 		{
-			throw new \SimpleUserUpdateException('Username cannot be changed.');
+			throw new \SimpleUserUpdateException('Username cannot be changed.', 5);
 		}
 		if (array_key_exists('password', $values))
 		{
@@ -269,7 +284,7 @@ class Auth_Login_SimpleAuth extends \Auth_Login_Driver
 			$password = trim(strval($values['password']));
 			if ($password === '')
 			{
-				throw new \SimpleUserUpdateException('Password can\'t be empty.');
+				throw new \SimpleUserUpdateException('Password can\'t be empty.', 6);
 			}
 			$update['password'] = $this->hash_password($password);
 			unset($values['password']);
@@ -283,7 +298,7 @@ class Auth_Login_SimpleAuth extends \Auth_Login_Driver
 			$email = filter_var(trim($values['email']), FILTER_VALIDATE_EMAIL);
 			if ( ! $email)
 			{
-				throw new \SimpleUserUpdateException('Email address is not valid');
+				throw new \SimpleUserUpdateException('Email address is not valid', 7);
 			}
 			$update['email'] = $email;
 			unset($values['email']);
@@ -370,7 +385,7 @@ class Auth_Login_SimpleAuth extends \Auth_Login_Driver
 
 		if ( ! $affected_rows)
 		{
-			throw new \SimpleUserUpdateException('Failed to reset password, user was invalid.');
+			throw new \SimpleUserUpdateException('Failed to reset password, user was invalid.', 8);
 		}
 
 		return $new_password;
@@ -386,7 +401,7 @@ class Auth_Login_SimpleAuth extends \Auth_Login_Driver
 	{
 		if (empty($username))
 		{
-			throw new \SimpleUserUpdateException('Cannot delete user with empty username');
+			throw new \SimpleUserUpdateException('Cannot delete user with empty username', 9);
 		}
 
 		$affected_rows = \DB::delete(\Config::get('simpleauth.table_name'))
@@ -405,7 +420,7 @@ class Auth_Login_SimpleAuth extends \Auth_Login_Driver
 	{
 		if (empty($this->user))
 		{
-			throw new \SimpleUserUpdateException('User not logged in, can\'t create login hash.');
+			throw new \SimpleUserUpdateException('User not logged in, can\'t create login hash.', 10);
 		}
 
 		$last_login = \Date::forge()->get_timestamp();
@@ -486,14 +501,23 @@ class Auth_Login_SimpleAuth extends \Auth_Login_Driver
 	 *
 	 * @return  Array
 	 */
-	public function get_profile_fields()
+	public function get_profile_fields($field = null, $default = null)
 	{
 		if (empty($this->user))
 		{
 			return false;
 		}
 
-		return @unserialize($this->user['profile_fields']) ?: array();
+		if (isset($this->user['profile_fields']))
+		{
+			is_array($this->user['profile_fields']) or $this->user['profile_fields'] = @unserialize($this->user['profile_fields']);
+		}
+		else
+		{
+			$this->user['profile_fields'] = array();
+		}
+
+		return is_null($field) ? $this->user['profile_fields'] : \Arr::get($this->user['profile_fields'], $field, $default);
 	}
 
 	/**

@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../../';
@@ -61,12 +62,12 @@
 				</p>
 
 				<ul>
-					<li>Login (Auth_Login_Driver).</li>
-					<li>Group (Auth_Group_Driver).</li>
-					<li>Acl (Auth_Acl_Driver).</li>
+					<li><a href="types/login.html">Login</a> (Auth_Login_Driver).</li>
+					<li><a href="types/group.html">Group</a> (Auth_Group_Driver).</li>
+					<li><a href="types/acl.html">Acl</a> (Auth_Acl_Driver).</li>
 				</ul>
 
-				<h3 id="extending">Extending auth classes.</h3>
+				<h3 id="extending">Extending auth classes</h3>
 
 				<p>Extend these classes like so:</p>
 
@@ -82,7 +83,7 @@ class Auth_Login_MyDriver extends \Auth\Auth_Login_Driver
 /* End of file mydriver.php */
 </code></pre>
 
-				<h3 id="implementing_function">Implementing functions.</h3>
+				<h3 id="implementing_function">Implementing functions</h3>
 
 				<p>
 					When extending the Auth driver classes take note on the expected return values of each function that needs to be implemented.
@@ -112,7 +113,7 @@ abstract public function get_user_id();</code></pre>
 				<pre class="php"><code>/**
  * Get the user's ID
  *
- * @return  Array  containing this driver's ID & the user's ID
+ * @return  Array  containing this driver's ID &amp; the user's ID
  */
 public function get_user_id()
 {
@@ -144,7 +145,7 @@ public function get_user_id()
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

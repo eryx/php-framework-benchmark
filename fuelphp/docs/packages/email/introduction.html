@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../../';
@@ -48,45 +49,50 @@
 				The Email package provides an interface for sending email using either php's mail function, sendmail
 				or SMTP. The package supports:
 			</p>
-			
+
 			<ul>
 				<li>Plain-text mails</li>
 				<li>HTML mails, with and optional alternative body</li>
 				<li>Attachments</li>
 				<li>Inline attachments.</li>
 			</ul>
-			
+
 			<section>
-			
+
 				<h3 id="installation">Installation</h3>
-				
+
 				<p>
 					The Email package is part of the official download (since version 1.1). You will have to enable the package
 					either in the app config or include it on the fly.
 				</p>
-				
-				<pre class="php"><code>// Inside app/config/config.php under 'always_load'
-'packages' => array(
-	'email',
+
+					<pre class="php"><code>'always_load' => array(
+	'packages' => array(
+		'email',
+	),
 ),
 
 // Or in a controller:
 
 \Package::load('email');
 </code></pre>
-				
+
 			</section>
-			
+
 			<section>
-			
+
 				<h3 id="configuration">Configuration</h3>
-				
+
 				<p>
 					Create (or copy from the package) a config file at <em>app/config/email.php</em>. And change the settings needed.
 				</p>
-				
+
+				<p class="note">
+					<strong>Please note:</strong> The Email package loads the email config for you, so there is no need to autoload it.
+				</p>
+
 				<h4 id="general_config">General configuration</h4>
-				
+
 				<table class="config">
 					<tbody>
 						<tr class="header">
@@ -123,9 +129,9 @@
 						</tr>
 					</tbody>
 				</table>
-				
+
 				<h4 id="group_config">Group configuration</h4>
-				
+
 				<table class="config">
 					<tbody>
 						<tr class="header">
@@ -147,7 +153,7 @@
 							<td>string</td>
 							<td><pre class="php"><code>'mail'</code></pre></td>
 							<td>
-								The driver to use. Can be mail, smtp or sendmail. Must be lowercase.
+								The driver to use. Can be mail, smtp, sendmail or noop (only logs writes to log). Must be lowercase.
 							</td>
 						</tr>
 						<tr>
@@ -156,6 +162,15 @@
 							<td><pre class="php"><code>false</code></pre></td>
 							<td>
 								Whether to send as html mail or as plain mail.
+							</td>
+						</tr>
+						<tr>
+							<th>encode_headers</th>
+							<td>boolean</td>
+							<td><pre class="php"><code>true</code></pre></td>
+							<td>
+								Wether to encode subject and recipient names.
+								Requires the <a href="http://www.php.net/manual/en/ref.mbstring.php" target="_blank">mbstring extension</a>.
 							</td>
 						</tr>
 						<tr>
@@ -303,6 +318,14 @@
 								Leave the empty ('') in there to allow absolute paths.
 							</td>
 						</tr>
+						<tr>
+							<th>return-path</th>
+							<td>string|false</td>
+							<td><pre class="php"><code>false</code></pre></td>
+							<td>
+								Use this to set a default return-path email address.
+							</td>
+						</tr>
 					</tbody>
 				</table>
 
@@ -312,7 +335,7 @@
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

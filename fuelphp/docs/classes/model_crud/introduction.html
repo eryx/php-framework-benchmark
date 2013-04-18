@@ -4,6 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../../';
@@ -144,14 +145,42 @@ class Model_Users extends \Model_Crud
 						</td>
 					</tr>
 					<tr>
+						<th><strong>$_properties</strong></th>
+						<td>array</td>
+						<td><em>none</em></td>
+						<td>
+							Columns to use when updating/saving.
+						</td>
+						<td>
+							<pre class="php"><code>protected static $_properties = array(
+	'id',
+	'name'
+	'age',
+	'birth_date',
+	'gender',
+);</code></pre>
+						</td>
+					</tr>
+					<tr>
 						<th><strong>$_connection</strong></th>
 						<td>string</td>
 						<td><em>none</em></td>
 						<td>
-							The database connection to use.
+							The database connection to use, or the connection used for reads in a master/slave setup. If not configured, the DB config default will be used.
 						</td>
 						<td>
 							<pre class="php"><code>protected static $_connection = null;</code></pre>
+						</td>
+					</tr>
+					<tr>
+						<th><strong>$_write_connection</strong></th>
+						<td>string</td>
+						<td><em>none</em></td>
+						<td>
+							The database connection to use for writes in a master/slave setup.
+						</td>
+						<td>
+							<pre class="php"><code>protected static $_write_connection = 'master';</code></pre>
 						</td>
 					</tr>
 					<tr>
@@ -159,13 +188,49 @@ class Model_Users extends \Model_Crud
 						<td>array</td>
 						<td><em>none</em></td>
 						<td>
-							AN array of default values
+							An array of default values
 						</td>
 						<td>
 							<pre class="php"><code>protected static $_defaults = array(
 	'field' => 'value',
 	'other_field' => 'other value',
 );</code></pre>
+						</td>
+					</tr>
+					<tr>
+						<th><strong>$_created_at</strong></th>
+						<td>string</td>
+						<td><em>none</em></td>
+						<td>
+							Field name for a 'created at' field. Set <strong>$_mysql_timestamp</strong>
+							to true to use a MySQL timestamp instead of a UNIX timestamp
+						</td>
+						<td>
+							<pre class="php"><code>protected static $_created_at = 'created_at';</code></pre>
+						</td>
+					</tr>
+					<tr>
+						<th><strong>$_updated_at</strong></th>
+						<td>string</td>
+						<td><em>none</em></td>
+						<td>
+							Field name for a 'updated at' field. Set <strong>$_mysql_timestamp</strong>
+							to true to use a MySQL timestamp instead of a UNIX timestamp
+						</td>
+						<td>
+							<pre class="php"><code>protected static $_updated_at = 'modified_at';</code></pre>
+						</td>
+					</tr>
+					<tr>
+						<th><strong>$_mysql_timestamp</strong></th>
+						<td>boolean</td>
+						<td><em>none</em></td>
+						<td>
+							Set to true to use a MySQL timestamp instead of a UNIX timestamp for
+							<strong>$_created_at</strong> and <strong>$_updated_at</strong> fields.
+						</td>
+						<td>
+							<pre class="php"><code>protected static $_mysql_timestamp = true;</code></pre>
 						</td>
 					</tr>
 				</tbody>
@@ -175,7 +240,7 @@ class Model_Users extends \Model_Crud
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

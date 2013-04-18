@@ -2,27 +2,33 @@
 /**
  * Fuel is a fast, lightweight, community driven PHP5 framework.
  *
- * @package		Fuel
- * @version		1.0
- * @author		Fuel Development Team
- * @license		MIT License
- * @copyright	2010 - 2011 Fuel Development Team
- * @link		http://fuelphp.com
+ * @package    Fuel
+ * @version    1.5
+ * @author     Fuel Development Team
+ * @license    MIT License
+ * @copyright  2010 - 2013 Fuel Development Team
+ * @link       http://fuelphp.com
  */
 
 namespace Orm;
 
-// Exception to throw when validation failed
-class ValidationFailed extends \FuelException {
+/**
+ *  Exception to throw when validation failed
+ */
+class ValidationFailed extends \FuelException
+{
+	/**
+	 * @var  Fieldset the fieldset causing this exception
+	 */
 	protected $fieldset;
 
 	/**
 	 * Overridden \FuelException construct to add a Fieldset instance into the exception
 	 *
-	 * @param string
-	 * @param int
-	 * @param Exception
-	 * @param Fieldset
+	 * @param  string  the error message
+	 * @param  int  the error code
+	 * @param  \Exception any previous exception
+	 * @param  \Fieldset  the fieldset on which this exception was triggered
 	 */
 	public function __construct($message = null, $code = 0, \Exception $previous = null, \Fieldset $fieldset = null)
 	{
@@ -42,6 +48,12 @@ class ValidationFailed extends \FuelException {
 	}
 }
 
+/**
+ * Observer class to validate the properties of the model before save.
+ *
+ * It is also used in Fieldset generation based on a model, to populate the fields
+ * and field validation rules of the Fieldset.
+ */
 class Observer_Validation extends Observer
 {
 
@@ -50,12 +62,13 @@ class Observer_Validation extends Observer
 	 * classname if none is provided.
 	 *
 	 * @param   string
-	 * @param   Fieldset|null
-	 * @return  Fieldset
+	 * @param   \Fieldset|null
+	 * @return  \Fieldset
 	 */
 	public static function set_fields($obj, $fieldset = null)
 	{
 		static $_generated = array();
+		static $_tabular_rows = array();
 
 		$class = is_object($obj) ? get_class($obj) : $obj;
 		if (is_null($fieldset))
@@ -67,18 +80,32 @@ class Observer_Validation extends Observer
 			}
 		}
 
-		! array_key_exists($class, $_generated) and $_generated[$class] = array();
-		if (in_array($fieldset, $_generated[$class], true))
+		// is our parent fieldset a tabular form set?
+		$tabular_form = is_object($fieldset->parent()) ? $fieldset->parent()->get_tabular_form() : false;
+
+		// don't cache tabular form fieldsets
+		if ( ! $tabular_form)
 		{
-			return $fieldset;
+			! array_key_exists($class, $_generated) and $_generated[$class] = array();
+			if (in_array($fieldset, $_generated[$class], true))
+			{
+				return $fieldset;
+			}
+			$_generated[$class][] = $fieldset;
 		}
-		$_generated[$class][] = $fieldset;
 
 		$primary_keys = is_object($obj) ? $obj->primary_key() : $class::primary_key();
+		$primary_key = count($primary_keys) === 1 ? reset($primary_keys) : false;
 		$properties = is_object($obj) ? $obj->properties() : $class::properties();
+
+		if ($tabular_form and $primary_key and ! is_object($obj))
+		{
+			isset($_tabular_rows[$class]) or $_tabular_rows[$class] = 0;
+		}
+
 		foreach ($properties as $p => $settings)
 		{
-			if (in_array($p, $primary_keys))
+			if (\Arr::get($settings, 'skip', in_array($p, $primary_keys)))
 			{
 				continue;
 			}
@@ -87,13 +114,32 @@ class Observer_Validation extends Observer
 			{
 				foreach ($settings['form']['options'] as $key => $value)
 				{
-					$settings['form']['options'][$key] = \Lang::line($value) ?: $value;
+					is_array($value) or $settings['form']['options'][$key] = \Lang::get($value, array(), false) ?: $value;
 				}
 			}
 
-			$label       = isset($settings['label']) ? $settings['label'] : $p;
-			$attributes  = isset($settings['form']) ? $settings['form'] : array();
-			$field       = $fieldset->add($p, $label, $attributes);
+			// field attributes can be passed in form key
+			$attributes = isset($settings['form']) ? $settings['form'] : array();
+			// label is either set in property setting, as part of form attributes or defaults to fieldname
+			$label = isset($settings['label']) ? $settings['label'] : (isset($attributes['label']) ? $attributes['label'] : $p);
+			$label = \Lang::get($label, array(), false) ?: $label;
+
+			// change the fieldname and label for tabular form fieldset children
+			if ($tabular_form and $primary_key)
+			{
+				if (is_object($obj))
+				{
+					$p = $tabular_form.'['.$obj->{$primary_key}.']['.$p.']';
+				}
+				else
+				{
+					$p = $tabular_form.'_new['.$_tabular_rows[$class].']['.$p.']';
+				}
+				$label = '';
+			}
+
+			// create the field and add validation rules
+			$field = $fieldset->add($p, $label, $attributes);
 			if ( ! empty($settings['validation']))
 			{
 				foreach ($settings['validation'] as $rule => $args)
@@ -112,24 +158,32 @@ class Observer_Validation extends Observer
 			}
 		}
 
+		// increase the row counter for tabular row fieldsets
+		if ($tabular_form and $primary_key and ! is_object($obj))
+		{
+			$_tabular_rows[$class]++;
+		}
+
 		return $fieldset;
 	}
 
 	/**
 	 * Execute before saving the Model
 	 *
-	 * @param   Model
+	 * @param   Model	the model object to validate
+	 *
 	 * @throws  ValidationFailed
 	 */
 	public function before_save(Model $obj)
 	{
-		return $this->validate($obj);
+		$this->validate($obj);
 	}
 
 	/**
 	 * Validate the model
 	 *
-	 * @param   Model
+	 * @param   Model	the model object to validate
+	 *
 	 * @throws  ValidationFailed
 	 */
 	public function validate(Model $obj)
@@ -163,5 +217,3 @@ class Observer_Validation extends Observer
 		}
 	}
 }
-
-// End of file validation.php

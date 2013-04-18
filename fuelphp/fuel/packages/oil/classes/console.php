@@ -3,10 +3,10 @@
  * Fuel is a fast, lightweight, community driven PHP5 framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -37,7 +37,7 @@ class Console
 		{
 			 ob_end_clean();
 		}
-		
+
 		ob_implicit_flush(true);
 
 		// And, go!
@@ -88,10 +88,19 @@ class Console
 			ob_start();
 
 			// Unset the previous line and execute the new one
-			$ret = eval("unset(\$__line); $__line;");
+			$random_ret = \Str::random();
+			try
+			{
+				$ret = eval("unset(\$__line); $__line;");
+			}
+			catch(\Exception $e)
+			{
+				$ret = $random_ret;
+				$__line = $e->getMessage();
+			}
 
 			// Error was returned
-			if ($ret === false)
+			if ($ret === $random_ret)
 			{
 				\Cli::error('Parse Error - ' . $__line);
 				\Cli::beep();
@@ -206,7 +215,7 @@ class Console
 		ob_end_clean();
 
 		$x = strip_tags($x);
-		$x = explode(PHP_EOL, $x);
+		$x = explode("\n", $x);	// PHP_EOL doesn't work on Windows
 		$s = array('Build Date => ', 'Build Date ');
 
 		foreach ($x as $i)

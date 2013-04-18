@@ -1,9 +1,10 @@
 <!doctype html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">	
+	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../../';
@@ -20,40 +21,38 @@
 					<strong>FuelPHP, a PHP 5.3 Framework</strong>
 					Documentation
 				</h1>
-				
+
 				<form id="google_search">
 					<p>
 						<span id="search_clear">&nbsp;</span>
 						<input type="submit" name="search_submit" id="search_submit" value="search" />
-						<input type="text" value="" id="search_input" name="search_input" />						
+						<input type="text" value="" id="search_input" name="search_input" />
 					</p>
 				</form>
 			</div>
 			<nav>
-				
+
 				<div class="clear"></div>
 			</nav>
 			<a href="#" id="toc_handle">table of contents</a>
 			<div class="clear"></div>
 		</header>
-		
+
 		<div id="cse">
 			<div id="cse_point"></div>
 			<div id="cse_content"></div>
 		</div>
-		
+
 		<div id="main">
 			<h2 id="introduction">Query_Builder_Select class</h2>
-			
+
 			<p>(extends <a href="qb_where.html">Query_Builder_Where</a>)</p>
-			
+
 			<p>
 				The Query_Builder_Select class handles all the select operations for the query building process. It extends the
 				Query_Builder_Where class, so all the methods are inherited.
 			</p>
-			
-			<h2 id="methods">Methods</h2>
-	
+
 			<article>
 				<h4 class="method" id="method_distinct">distinct($value = true)</h4>
 				<p>The <strong>distinct</strong> method sets whether to select distinct values.</p>
@@ -102,7 +101,7 @@ $query->distinct();
 					</tbody>
 				</table>
 			</article>
-			
+
 			<article>
 				<h4 class="method" id="method_select">select($columns = null)</h4>
 				<p>The <strong>select</strong> method appends columns to select.</p>
@@ -157,9 +156,9 @@ $query->select(
 					</tbody>
 				</table>
 			</article>
-			
+
 			<article>
-				<h4 class="method" id="method_select_array">select_array(array $columns)</h4>
+				<h4 class="method" id="method_select_array">select_array(array $columns, $reset = false)</h4>
 				<p>The <strong>select_array</strong> method appends columns to select.</p>
 				<table class="method">
 					<tbody>
@@ -183,6 +182,12 @@ $query->select(
 										<td><em>required</em></td>
 										<td>an array containing column names</td>
 									</tr>
+									<tr>
+										<th><kbd>$reset</kbd></th>
+										<td><em>bool</em></td>
+										<td><pre class="php"><code>false</code></pre></td>
+										<td>If true, do not append, but overwrite</td>
+									</tr>
 								</table>
 							</td>
 						</tr>
@@ -205,14 +210,23 @@ $query->select_array(array(
 	'birthdate'
 ));
 
-// SELECT `surname`, `email`, `is_active` as active, `birthdate` FROM `users ...
+// produces SELECT `surname`, `email`, `is_active` as active, `birthdate` FROM `users ...
+
+// Supply an array to use an alias and reset the previous select
+$query->select_array(array(
+	array('surname', 'name'),
+	'birthdate'
+), true);
+
+// produces SELECT `surname` as name, `birthdate` FROM `users ...
+
 </code></pre>
 							</td>
 						</tr>
 					</tbody>
 				</table>
 			</article>
-	
+
 			<article>
 				<h4 class="method" id="method_from">from($tables)</h4>
 				<p>The <strong>from</strong> method appends tables to select from.</p>
@@ -264,7 +278,7 @@ $query->from(
 					</tbody>
 				</table>
 			</article>
-			
+
 			<article>
 				<h4 class="method" id="method_join">join($table, $type = null)</h4>
 				<p>The <strong>join</strong> method appends tables to join.</p>
@@ -328,7 +342,7 @@ $query->join('pictures', 'RIGHT OUTER');
 					</tbody>
 				</table>
 			</article>
-			
+
 			<article>
 				<h4 class="method" id="method_on">on($c1, $op, $c2)</h4>
 				<p>The <strong>on</strong> method adds "ON ..." conditions for the last created JOIN statement.</p>
@@ -390,7 +404,77 @@ $query->on('users.id', '=', 'profiles.user_id');
 					</tbody>
 				</table>
 			</article>
-			
+
+			<article>
+				<h4 class="method" id="method_and_on">and_on()</h4>
+				<p>The <strong>and_on</strong> method is an alias for <a href="#method_on">on</a>.</p>
+			</article>
+
+			<article>
+				<h4 class="method" id="method_or_on">or_ on($c1, $op, $c2)</h4>
+				<p>The <strong>on</strong> method adds "OR ON ..." conditions for the last created JOIN statement.</p>
+				<table class="method">
+					<tbody>
+						<tr>
+							<th>Static</th>
+							<td>No</td>
+						</tr>
+						<tr>
+							<th>Parameters</th>
+							<td>
+								<table class="parameters">
+									<tr>
+										<th>Param</th>
+										<th>Type</th>
+										<th>Default</th>
+										<th class="description">Description</th>
+									</tr>
+									<tr>
+										<th><kbd>$c1</kbd></th>
+										<td><em>mixed</em></td>
+										<td><em>required</em></td>
+										<td>table name or array($table, $alias)</td>
+									</tr>
+									<tr>
+										<th><kbd>$op</kbd></th>
+										<td><em>string</em></td>
+										<td><em>required</em></td>
+										<td>logical operator</td>
+									</tr>
+									<tr>
+										<th><kbd>$c2</kbd></th>
+										<td><em>mixed</em></td>
+										<td><em>required</em></td>
+										<td>table name or array($table, $alias)</td>
+									</tr>
+								</table>
+							</td>
+						</tr>
+						<tr>
+							<th>Returns</th>
+							<td>Returns the current instance.</td>
+						</tr>
+						<tr>
+							<th>Example</th>
+							<td>
+								<pre class="php"><code>// prepare a select statement
+$query = DB::select()->from('users');
+
+// Join a table
+$query->join('profiles');
+$query->on('users.id', '=', 'profiles.user_id');
+
+// Add an OR ON condition
+$query->or_on('users.id', '=', 'profiles.other_id');
+
+// SELECT * FROM `users` JOIN `profiles` ON `users`.`id` = `profiles`.`user_id` OR `users`.`id` = `profiles`.`other_id`
+</code></pre>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</article>
+
 			<article>
 				<h4 class="method" id="method_group_by">group_by($columns)</h4>
 				<p>The <strong>group_by</strong> method creates a "GROUP BY ..." filter.</p>
@@ -439,12 +523,12 @@ $query->group_by('genre', 'category');
 					</tbody>
 				</table>
 			</article>
-			
+
 			<article>
 				<h4 class="method" id="method_having">having($column, $op, $value = NULL)</h4>
 				<p>The <strong>having</strong> method is an alias for <a href="#method_and_having">and_having</a>.</p>
 			</article>
-			
+
 			<article>
 				<h4 class="method" id="method_and_having">and_having($column, $op, $value = NULL)</h4>
 				<p>The <strong>and_having</strong> method appends a "AND HAVING" statement.</p>
@@ -468,7 +552,7 @@ $query->group_by('genre', 'category');
 										<th><kbd>$column</kbd></th>
 										<td><em>string</em></td>
 										<td><em>required</em></td>
-										<td>Column name or array($column, $alias) or object</td>
+										<td>Column name or array($column, $alias), object or callback</td>
 									</tr>
 									<tr>
 										<th><kbd>$op</kbd></th>
@@ -478,7 +562,7 @@ $query->group_by('genre', 'category');
 									</tr>
 									<tr>
 										<th><kbd>$value</kbd></th>
-										<td><em>string</em></td>
+										<td><em>mixed</em></td>
 										<td><pre class="php"><code>null</code></pre></td>
 										<td>Column value</td>
 									</tr>
@@ -501,19 +585,99 @@ $query->having('name', '!=', 'John');
 // and append a new condition
 $query->and_having('surname', '=', 'Doe');
 
-// Resulting in: SELECT * FROM `users` HAVING `name` != "John" AND `surname` = "Doe"
+// create a group using a callback
+$query->and_having(function($query){
+	$query->having('email', 'info@example.com');
+	$query->or_having('email', 'second@example.com');
+});
+
+// Resulting in:
+// SELECT * FROM `users` HAVING `name` != "John" AND `surname` = "Doe"
+// AND (`email` = "info@example.com" OR `email` = "second@example.com")
 </code></pre>
 							</td>
 						</tr>
 					</tbody>
 				</table>
 			</article>
-			
+
+			<article>
+				<h4 class="method" id="method_or_having">or_having($column, $op, $value = NULL)</h4>
+				<p>The <strong>or_having</strong> method appends a "OR HAVING" statement.</p>
+				<table class="method">
+					<tbody>
+						<tr>
+							<th>Static</th>
+							<td>No</td>
+						</tr>
+						<tr>
+							<th>Parameters</th>
+							<td>
+								<table class="parameters">
+									<tr>
+										<th>Param</th>
+										<th>Type</th>
+										<th>Default</th>
+										<th class="description">Description</th>
+									</tr>
+									<tr>
+										<th><kbd>$column</kbd></th>
+										<td><em>string</em></td>
+										<td><em>required</em></td>
+										<td>Column name or array($column, $alias), object or callback</td>
+									</tr>
+									<tr>
+										<th><kbd>$op</kbd></th>
+										<td><em>string</em></td>
+										<td><pre class="php"><code>null</code></pre></td>
+										<td>Logic operator: =, !=, IN, BETWEEN and LIKE.</td>
+									</tr>
+									<tr>
+										<th><kbd>$value</kbd></th>
+										<td><em>mixed</em></td>
+										<td><pre class="php"><code>null</code></pre></td>
+										<td>Column value</td>
+									</tr>
+								</table>
+							</td>
+						</tr>
+						<tr>
+							<th>Returns</th>
+							<td>Returns the current instance.</td>
+						</tr>
+						<tr>
+							<th>Example</th>
+							<td>
+								<pre class="php"><code>// prepare a select statement
+$query = DB::select('*')->from('users');
+
+// Set the first HAVING statement
+$query->having('name', '!=', 'John');
+
+// and append a new condition
+$query->or_having('surname', '=', 'Doe');
+
+// create a group using a callback
+$query->or_having(function($query){
+	$query->having('email', 'info@example.com');
+	$query->and_having('email', 'second@example.com');
+});
+
+// Resulting in:
+// SELECT * FROM `users` HAVING `name` != "John" OR `surname` = "Doe"
+// OR (`email` = "info@example.com" AND `email` = "second@example.com")
+</code></pre>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</article>
+
 			<article>
 				<h4 class="method" id="method_having_open">having_open()</h4>
 				<p>The <strong>having_open</strong> method is an alias for <a href="#method_and_having_open">and_having_open</a>.</p>
 			</article>
-			
+
 			<article>
 				<h4 class="method" id="method_and_having_open">and_having_open()</h4>
 				<p>The <strong>and_having_open</strong> method opens an SQL closure and appends it using AND.</p>
@@ -552,7 +716,7 @@ $query->and_having_open();
 					</tbody>
 				</table>
 			</article>
-			
+
 			<article>
 				<h4 class="method" id="method_or_having_open">or_having_open()</h4>
 				<p>The <strong>or_having_open</strong> method opens an SQL closure and appends it using OR.</p>
@@ -591,12 +755,12 @@ $query->or_having_open();
 					</tbody>
 				</table>
 			</article>
-			
+
 			<article>
 				<h4 class="method" id="method_having_close">having_close()</h4>
 				<p>The <strong>having_close</strong> method is an alias for <a href="#method_and_having_close">and_having_close</a>.</p>
 			</article>
-	
+
 			<article>
 				<h4 class="method" id="method_and_having_close">and_having_close()</h4>
 				<p>The <strong>and_having_close</strong> method closes an SQL closure.</p>
@@ -636,51 +800,7 @@ $query->and_having_close();
 					</tbody>
 				</table>
 			</article>
-			
-			<article>
-				<h4 class="method" id="method_and_having_close">and_having_close()</h4>
-				<p>The <strong>and_having_close</strong> method closes an SQL closure.</p>
-				<table class="method">
-					<tbody>
-						<tr>
-							<th>Static</th>
-							<td>No</td>
-						</tr>
-						<tr>
-							<th>Parameters</th>
-							<td>
-								<em>None</em>
-							</td>
-						</tr>
-						<tr>
-							<th>Returns</th>
-							<td>Returns the current instance.</td>
-						</tr>
-						<tr>
-							<th>Example</th>
-							<td>
-								<pre class="php"><code>// prepare a select statement
-$query = DB::select('*')->from('users');
 
-// Set a HAVING statement
-$query->having('email', 'like', '%@example.com');
-
-// Open a closure
-$query->and_having_open();
-
-// Set a HAVING statement
-$query->having('name', '=', 'John');
-$query->or_where('surname', 'Doe');
-
-$query->and_having_close();
-// SELECT * FROM `users` HAVING `email` LIKE "%example.com" AND (`name` = "John" OR `surname` = "Doe")
-</code></pre>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</article>
-			
 			<article>
 				<h4 class="method" id="method_or_having_close">or_having_close()</h4>
 				<p>The <strong>or_having_close</strong> method closes an SQL closure.</p>
@@ -724,7 +844,7 @@ $query->or_having_close();
 					</tbody>
 				</table>
 			</article>
-			
+
 			<article>
 				<h4 class="method" id="method_offset">offset($number)</h4>
 				<p>The <strong>offset</strong> method sets row number to start from when selecting/updating/deleting.</p>
@@ -775,7 +895,7 @@ $query->offset(5);
 					</tbody>
 				</table>
 			</article>
-			
+
 			<article>
 				<h4 class="method" id="method_compile">compile(\Database_Connection$db)</h4>
 				<p>The <strong>compile</strong> method returns the select SQL query as a string.</p>
@@ -829,7 +949,7 @@ $sql = $query->compile($connection);
 					</tbody>
 				</table>
 			</article>
-			
+
 			<article>
 				<h4 class="method" id="method_reset">reset()</h4>
 				<p>The <strong>reset</strong> method resets all values of the current instance.</p>
@@ -873,12 +993,12 @@ $query->select('email')->from('admins')->where('role', 'superadmin');
 					</tbody>
 				</table>
 			</article>
-				
+
 		</div>
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

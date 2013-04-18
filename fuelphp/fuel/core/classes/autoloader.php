@@ -3,10 +3,10 @@
  * Part of the Fuel framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2012 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -231,7 +231,7 @@ class Autoloader
 			static::$auto_initialize = $class;
 		}
 
-		if (array_key_exists($class, static::$classes))
+		if (isset(static::$classes[$class]))
 		{
 			include str_replace('/', DS, static::$classes[$class]);
 			static::init_class($class);
@@ -293,6 +293,18 @@ class Autoloader
 		}
 
 		return $loaded;
+	}
+
+	/**
+	 * Reset the auto initialize state after an autoloader exception.
+	 * This method is called by the exception handler, and is considered an
+	 * internal method!
+	 *
+	 * @access protected
+	 */
+	public static function _reset()
+	{
+		static::$auto_initialize = null;
 	}
 
 	/**

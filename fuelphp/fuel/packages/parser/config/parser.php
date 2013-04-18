@@ -3,10 +3,10 @@
  * Fuel is a fast, lightweight, community driven PHP5 framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2011 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -33,6 +33,7 @@ return array(
 		'jade'      => 'View_Jade',
 		'haml'      => 'View_Haml',
 		'smarty'    => 'View_Smarty',
+		'phptal'    => 'View_Phptal',
 	),
 
 
@@ -44,7 +45,7 @@ return array(
 	// MARKDOWN ( http://michelf.com/projects/php-markdown/ )
 	// ------------------------------------------------------------------------
 	'View_Markdown' => array(
-		'include'      => PKGPATH.'parser'.DS.'vendor'.DS.'markdown'.DS.'markdown.php',
+		'include'      => \Package::exists('parser').'vendor'.DS.'markdown'.DS.'markdown.php',
 		'auto_encode'  => true,
 		'allow_php'    => true,
 	),
@@ -56,9 +57,9 @@ return array(
 		'auto_encode' => true,
 		'views_paths' => array(APPPATH.'views'),
 		'delimiters' => array(
-			'tag_block'     => array('{%', '%}'),
-			'tag_comment'   => array('{#', '#}'),
-			'tag_variable'  => array('{{', '}}'),
+			'tag_block'     => array('left' => '{%', 'right' => '%}'),
+			'tag_comment'   => array('left' => '{#', 'right' => '#}'),
+			'tag_variable'  => array('left' => '{{', 'right' => '}}'),
 		),
 		'environment' => array(
 			'debug'                => false,
@@ -80,7 +81,7 @@ return array(
 	'View_Dwoo' => array(
 		'include' => APPPATH.'vendor'.DS.'Dwoo'.DS.'dwooAutoload.php',
 		'auto_encode' => true,
-		'delimiters' => array('{{', '}}'),
+		'delimiters' => array('left' => '{{', 'right' => '}}'),
 		'environment' => array(
 			'autoescape'       => false,
 			'nested_comments'  => false,
@@ -101,9 +102,9 @@ return array(
 	// MUSTACHE ( https://github.com/bobthecow/mustache.php )
 	// ------------------------------------------------------------------------
 	'View_Mustache' => array(
-		'include' => PKGPATH.'parser'.DS.'vendor'.DS.'Mustache'.DS.'Mustache.php',
+		'include' => \Package::exists('parser').'vendor'.DS.'Mustache'.DS.'Mustache.php',
 		'auto_encode' => true,
-		'delimiters' => array('{{', '}}'),
+		'delimiters' => array('left' => '{{', 'right' => '}}'),
 		'environment' => array(
 			'charset' => 'UTF-8',
 			'pragmas' => array(),
@@ -132,11 +133,12 @@ return array(
 	'View_Smarty'   => array(
 		'include'       => APPPATH.'vendor'.DS.'Smarty'.DS.'libs'.DS.'Smarty.class.php',
 		'auto_encode' => true,
-		'delimiters'    => array('{', '}'),
+		'delimiters'    => array('left' => '{', 'right' => '}'),
 		'environment'   => array(
 			'compile_dir'       => APPPATH.'tmp'.DS.'Smarty'.DS.'templates_c'.DS,
 			'config_dir'        => APPPATH.'tmp'.DS.'Smarty'.DS.'configs'.DS,
 			'cache_dir'         => APPPATH.'cache'.DS.'Smarty'.DS,
+			'plugins_dir'       => array(),
 			'caching'           => false,
 			'cache_lifetime'    => 0,
 			'force_compile'     => false,
@@ -145,6 +147,19 @@ return array(
 			'autoload_filters'  => array(),
 			'default_modifiers' => array(),
 		),
+	),
+
+	// Phptal ( http://phptal.org/manual/en/ )
+	// ------------------------------------------------------------------------
+	'View_Phptal'   => array(
+		'include'   => APPPATH.'vendor'.DS.'PHPTAL'.DS.'PHPTAL.php',
+		'auto_encode' => true,
+		'cache_dir' => APPPATH.'cache'.DS.'PHPTAL'.DS,
+		'cache_lifetime' => 0,
+		'encoding' => 'UTF-8',
+		'output_mode' => 'PHPTAL::XHTML',
+		'template_repository' => '',
+		'force_reparse' => false,
 	),
 );
 

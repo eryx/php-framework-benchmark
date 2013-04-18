@@ -1,15 +1,13 @@
 <?php
-
 /**
  * Part of the Fuel framework.
  *
- * Image manipulation class.
- *
- * @package		Fuel
- * @version		1.0
- * @license		MIT License
- * @copyright	2010 - 2011 Fuel Development Team
- * @link		http://fuelphp.com
+ * @package    Fuel
+ * @version    1.5
+ * @author     Fuel Development Team
+ * @license    MIT License
+ * @copyright  2010 - 2013 Fuel Development Team
+ * @link       http://fuelphp.com
  */
 
 namespace Fuel\Core;
@@ -212,6 +210,20 @@ abstract class Image_Driver
 	public function resize($width, $height = null, $keepar = true, $pad = false)
 	{
 		$this->queue('resize', $width, $height, $keepar, $pad);
+		return $this;
+	}
+
+
+	/**
+	 * Creates a vertical / horizontal or both mirror image.
+	 *
+	 * @access public
+	 * @param mixed $direction 'vertical', 'horizontal', 'both'
+	 * @return Image_Driver
+	 */
+	public function flip($direction)
+	{
+		$this->queue('flip', $direction);
 		return $this;
 	}
 
@@ -845,7 +857,7 @@ abstract class Image_Driver
 	public function reload()
 	{
 		$this->debug("Reloading was called!");
-		$this->load($this->image_fullpath, false, $this->image_extension);
+		$this->load($this->image_fullpath);
 		return $this;
 	}
 

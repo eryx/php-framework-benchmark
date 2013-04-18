@@ -4,6 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../';
@@ -47,7 +48,7 @@
 			<h2>Fieldset Class</h2>
 
 			<p>
-				The Fieldset class is used to create a form and handle its' validation in an object oriented way. It uses the Form
+				The Fieldset class is used to create a form and handle its validation in an object oriented way. It uses the Form
 				and Validation classes. This class itself is only meant to model the fieldset and its fields while the other
 				two classes do the real work.
 			</p>
@@ -57,7 +58,7 @@
 
 			<article>
 				<h4 class="method" id="method_forge">forge($name = 'default', $config = array())</h4>
-				<p>The <strong>forge</strong> method returns a new Fieldset instance. Note: there can only be one instance per <kdb>$name</kbd>.</p>
+				<p>The <strong>forge</strong> method returns a new Fieldset instance. Note: there can only be one instance per <kbd>$name</kbd>.</p>
 				<table class="method">
 					<tbody>
 					<tr>
@@ -249,7 +250,138 @@ $form->add('gender', '', array('options' => $ops, 'type' => 'radio', 'value' => 
 
 // Example Checkbox
 $ops = array('male', 'female');
-$form->add('gender', '', array('options' => $ops, 'type' => 'checkbox', 'value' => 'true'));</code></pre>
+$form->add('gender', '', array('options' => $ops, 'type' => 'checkbox', 'value' => 'true'));
+
+// Example of an Email input
+$form->add('email', 'E-mail', array('type' => 'email', 'class' => 'pretty_input'),  array(array('required'), array('valid_email')));</code></pre>
+						</td>
+					</tr>
+					</tbody>
+				</table>
+			</article>
+
+			<article>
+				<h4 class="method" id="method_add_before">add_before($name, $label = '', array $attributes = array(), array $rules = array(), $fieldname = null)</h4>
+				<p>Creates a Fieldset_Field instance and adds it to the current Fieldset, just before an already defined field identified by <strong>$fieldname</strong>.</p>
+				<table class="method">
+					<tbody>
+					<tr>
+						<th class="legend">Static</th>
+						<td>No</td>
+					</tr>
+					<tr>
+						<th>Parameters</th>
+						<td>
+							<table class="parameters">
+								<tbody>
+									<tr>
+										<th>Param</th>
+										<th>Default</th>
+										<th class="description">Description</th>
+									</tr>
+									<tr>
+										<th><kbd>$name</kbd></th>
+										<td><i>required</i></td>
+										<td>HTML name attribute, also used for referencing the field within the Fieldset</td>
+									</tr>
+									<tr>
+										<th><kbd>$label</kbd></th>
+										<td><pre class="php"><code>''</code></pre></td>
+										<td>Field label</td>
+									</tr>
+									<tr>
+										<th><kbd>$attributes</kbd></th>
+										<td><pre class="php"><code>array()</code></pre></td>
+										<td>HTML attributes as an associative array</td>
+									</tr>
+									<tr>
+										<th><kbd>$rules</kbd></th>
+										<td><pre class="php"><code>array()</code></pre></td>
+										<td>Validation rules to be applied to this Field</td>
+									</tr>
+									<tr>
+										<th><kbd>$fieldname</kbd></th>
+										<td><pre class="php"><code>null</code></pre></td>
+										<td>Already defined field to which this field must be prepended</td>
+									</tr>
+								</tbody>
+							</table>
+						</td>
+					</tr>
+					<tr>
+						<th>Returns</th>
+						<td>\Fieldset_Field Object</td>
+					</tr>
+					<tr>
+						<th>Example</th>
+						<td>
+							<pre class="php"><code>// Radio button field, to be added before the 'location' field.
+$ops = array('male', 'female');
+$form->add_before('gender', '', array('options' => $ops, 'type' => 'radio', 'value' => 'true'), array(), 'location');</code></pre>
+						</td>
+					</tr>
+					</tbody>
+				</table>
+			</article>
+
+			<article>
+				<h4 class="method" id="method_add_after">add_after($name, $label = '', array $attributes = array(), array $rules = array(), $fieldname = null)</h4>
+				<p>Creates a Fieldset_Field instance and adds it to the current Fieldset, just after an already defined field identified by <strong>$fieldname</strong>.</p>
+				<table class="method">
+					<tbody>
+					<tr>
+						<th class="legend">Static</th>
+						<td>No</td>
+					</tr>
+					<tr>
+						<th>Parameters</th>
+						<td>
+							<table class="parameters">
+								<tbody>
+									<tr>
+										<th>Param</th>
+										<th>Default</th>
+										<th class="description">Description</th>
+									</tr>
+									<tr>
+										<th><kbd>$name</kbd></th>
+										<td><i>required</i></td>
+										<td>HTML name attribute, also used for referencing the field within the Fieldset</td>
+									</tr>
+									<tr>
+										<th><kbd>$label</kbd></th>
+										<td><pre class="php"><code>''</code></pre></td>
+										<td>Field label</td>
+									</tr>
+									<tr>
+										<th><kbd>$attributes</kbd></th>
+										<td><pre class="php"><code>array()</code></pre></td>
+										<td>HTML attributes as an associative array</td>
+									</tr>
+									<tr>
+										<th><kbd>$rules</kbd></th>
+										<td><pre class="php"><code>array()</code></pre></td>
+										<td>Validation rules to be applied to this Field</td>
+									</tr>
+									<tr>
+										<th><kbd>$fieldname</kbd></th>
+										<td><pre class="php"><code>null</code></pre></td>
+										<td>Already defined field to which this field must be appended</td>
+									</tr>
+								</tbody>
+							</table>
+						</td>
+					</tr>
+					<tr>
+						<th>Returns</th>
+						<td>\Fieldset_Field Object</td>
+					</tr>
+					<tr>
+						<th>Example</th>
+						<td>
+							<pre class="php"><code>// Radio button field, to be added after the 'location' field.
+$ops = array('male', 'female');
+$form->add_after('gender', '', array('options' => $ops, 'type' => 'radio', 'value' => 'true'), array(), 'location');</code></pre>
 						</td>
 					</tr>
 					</tbody>
@@ -406,7 +538,7 @@ $article_form->set_config('key', 'value');</code></pre>
 			</article>
 
 			<article id="method_get_config">
-				<h4>get_config($key = null, $default = null)</h4>
+				<h4 class="method" id="method_get_config">get_config($key = null, $default = null)</h4>
 				<p>Get the configuration array or one or more config values by key.</p>
 				<table class="method">
 					<tbody>
@@ -452,6 +584,34 @@ $article_form->set_config('key', 'value');</code></pre>
 				</table>
 			</article>
 
+			<article id="method_get_name">
+				<h4 class="method" id="method_get_name">get_name()</h4>
+				<p>Get the identifier of the fieldset instance.</p>
+				<table class="method">
+					<tbody>
+					<tr>
+						<th class="legend">Static</th>
+						<td>No</td>
+					</tr>
+					<tr>
+						<th>Parameters</th>
+						<td>(none)</td>
+					</tr>
+					<tr>
+						<th>Returns</th>
+						<td>string</td>
+					</tr>
+					<tr>
+						<th>Example</th>
+						<td>
+                            <pre class="php"><code>$article_form = Fieldset::forge('article');
+$name = $article_form->get_name();  // 'article'</code></pre>
+						</td>
+					</tr>
+					</tbody>
+				</table>
+			</article>
+
 			<article>
 				<h4 class="method" id="method_populate">populate($input, $repopulate = false)</h4>
 				<p>Set initial field values to the given input, optionally set it to repopulate after that as well.</p>
@@ -480,7 +640,7 @@ $article_form->set_config('key', 'value');</code></pre>
 									<tr>
 										<th><kbd>$repopulate</kbd></th>
 										<td><code>false</code></td>
-										<td>Use the repopulate() method after inital populating</td>
+										<td>Use the repopulate() method after initial populating</td>
 									</tr>
 								</tbody>
 							</table>
@@ -573,6 +733,102 @@ $article_form->set_config('key', 'value');</code></pre>
 			</article>
 
 			<article>
+				<h4 class="method" id="method_disable">disable($field)</h4>
+				<p>
+					The <kbd>disable</kbd> method allows you to disable a field from being build. You can use this if you want to alter the sequence of fields
+					on the form, or to create more complex layouts without having to build individual fields.
+				</p>
+				<table class="method">
+					<tbody>
+					<tr>
+						<th class="legend">Static</th>
+						<td>No</td>
+					</tr>
+					<tr>
+						<th>Parameters</th>
+						<td>
+							<table class="parameters">
+								<tbody>
+									<tr>
+										<th>Param</th>
+										<th>Default</th>
+										<th class="description">Description</th>
+									</tr>
+									<tr>
+										<th><kbd>$field</kbd></th>
+										<td>required</td>
+										<td>The specific field you want to disable.</td>
+									</tr>
+								</tbody>
+							</table>
+						</td>
+					</tr>
+					<tr>
+						<th>Returns</th>
+						<td>\Fieldset Object</td>
+					</tr>
+					<tr>
+						<th>Throws</th>
+						<td>RuntimeException, if the field given is not defined</td>
+					</tr>
+					<tr>
+						<th>Example</th>
+						<td>
+							<pre class="php"><code>$fieldset->disable('name');</code></pre>
+						</td>
+					</tr>
+					</tbody>
+				</table>
+				<p class="note">The field is not removed from the fieldset, so it will still be validated.</p>
+			</article>
+
+			<article>
+				<h4 class="method" id="method_enable">enable($field)</h4>
+				<p>The <kbd>enable</kbd> method allows you to re-enable a field that has been <kbd>disable</kbd>d before.</p>
+				<table class="method">
+					<tbody>
+					<tr>
+						<th class="legend">Static</th>
+						<td>No</td>
+					</tr>
+					<tr>
+						<th>Parameters</th>
+						<td>
+							<table class="parameters">
+								<tbody>
+									<tr>
+										<th>Param</th>
+										<th>Default</th>
+										<th class="description">Description</th>
+									</tr>
+									<tr>
+										<th><kbd>$field</kbd></th>
+										<td>required</td>
+										<td>The specific field you want to enable.</td>
+									</tr>
+								</tbody>
+							</table>
+						</td>
+					</tr>
+					<tr>
+						<th>Returns</th>
+						<td>\Fieldset Object</td>
+					</tr>
+					<tr>
+						<th>Throws</th>
+						<td>RuntimeException, if the field given is not defined</td>
+					</tr>
+					<tr>
+						<th>Example</th>
+						<td>
+							<pre class="php"><code>$fieldset->enable('name');</code></pre>
+						</td>
+					</tr>
+					</tbody>
+				</table>
+			</article>
+
+			<article>
 				<h4 class="method" id="method_input">input($field = null)</h4>
 				<p>Alias for $this->validation()->input(). Gets an array of validated input value(s) from either POST data or given input. See <a href="validation/validation.html#usage">Validation</a>.</p>
 				<table class="method">
@@ -657,8 +913,8 @@ $article_form->set_config('key', 'value');</code></pre>
 			</article>
 
 			<article>
-				<h4 class="method" id="method_errors">errors($field = null)</h4>
-				<p>Alias for $this->validation()->errors(). Gets an array of input value(s) that did not pass validation. See <a href="validation/validation.html#usage">Validation</a>.</p>
+				<h4 class="method" id="method_error">error($field = null)</h4>
+				<p>Alias for $this->validation()->error(). Gets an array of input value(s) that did not pass validation. See <a href="validation/validation.html#usage">Validation</a>.</p>
 				<table class="method">
 					<tbody>
 					<tr>
@@ -691,7 +947,7 @@ $article_form->set_config('key', 'value');</code></pre>
 					<tr>
 						<th>Example</th>
 						<td>
-							<pre class="php"><code>$errors = $article_form->errors();</code></pre>
+							<pre class="php"><code>$errors = $article_form->error();</code></pre>
 						</td>
 					</tr>
 					</tbody>
@@ -733,7 +989,106 @@ $article_form->set_config('key', 'value');</code></pre>
 					<tr>
 						<th>Example</th>
 						<td>
-							<pre class="php"><code>$validated_values = $article_form->validated();</code></pre>
+							<pre class="php"><code>$all_errors = $article_form->show_errors();</code></pre>
+						</td>
+					</tr>
+					</tbody>
+				</table>
+			</article>
+
+			<article>
+				<h4 class="method" id="method_set_tabular_form">set_tabular_form($model, $relation, $parent, $blanks = 1)</h4>
+				<p>Define an embedded fieldset on a related ORM model to create a One-to-Many form.</p>
+				<table class="method">
+					<tbody>
+					<tr>
+						<th class="legend">Static</th>
+						<td>No</td>
+					</tr>
+					<tr>
+						<th>Parameters</th>
+						<td>
+							<table class="parameters">
+								<tbody>
+									<tr>
+										<th>Param</th>
+										<th>Default</th>
+										<th class="description">Description</th>
+									</tr>
+									<tr>
+										<th><kbd>$model</kbd></th>
+										<td><i>required</i></td>
+										<td>Fully namespaced name of the related model on which the form must be generated</td>
+									</tr>
+									<tr>
+										<th><kbd>$relation</kbd></th>
+										<td><i>required</i></td>
+										<td>Name of the relation of the parent object that relates to $model</td>
+									</tr>
+									<tr>
+										<th><kbd>$parent</kbd></th>
+										<td><i>required</i></td>
+										<td>Parent object that is used to generate the main form, and contains the related records to be displayed in the tabular form</td>
+									</tr>
+									<tr>
+										<th><kbd>$blanks</kbd></th>
+										<td><pre class="php"><code>1</code></pre></td>
+										<td>Number of empty rows to be displayed in the tabular form</td>
+									</tr>
+								</tbody>
+							</table>
+						</td>
+					</tr>
+					<tr>
+						<th>Returns</th>
+						<td>Fieldset, for chaining</td>
+					</tr>
+					<tr>
+						<th>Throws</th>
+						<td>RuntimeException, if incorrect parameters are passed</td>
+					</tr>
+					<tr>
+						<th>Example</th>
+						<td>
+							See <a href="#one_to_many_forms">below</a>...
+						</td>
+					</tr>
+					</tbody>
+				</table>
+				<p class="note">
+					The tabular form is displayed in a table, controlled by template definitions in the <kbd>config/form.php</kbd>
+					configuration file. You are free to modify these templates, but you should leave the table structure, as the
+					fieldset class will add the table headers based on the fields present in each row. This will generate invalid HTML
+					if you remove the table and row definition from the template.
+				</p>
+			</article>
+
+			<article>
+				<h4 class="method" id="method_get_tabular_form">get_tabular_form()</h4>
+				<p>Return the name of the defined tabular form.</p>
+				<table class="method">
+					<tbody>
+					<tr>
+						<th class="legend">Static</th>
+						<td>No</td>
+					</tr>
+					<tr>
+						<th>Parameters</th>
+						<td>
+							None
+						</td>
+					</tr>
+					<tr>
+						<th>Returns</th>
+						<td>mixed, the name of the form, or <kbd>false</kbd> if the fieldset is not a tabular form</td>
+					</tr>
+					<tr>
+						<th>Example</th>
+						<td>
+							<pre class="php"><code>if ($name = $form->get_tabular_form())
+{
+	echo '$form is a tabular fieldset named', $name;
+}</code></pre>
 						</td>
 					</tr>
 					</tbody>
@@ -757,6 +1112,104 @@ $article_form->set_config('key', 'value');</code></pre>
 			</article>
 
 			<article>
+			<h2 id="one_to_many_forms">Creating One-to-Many forms with ORM Models</h2>
+				<p>The Fieldset class can also be used to create forms for an ORM model object and a Many relation. This is done by embedding
+					a tabular form fieldset into the main form fieldset, specifying the related model and the name of the relation.</p>
+
+				<p>By default, the One-to-Many fieldset is displayed in tabular form, controlled by the template in the <kbd>config/form.php</kbd> file.
+				</p>
+
+				<pre class='php'><code>// We're going to create a one-to-many form of an article, identified by $id, and it's comments
+
+// get the article and it's related comments
+$article = Model_Article::find($id, array('related' => array('comments')));
+
+// create the form fieldset for this article using the ORM model's form definition
+$form = Fieldset::forge('article')->add_model($article);
+
+/*
+ * add the tabular form to it to create the one-to-many table.
+ *
+ * the data is provided by the relation 'comments' of the $article object, which
+ * are objects of the class 'Model_Comments'.
+ *
+ * you can disable the fieldset tag to avoid embedded fieldsets in your form
+ */
+$form->add(\Fieldset::forge('tabular')->set_tabular_form('Model_Comments', 'comments', $article)->set_fieldset_tag(false));
+				</code></pre>
+
+				<p class="note">This only works for related models that <strong>DO NOT</strong> have a compound key!</p>
+
+				<p>
+					A tabular form generates HTML input tags that use an array with the name of the relation specified, and the primary key value of the
+					record as it's index value. Any blank rows that are added at the bottom of the table will use the relation name, with a '_new' suffix.
+					This will allow you to update the parent record, and all related records, in one go, and process the new lines separately.
+				</p>
+				<p>
+					In this example, you'll see input tag names like <code>comments[12][fieldA]</code> for existing rows (in this case a row with <code>id = 12</code>,
+					and <code>comments_new[0][fieldA]</code> for a field in the first blank line.
+				</p>
+				<pre class='php'><code>// Process the posted one-to-many form
+if (\Input::post())
+{
+	// validate the input
+	$form->validation()->run();
+
+	// if validated, save the updates
+	if ( ! $form->validation()->error())
+	{
+		// update the article record, and any comment record changes
+		$article->from_array($data);
+
+		// do we need to delete tabular form records?
+		foreach ($data['comments'] as $id => $row)
+		{
+			if ($id and ! empty($row['_delete']))
+			{
+				unset($article->comments[$id]);
+			}
+		}
+
+		// do we have a new tabular form record data (assuming we've added only one blank line)?
+		$data = array_filter($data['comments_new'][0]);
+
+		$new_errors = false;
+		if ( ! empty($data))
+		{
+			// check for required fields
+			if (empty($data['fieldA']) or empty($data['fieldB']))
+			{
+				$new_errors = true;
+				// display an error message about missing required fields here...
+			}
+			else
+			{
+				// create a new related record
+				$article->comments[] = Model_Comments::forge(array('article_id' => $article->id, 'fieldA' => $data['fieldA'], 'fieldB' => $data['fieldB']));
+			}
+		}
+
+		// save the updates
+		if ( ! $new_errors)
+		{
+			if ($article->save())
+			{
+				// display a save-succesful message here and redirect away
+			}
+			else
+			{
+				// display an error message, save was not succesful
+			}
+		}
+	}
+	else
+	{
+		// inform the user validation failed
+	}
+}</code></pre>
+			</article>
+
+			<article>
 			<h2 id="modify_form_attributes">Modify Form Attributes</h2>
 				<p>Changing the attributes of the <kbd>form()</kbd> instance in the fieldset can be done in two ways. You can either provide your options in the <kbd>forge()</kbd> method's attributes array, or modify the form instance directly.</p>
 				<pre class='php'><code>// Use the form_attributes option in the attributes of the Fieldset object
@@ -769,7 +1222,7 @@ $fieldset = Fieldset::forge('article', array(
 );
 
 // Modify the form instance directly
-$fieldset->form->set_attribute('id', 'edit_article_form');
+$fieldset->form()->set_attribute('id', 'edit_article_form');
 				</code></pre>
 			</article>
 
@@ -779,7 +1232,7 @@ $fieldset->form->set_attribute('id', 'edit_article_form');
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

@@ -9,14 +9,14 @@
 
 			if ($<?php echo $singular_name; ?>->save())
 			{
-				Session::set_flash('success', 'Updated <?php echo $singular_name; ?> #' . $id);
+				Session::set_flash('success', e('Updated <?php echo $singular_name; ?> #' . $id));
 
 				Response::redirect('<?php echo $uri; ?>');
 			}
 
 			else
 			{
-				Session::set_flash('error', 'Could not update <?php echo $singular_name; ?> #' . $id);
+				Session::set_flash('error', e('Could not update <?php echo $singular_name; ?> #' . $id));
 			}
 		}
 
@@ -28,9 +28,9 @@
 				$<?php echo $singular_name; ?>-><?php echo $field['name']; ?> = $val->validated('<?php echo $field['name']; ?>');
 <?php endforeach; ?>
 
-				Session::set_flash('error', $val->show_errors());
+				Session::set_flash('error', $val->error());
 			}
-			
+
 			$this->template->set_global('<?php echo $singular_name; ?>', $<?php echo $singular_name; ?>, false);
 		}
 

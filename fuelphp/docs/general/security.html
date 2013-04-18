@@ -1,9 +1,10 @@
 <!doctype html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">	
+	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../';
@@ -19,36 +20,36 @@
 					<strong>FuelPHP, a PHP 5.3 Framework</strong>
 					Documentation
 				</h1>
-				
+
 				<form id="google_search">
 					<p>
 						<span id="search_clear">&nbsp;</span>
 						<input type="submit" name="search_submit" id="search_submit" value="search" />
-						<input type="text" value="" id="search_input" name="search_input" />						
+						<input type="text" value="" id="search_input" name="search_input" />
 					</p>
 				</form>
 			</div>
 			<nav>
-				
+
 				<div class="clear"></div>
 			</nav>
 			<a href="#" id="toc_handle">table of contents</a>
 			<div class="clear"></div>
 		</header>
-		
+
 		<div id="cse">
 			<div id="cse_point"></div>
 			<div id="cse_content"></div>
 		</div>
-		
+
 		<div id="main">
-		
+
 			<h2>Security</h2>
-	
+
 			<p>
 				Fuel takes security very serious, and as a result, has implemented the following measures to ensure the safety of your web applications:
 			</p>
-	
+
 			<ul>
 				<li><a href="#output">Output encoding</a></li>
 				<li><a href="#csrf">CSRF protection</a></li>
@@ -64,10 +65,10 @@
 				This page explains the general security measures Fuel offers, the <a href="../classes/security.html">Security
 				class</a> is documented under Classes. You will also find the details on configuring Fuels security class on that page.
 			</p>
-	
+
 			<article id="output">
 				<h3>Output encoding</h3>
-	
+
 				<p>
 					By default, Fuel favors output encoding to input filtering. The reason behind this is twofold.
 					No matter where your data originates, and whether or not it is filtered, output encoding will make it harmless
@@ -75,7 +76,7 @@
 					what happens, you will always have access to the original data.
 				</p>
 				<p>
-					It also means you don't run into trouble when you need data in it's unaltered form. One common example is the
+					It also means you don't run into trouble when you need data in its unaltered form. One common example is the
 					data produced by html editors like TinyMCE or ckeditor, used in lots of application for enduser content editing.
 					In such cases you might want to run <a href="#xss">XSS Filtering</a> on these input variables to filter out
 					any nasty surprises that might have crept in, since this is a typical example of data you don't want
@@ -93,7 +94,7 @@
 					See the section on <a href="views.html#security">view security</a> to see how this is implemented for views.
 				</p>
 			</article>
-	
+
 			<article id="csrf">
 				<h3>CSRF Protection</h3>
 				<p>
@@ -117,8 +118,8 @@
 				<p>
 					CSRF protection can be configured through the security section in the applications config/config.php file.
 				</p>
-	
-	
+
+
 				<p>To enable CRSF protection, start by adding the token to your form:</p>
 				<pre class="php"><code>// in plain HTML
 &lt;input type="hidden" name="&lt;?php echo \Config::get('security.csrf_token_key');?&gt;" value="&lt;?php echo \Security::fetch_token();?&gt;" /&gt;
@@ -145,9 +146,9 @@ if ($_POST)
 	}
 }
 </code></pre>
-	
+
 			</article>
-	
+
 			<article id="xss">
 				<h3>XSS filtering</h3>
 				<p>
@@ -165,15 +166,15 @@ if ($_POST)
 				</p>
 				<p class="note">
 					For performance reasons, it is recommended that you use the <a href="../classes/security.html#method_xss_clean">xss_clean</a> method
-					on individual input values, rather then as a generic input filter.
+					on individual input values, rather than as a generic input filter.
 				</p>
 			</article>
-	
+
 			<article id="input">
 				<h3>Input filtering</h3>
 				<p>
 					Although not enabled by default, you can configure Fuel to filter all input ($_GET, $_POST and $_COOKIE) on every page request.
-					To do so, configure the functions or methods to be used to filter them in the applications config/config.php file.
+					To do so, configure the functions or methods to be used to filter them in the application's config/config.php file.
 				</p>
 				<pre class="php"><code>/**
  * Security settings
@@ -188,7 +189,7 @@ if ($_POST)
 					before Fuel is initialized, as input filtering happens very early in the request process.
 				</p>
 			</article>
-	
+
 			<article id="sql">
 				<h3>SQL injection</h3>
 				<p>
@@ -204,16 +205,16 @@ if ($_POST)
 				</p>
 				<p>
 					Fuel protects against SQL injection by escaping all values passed to one of the Database class methods. Since this happens at the level
-					of Fuel's central Query Builder, all code that uses the Query Builder, including Fuels ORM package, will automatically use escaping.
+					of Fuel's central Query Builder, all code that uses the Query Builder, including Fuel's ORM package, will automatically use escaping.
 				</p>
-	
+
 			</article>
 
 		</div>
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

@@ -4,12 +4,13 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="./../assets/css/combined.css">
+	<link rel="shortcut icon" href="./../favicon.ico" />
 	<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 	<script type="text/javascript">
 		var path = './../';
 	</script>
 	<script src="./../assets/js/combined.js"></script>
-	<title>HMCV Requests - General - FuelPHP Documentation</title>
+	<title>HMVC Requests - General - FuelPHP Documentation</title>
 </head>
 <body>
 	<div id="container">
@@ -52,7 +53,7 @@
 				By using modules to produce the widget output, you can create a highly modular application with easy to re-use components.
 			</p>
 
-			<p>You call a module controller method using the <a href="../classes/request.html">Request</a> class:</p>
+			<p>You call a module controller method using the <a href="../classes/request/request.html">Request</a> class:</p>
 			<pre class="php"><code>// fetch the output of a controller
 $widget = Request::forge('mycontroller/mymethod/parms')->execute();
 echo $widget;
@@ -60,6 +61,11 @@ echo $widget;
 // or fetch the output of a module
 $widget = Request::forge('mymodule/mycontroller/mymethod/parms', false)->execute();
 echo $widget;
+
+// and if you need to pass in some data
+$widget = Request::forge('mymodule/mycontroller/mymethod/parms', false)->execute(array('tree'=>'apple'));
+echo $widget;
+
 </code></pre>
 			<p class="note">
 				By default, all requests made are processed by Fuel's routing engine. If you want to request something that isn't routable
@@ -68,9 +74,9 @@ echo $widget;
 			</p>
 
 			<p>
-				Loading views in HMVC request is the same as in normal requests and controllers accessed by HMVC request 
-				are also approachable via the browser. However, in some cases you may not want the component (for example, a widget) 
-				to be accessed through the browser. In those cases, you'll want to check if the request is made through HMVC or the browser. 
+				Loading views in HMVC request is the same as in normal requests and controllers accessed by HMVC request
+				are also approachable via the browser. However, in some cases you may not want the component (for example, a widget)
+				to be accessed through the browser. In those cases, you'll want to check if the request is made through HMVC or the browser.
 				The following example shows you how to check for a HMVC request:
 			</p>
 
@@ -81,7 +87,7 @@ class Controller_Widget extends Controller
 
 	public function action_show()
 	{
-		if(Request::main() === Request::active())
+		if( ! Request::is_hmvc())
 		{
 			// this is the main request
 		}
@@ -97,7 +103,7 @@ class Controller_Widget extends Controller
 
 			<p>
 				When a 404 occurs during a HMVC request, a <kbd>HttpNotFoundException</kbd> is thrown. If uncaught, it will trigger
-				a full 404 message using <kbd>Request::show_404()</kbd>. However, you can prevent this and handle the 404
+				the load of the frameworks default 404 page. However, you can prevent this and handle the 404
 				yourself:
 			</p>
 
@@ -114,7 +120,7 @@ catch (HttpNotFoundException $e)
 			<h3>Traversing Request instances</h3>
 
 			<p>If you want to access other Requests, you can traverse them using two methods:
-				<kbd>$request->parent()</kbd> and <kbd>$request->children</kbd>. The parent is the Request during
+				<kbd>$request->parent()</kbd> and <kbd>$request->children()</kbd>. The parent is the Request during
 				which the current Request was created (<kbd>null</kbd> for the main Request). The children are all the Requests
 				created during the current Request.</p>
 
@@ -122,7 +128,7 @@ catch (HttpNotFoundException $e)
 
 		<footer>
 			<p>
-				&copy; FuelPHP Development Team 2010-2011 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
+				&copy; FuelPHP Development Team 2010-2013 - <a href="http://fuelphp.com">FuelPHP</a> is released under the MIT license.
 			</p>
 		</footer>
 	</div>

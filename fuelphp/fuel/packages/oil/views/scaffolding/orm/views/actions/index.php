@@ -2,7 +2,7 @@
 <br>
 <?php echo "<?php if (\${$plural_name}): ?>"; ?>
 
-<table class="zebra-striped">
+<table class="table table-striped">
 	<thead>
 		<tr>
 <?php foreach ($fields as $field): ?>
@@ -36,7 +36,7 @@
 
 <?php echo '<?php endif; ?>'; ?>
 <p>
-	<?php echo '<?php'; ?> echo Html::anchor('<?php echo $uri; ?>/create', 'Add new <?php echo \Inflector::humanize($singular_name); ?>', array('class' => 'btn success')); <?php echo '?>'; ?>
+	<?php echo '<?php'; ?> echo Html::anchor('<?php echo $uri; ?>/create', 'Add new <?php echo \Inflector::humanize($singular_name); ?>', array('class' => 'btn btn-success')); <?php echo '?>'; ?>
 
 
 </p>

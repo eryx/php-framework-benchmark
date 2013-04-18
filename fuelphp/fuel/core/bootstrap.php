@@ -3,10 +3,10 @@
  * Part of the Fuel framework.
  *
  * @package    Fuel
- * @version    1.0
+ * @version    1.5
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2012 Fuel Development Team
+ * @copyright  2010 - 2013 Fuel Development Team
  * @link       http://fuelphp.com
  */
 
@@ -29,22 +29,28 @@ define('MBSTRING', function_exists('mb_get_info'));
  */
 register_shutdown_function(function ()
 {
+	// reset the autoloader
+	\Autoloader::_reset();
+
 	// Fire off the shutdown events
 	Event::shutdown();
 
-	load_error_classes();
 	return \Error::shutdown_handler();
 });
 
 set_exception_handler(function (\Exception $e)
 {
-	load_error_classes();
+	// reset the autoloader
+	\Autoloader::_reset();
+
 	return \Error::exception_handler($e);
 });
 
 set_error_handler(function ($severity, $message, $filepath, $line)
 {
-	load_error_classes();
+	// reset the autoloader
+	\Autoloader::_reset();
+
 	return \Error::error_handler($severity, $message, $filepath, $line);
 });
 
@@ -176,8 +182,6 @@ function setup_autoloader()
 		'Fuel\\Core\\Lang_Interface'     => COREPATH.'classes/lang/interface.php',
 		'Fuel\\Core\\Lang_Php'           => COREPATH.'classes/lang/php.php',
 		'Fuel\\Core\\Lang_Yml'           => COREPATH.'classes/lang/yml.php',
-
-		'Fuel\\Core\\Log'        => COREPATH.'classes/log.php',
 
 		'Fuel\\Core\\Markdown'   => COREPATH.'classes/markdown.php',
 
