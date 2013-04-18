@@ -23199,3 +23199,63 @@ WARNING - 2013-04-18 17:36:28 --> Fuel\Core\Fuel::init - The configured locale e
 ERROR - 2013-04-18 17:36:28 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
 WARNING - 2013-04-18 17:36:30 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
 ERROR - 2013-04-18 17:36:30 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
+WARNING - 2013-04-18 17:39:41 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+WARNING - 2013-04-18 17:39:42 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+ERROR - 2013-04-18 17:39:42 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
+WARNING - 2013-04-18 17:39:44 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+WARNING - 2013-04-18 17:39:44 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+ERROR - 2013-04-18 17:39:44 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
+WARNING - 2013-04-18 17:39:45 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+WARNING - 2013-04-18 17:39:45 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+ERROR - 2013-04-18 17:39:45 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
+WARNING - 2013-04-18 17:39:46 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+WARNING - 2013-04-18 17:39:46 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+ERROR - 2013-04-18 17:39:46 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
+WARNING - 2013-04-18 17:39:47 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+WARNING - 2013-04-18 17:39:47 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+ERROR - 2013-04-18 17:39:47 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
+WARNING - 2013-04-18 17:39:47 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+WARNING - 2013-04-18 17:39:47 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+ERROR - 2013-04-18 17:39:47 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
+WARNING - 2013-04-18 17:39:48 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+WARNING - 2013-04-18 17:39:49 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+WARNING - 2013-04-18 17:39:49 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+ERROR - 2013-04-18 17:39:49 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
+WARNING - 2013-04-18 17:39:49 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+WARNING - 2013-04-18 17:39:49 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+ERROR - 2013-04-18 17:39:49 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
+WARNING - 2013-04-18 17:39:49 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+ERROR - 2013-04-18 17:39:49 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
+WARNING - 2013-04-18 17:40:08 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+WARNING - 2013-04-18 17:40:08 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+ERROR - 2013-04-18 17:40:08 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
+WARNING - 2013-04-18 17:40:09 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+WARNING - 2013-04-18 17:40:09 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+ERROR - 2013-04-18 17:40:09 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
+WARNING - 2013-04-18 17:40:09 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+WARNING - 2013-04-18 17:40:10 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+ERROR - 2013-04-18 17:40:10 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
+WARNING - 2013-04-18 17:40:42 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+WARNING - 2013-04-18 17:40:42 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+ERROR - 2013-04-18 17:40:42 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
+WARNING - 2013-04-18 17:40:43 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+WARNING - 2013-04-18 17:40:43 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+ERROR - 2013-04-18 17:40:43 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
+WARNING - 2013-04-18 17:40:44 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+WARNING - 2013-04-18 17:40:44 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+ERROR - 2013-04-18 17:40:44 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
+WARNING - 2013-04-18 17:40:44 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+WARNING - 2013-04-18 17:40:45 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+WARNING - 2013-04-18 17:40:45 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+ERROR - 2013-04-18 17:40:45 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
+WARNING - 2013-04-18 17:40:45 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+ERROR - 2013-04-18 17:40:45 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
+WARNING - 2013-04-18 17:40:45 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+WARNING - 2013-04-18 17:40:45 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+ERROR - 2013-04-18 17:40:45 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
+WARNING - 2013-04-18 17:41:17 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+WARNING - 2013-04-18 17:41:18 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+ERROR - 2013-04-18 17:41:18 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
+WARNING - 2013-04-18 17:41:18 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+WARNING - 2013-04-18 17:41:18 --> Fuel\Core\Fuel::init - The configured locale en_US is not installed on your system.
+ERROR - 2013-04-18 17:41:18 --> Error -  in /opt/src/php-framework-benchmark-git/fuelphp/fuel/core/classes/request.php on line 354
