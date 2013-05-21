@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_XmlRpc
  */
 
 namespace Zend\XmlRpc;
@@ -22,8 +21,6 @@ use Zend\Math\BigInteger;
  *
  * Using this function, users/Zend\XmlRpc\Client object can create the Zend\XmlRpc\Value objects
  * from PHP variables, XML string or by specifying the exact XML-RPC natvie type
- *
- * @package    Zend_XmlRpc
  */
 abstract class AbstractValue
 {
@@ -257,7 +254,7 @@ abstract class AbstractValue
             return self::XMLRPC_TYPE_DOUBLE;
         } elseif (is_bool($value)) {
             return self::XMLRPC_TYPE_BOOLEAN;
-        } elseif (is_null($value)) {
+        } elseif (null === $value) {
             return self::XMLRPC_TYPE_NIL;
         } elseif (is_string($value)) {
             return self::XMLRPC_TYPE_STRING;
@@ -405,7 +402,7 @@ abstract class AbstractValue
                         continue;
                         //throw new Value_Exception('Member of the '. self::XMLRPC_TYPE_STRUCT .' XML-RPC native type must contain a VALUE tag');
                     }
-                    $values[(string)$member->name] = static::_xmlStringToNativeXmlRpc($member->value);
+                    $values[(string) $member->name] = static::_xmlStringToNativeXmlRpc($member->value);
                 }
                 $xmlrpcValue = new Value\Struct($values);
                 break;
